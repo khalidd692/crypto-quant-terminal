@@ -1,16 +1,16 @@
 import { loadResearchPoints } from "../src/research/research-dataset-loader.js";
-import type { ISO8601 } from "../src/domain/types.js";
+import type { ISO8601, MarketDataPoint } from "../src/domain/types.js";
 
-const point = (eventTime: string) => ({
+const point = (eventTime: string): MarketDataPoint => ({
   instrumentId: "BTCUSDT",
-  eventTime,
-  availableTime: eventTime,
+  eventTime: eventTime as ISO8601,
+  availableTime: eventTime as ISO8601,
   open: 1,
   high: 1,
   low: 1,
   close: 1,
   volume: 1,
-  dataQuality: "complete" as const,
+  dataQuality: "complete",
   sourceId: "test",
 });
 
