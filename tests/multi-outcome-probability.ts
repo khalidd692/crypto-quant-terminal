@@ -27,7 +27,7 @@ const observations = labels.map((label, index) => createResearchObservation({
     intrabarAmbiguous: label === "AMBIGUOUS",
     mfeR: 0,
     maeR: 0,
-    realizedR: 0,
+    realizedR: label === "TARGET" ? 1 : label === "INVALIDATION" ? -1 : 0,
     returnFraction: 0,
     exitPrice: 100,
     exitEventTime: new Date(Date.UTC(2025, 0, 1, index + 1)).toISOString(),
@@ -51,6 +51,10 @@ assert.equal(estimate.sampleSize, 4);
 assert.equal(estimate.probabilities.length, 4);
 assert.equal(estimate.probabilities.reduce((sum, item) => sum + item.probability, 0), 1);
 for (const item of estimate.probabilities) assert.equal(item.probability, 0.25);
+assert.equal(estimate.expectancy.expectedValueR, 0);
+assert.equal(estimate.probabilities.find((item) => item.event === "TARGET")?.meanRealizedR, 1);
+assert.equal(estimate.probabilities.find((item) => item.event === "INVALIDATION")?.meanRealizedR, -1);
+assert.equal(estimate.probabilities.find((item) => item.event === "AMBIGUOUS")?.meanRealizedR, 0);
 
 const leaked = createResearchObservation({
   ...observations[0]!,
