@@ -1,12 +1,13 @@
 import { buildOutcomeDiagnostics } from "../src/research/outcome-diagnostics.js";
 import type { ResearchObservation } from "../src/research/observation-ledger.js";
+import type { ISO8601 } from "../src/domain/types.js";
 
 const feature = {
   featureId: "volatility.atr_ratio",
   featureVersion: "test",
   instrumentId: "TEST",
-  eventTime: "2026-01-01T00:00:00.000Z",
-  availableTime: "2026-01-01T00:00:00.000Z",
+  eventTime: "2026-01-01T00:00:00.000Z" as ISO8601,
+  availableTime: "2026-01-01T00:00:00.000Z" as ISO8601,
   value: 0.01,
   inputDataVersion: "fixture",
 };
@@ -32,7 +33,7 @@ function observation(
     regimeLabel: null,
     entryReferencePrice: 100,
     horizonCandles: 8,
-    horizonEndTime: "2026-01-01T08:00:00.000Z",
+    horizonEndTime: "2026-01-01T08:00:00.000Z" as ISO8601,
     targetR: 1.5,
     invalidationR: 1,
     outcome: {
