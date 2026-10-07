@@ -4,7 +4,9 @@
 - **Date:** 2026-10-07
 - **Scope:** Phase 3 only — BTCUSDT, USDⓈ-M futures, 1h
 - **Contract:** V1.2
-- **Precondition:** This ADR MUST be merged before the first Phase 3 research run.
+- **Precondition:** This ADR MUST be committed before the first Phase 3 research run.
+- **Amendment status:** Amended before any research run; no research result was observed before this amendment.
+- **Amendment commit intent:** `amendé avant tout run, aucun résultat observé`.
 
 ## Decision
 
@@ -34,7 +36,7 @@ A disappointing result is a valid result and MUST be retained in the experiment 
 
 The historical kline dataset must be validated for timestamp ordering, duplicates, invalid OHLC/volume rows and gaps. The resulting dataset artifact is content-hashed and versioned.
 
-The dataset boundary is event-time based and end-exclusive.
+The dataset boundary is event-time based, UTC, and semi-open `[start, end)`; every timestamp comparison in Phase 3 MUST use this convention.
 
 ## 2. Train / validation / test / holdout
 
@@ -47,7 +49,7 @@ The frozen chronological partitions are:
 | Test | 2024-01-01 | 2026-01-01 | Final development OOS evaluation |
 | Final holdout | 2026-01-01 | 2026-10-01 | One-time final evaluation |
 
-All boundaries are UTC and end-exclusive.
+All boundaries are UTC and semi-open `[start, end)`. The purge is **8 hours** (8 × 1h outcome horizon), and the embargo is **8 hours**. The purge removes observations whose outcome window could cross a downstream training/test boundary; the 8-hour embargo prevents immediate post-test observations from entering the next training window while preserving a fixed, protocol-derived buffer. No arbitrary day-based embargo is permitted.
 
 The walk-forward executor remains chronological and uses purge/embargo rules derived from the outcome horizon. No future observation may influence a training or validation decision.
 
@@ -85,7 +87,7 @@ The frozen baseline simulation costs are:
 
 | Cost | Frozen value |
 |---|---:|
-| Fee rate | 0.0004 per side (4 bps) |
+| Taker fee rate | 0.0004 per side (4 bps) |
 | Slippage rate | 0.0002 per side (2 bps) |
 | Funding | Historical Binance USDⓈ-M funding rates |
 
@@ -111,10 +113,31 @@ Every Phase 3 report MUST include, on the same applicable test period:
 
 1. **No-trade baseline:** zero trades, zero realized return, zero drawdown attributable to strategy trades.
 2. **Buy-and-hold baseline:** BTCUSDT buy-and-hold over the applicable evaluation interval, with its methodology and boundary timestamps stated explicitly.
+3. **Random-entry baseline:** deterministic seeded random LONG/SHORT entries on exactly the same eligible timestamps, with the same horizon, target/invalidation, fees, slippage and funding accounting as the strategy.
+4. **Always-LONG baseline:** LONG on exactly the same eligible timestamps, with the same horizon, target/invalidation, fees, slippage and funding accounting as the strategy.
+
+All four baselines MUST expose the same report fields as the strategy where applicable: observation/trade count, mean/sum realized R, positive fraction, drawdown, target/invalidation hit rates, and annual breakdown. Baseline randomness MUST use a recorded fixed seed and MUST NOT be re-seeded after observing results.
 
 The report MUST make clear whether strategy performance is superior to a trivial baseline and MUST NOT present a profitable strategy result as proof of live tradability.
 
-## 7. Experiment registry
+## 7. Success criterion
+
+Phase 3 is a success only if the frozen **test** interval satisfies all of the following, using the dependence-aware uncertainty already required by Phase 2:
+
+1. the 95% lower bound of mean realized R is **> +0.05R**;
+2. cumulative strategy return exceeds buy-and-hold by **≥ 5 percentage points** over the same test boundaries;
+3. mean realized R remains **> 0** under the ×1.5 fee/slippage stress;
+4. strategy mean realized R exceeds both the deterministic always-LONG baseline and the fixed-seed random-entry baseline.
+
+Failure of any criterion is a valid negative result and does not authorize protocol changes.
+
+## 8. Holdout isolation and hash
+
+The final holdout dataset is a separate artifact from the research dataset. Its manifest MUST contain its content hash and exact semi-open UTC boundaries. The research loader MUST reject any market-data or observation timestamp `>= 2026-01-01T00:00:00.000Z`; this is a fail-closed boundary, not merely a caller convention. A dedicated automated test MUST prove that rejection.
+
+The holdout artifact is loaded only by the one-time holdout script. `npm run research` MUST never load the holdout artifact or its manifest.
+
+## 9. Experiment registry
 
 Every Phase 3 run is an immutable experiment-registry entry, including runs that fail, lose money, produce insufficient evidence, or otherwise disappoint.
 
@@ -142,7 +165,7 @@ A run MUST be registered before its result is considered for comparison, and a f
 
 No result may be deleted or overwritten to hide an unfavorable experiment.
 
-## 8. Post-result changes
+## 10. Post-result changes
 
 After a result has been observed, changing any protocol, dataset boundary, cost, funding treatment, outcome horizon, target/invalidation, split, purge/embargo rule, estimator configuration, evidence policy, or baseline methodology constitutes a new experiment.
 
@@ -150,7 +173,7 @@ It requires a new ADR before the new run.
 
 Parameter changes MUST NOT be applied in place.
 
-## 9. Red Team / stop-the-line conditions
+## 11. Red Team / stop-the-line conditions
 
 This ADR does not relax `docs/RED_TEAM_RULES.md`.
 
@@ -166,7 +189,7 @@ Phase 3 is blocked if any of the following remains unresolved:
 - cost/funding accounting ambiguity;
 - unexplained divergence between the reported protocol and executed protocol.
 
-## 10. Explicit non-decisions
+## 12. Explicit non-decisions
 
 This ADR does **not** add:
 
