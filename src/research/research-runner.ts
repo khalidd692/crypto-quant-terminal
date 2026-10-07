@@ -142,6 +142,8 @@ export function runResearchLedger(
       availableTime: entry.availableTime,
       datasetVersion: config.dataVersion,
       featureDefinitionVersions: featureVersions,
+      featureVersionPolicy: config.featureVersionPolicy,
+      dataAvailabilityRule: "features use points.slice(0,T0+1); PIT eligibility requires availableTime <= decisionTime",
       featureSnapshot: features,
       setupId: "baseline.trend.v1",
       side: setup.side,
