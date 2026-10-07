@@ -1,5 +1,7 @@
 import type { FeatureSnapshot, Side } from "../domain/types.js";
 
+export const BASELINE_SETUP_ID = "baseline.trend.v1";
+
 export interface SetupAssessment {
   readonly valid: boolean;
   readonly side: Side | null;
@@ -17,13 +19,13 @@ export function assessBasicTrendSetup(features: readonly FeatureSnapshot[]): Set
   if (trend === null) reasons.push("missing_trend");
   if (rsi === null) reasons.push("missing_momentum");
   if (volatility === null) reasons.push("missing_volatility");
-  if (reasons.length > 0) return { valid: false, side: null, setupId: "basic-trend-v1", reasons };
+  if (reasons.length > 0) return { valid: false, side: null, setupId: BASELINE_SETUP_ID, reasons };
 
   if (trend !== null && trend > 0.002 && rsi !== null && rsi >= 50 && rsi <= 70) {
-    return { valid: true, side: "LONG", setupId: "basic-trend-v1", reasons: ["trend_up", "momentum_confirmed"] };
+    return { valid: true, side: "LONG", setupId: BASELINE_SETUP_ID, reasons: ["trend_up", "momentum_confirmed"] };
   }
   if (trend !== null && trend < -0.002 && rsi !== null && rsi >= 30 && rsi <= 50) {
-    return { valid: true, side: "SHORT", setupId: "basic-trend-v1", reasons: ["trend_down", "momentum_confirmed"] };
+    return { valid: true, side: "SHORT", setupId: BASELINE_SETUP_ID, reasons: ["trend_down", "momentum_confirmed"] };
   }
-  return { valid: false, side: null, setupId: "basic-trend-v1", reasons: ["setup_not_confirmed"] };
+  return { valid: false, side: null, setupId: BASELINE_SETUP_ID, reasons: ["setup_not_confirmed"] };
 }
