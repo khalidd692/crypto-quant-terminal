@@ -11,6 +11,7 @@ const observations = labels.map((label, index) => createResearchObservation({
   featureDefinitionVersions: ["test.v1"],
   featureVersionPolicy: "test",
   featureSnapshot: [],
+  regimeLabel: null,
   setupId: "setup.test",
   side: "LONG",
   entryReferencePrice: 100,
