@@ -13,6 +13,7 @@ const make = (hour: number, horizonHour: number): ResearchObservation => {
     featureDefinitionVersions: [],
     featureVersionPolicy: "test",
     featureSnapshot: [],
+    dataAvailabilityRule: "availableTime <= decisionTime",
     setupId: null,
     side: null,
     regimeLabel: null,
