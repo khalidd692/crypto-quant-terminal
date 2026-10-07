@@ -2,7 +2,7 @@ import { buildHistoricalResearchDataset } from "../src/research/historical-datas
 
 const points = Array.from({ length: 140 }, (_, i) => {
   const close = 100 + i * 0.2;
-  const event = new Date(Date.UTC(2026, 0, 1, i)).toISOString() as any;
+  const event = new Date(Date.UTC(2025, 11, 20, i)).toISOString() as any;
   return {
     instrumentId: "TEST",
     eventTime: event,

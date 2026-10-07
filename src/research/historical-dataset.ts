@@ -5,6 +5,7 @@ import { BinancePublicClient, type BinanceMarket } from "../adapters/binance/pub
 import { createDatasetVersion } from "./dataset.js";
 import { runResearchLedger, type ResearchRunnerConfig } from "./research-runner.js";
 import { serializeObservationLedger, type ResearchObservation } from "./observation-ledger.js";
+import { loadResearchPoints, RESEARCH_END_EXCLUSIVE } from "./research-dataset-loader.js";
 
 export interface HistoricalKlineSource {
   historicalKlines(
@@ -71,13 +72,14 @@ export async function buildHistoricalResearchDataset(
     ...(config.pageDelayMs === undefined ? {} : { pageDelayMs: config.pageDelayMs }),
     ...(config.maxPages === undefined ? {} : { maxPages: config.maxPages }),
   };
-  const points = await client.historicalKlines(
+  if (config.endTimeMs > Date.parse(RESEARCH_END_EXCLUSIVE)) throw new Error("Research dataset cannot cross holdout start");
+  const points = loadResearchPoints(await client.historicalKlines(
     config.symbol,
     config.interval,
     config.startTimeMs,
     config.endTimeMs,
     klineOptions,
-  );
+  ));
 
   const integrity = validateMarketDataSeries(points, config.expectedIntervalMs);
   if (!integrity.valid) {

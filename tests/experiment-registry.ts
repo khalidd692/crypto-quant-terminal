@@ -15,6 +15,7 @@ const report: ResearchReport = {
   targetHitRateAdjusted: null,
   effectiveSampleSize: 0,
   realizedRBootstrap: null,
+  annual: [],
 };
 
 const spec = {
