@@ -36,7 +36,7 @@ A disappointing result is a valid result and MUST be retained in the experiment 
 
 The historical kline dataset must be validated for timestamp ordering, duplicates, invalid OHLC/volume rows and gaps. The resulting dataset artifact is content-hashed and versioned.
 
-The dataset boundary is event-time based, UTC, and semi-open `[start, end)`; every timestamp comparison in Phase 3 MUST use this convention.
+The dataset boundary is event-time based, UTC, and semi-open `[start, end)`; every timestamp comparison in Phase 3 MUST use this convention. Research data must be loaded only through the fail-closed research loader.
 
 ## 2. Train / validation / test / holdout
 
@@ -125,9 +125,9 @@ The report MUST make clear whether strategy performance is superior to a trivial
 Phase 3 is a success only if the frozen **test** interval satisfies all of the following, using the dependence-aware uncertainty already required by Phase 2:
 
 1. the 95% lower bound of mean realized R is **> +0.05R**;
-2. cumulative strategy return exceeds buy-and-hold by **≥ 5 percentage points** over the same test boundaries;
+2. mean realized R is at least **+0.10R** and exceeds both the deterministic always-LONG baseline and the fixed-seed random-entry baseline by **≥ 0.05R**;
 3. mean realized R remains **> 0** under the ×1.5 fee/slippage stress;
-4. strategy mean realized R exceeds both the deterministic always-LONG baseline and the fixed-seed random-entry baseline.
+4. buy-and-hold is reported on the identical test boundaries as a contextual baseline, but is **not** compared to R-denominated strategy returns because the units are not identical.
 
 Failure of any criterion is a valid negative result and does not authorize protocol changes.
 
