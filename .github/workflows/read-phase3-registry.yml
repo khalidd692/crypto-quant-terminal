@@ -1,0 +1,18 @@
+name: Read Phase 3 registry artifact
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: 11482853737
+          github-token: ${{ github.token }}
+          run-id: 37622713282
+          path: registry
+      - run: find registry -type f -maxdepth 2 -print -exec cat {} \;
