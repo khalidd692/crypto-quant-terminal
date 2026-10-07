@@ -5,14 +5,11 @@ import { assessMultiTimeframeAlignment } from "../src/setup/multitimeframe.js";
 const veto = evaluateHardVetoes({
   dataValid: true,
   dataFresh: true,
-  evidenceSufficient: false,
-  expectancyNetR: null,
-  minExpectedValueR: 0.1,
-  liquidityPassed: true,
+  liquidityPassed: false,
   portfolioRiskAllowed: true,
   invalidationDefined: true,
 });
-if (!veto.vetoed || !veto.reasons.includes("insufficient_evidence")) throw new Error("Veto engine mismatch");
+if (!veto.vetoed || !veto.reasons.includes("liquidity_gate_failed")) throw new Error("Veto engine mismatch");
 
 const base = {
   instrumentId: "TEST",
