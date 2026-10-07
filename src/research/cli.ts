@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { BinancePublicClient } from "../adapters/binance/public-client.js";
+import { BinanceVisionHistoricalClient } from "../adapters/binance/vision-public-data.js";
 import { buildHistoricalResearchDataset } from "./historical-dataset.js";
 import { runResearchLedger } from "./research-runner.js";
 import { buildResearchReport } from "./report.js";
@@ -101,7 +102,8 @@ try {
     featureVersionPolicy: "core-v1",
     rejectGaps: true,
   }, client);
-  const funding = await client.historicalFundingRates(
+  const fundingClient = new BinanceVisionHistoricalClient(fetch, process.env.PHASE3_FUNDING_DIR);
+  const funding = await fundingClient.historicalFundingRates(
     PROTOCOL.symbol,
     Date.parse(PROTOCOL.datasetStart),
     Date.parse(PROTOCOL.datasetEnd),
