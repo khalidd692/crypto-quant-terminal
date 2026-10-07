@@ -1,4 +1,4 @@
-import type { ResearchObservation } from "./observation-ledger.js";
+import type { ResearchObservation } from "../research/observation-ledger.js";
 import { estimateBinomial, type BinomialEstimate } from "../statistics/binomial.js";
 
 export interface ProbabilityCondition {
