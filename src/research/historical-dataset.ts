@@ -64,15 +64,19 @@ export async function buildHistoricalResearchDataset(
   config: HistoricalResearchConfig,
   client: HistoricalKlineSource = new BinancePublicClient({
     market: config.market,
-    availabilityLagMs: config.availabilityLagMs,
+    ...(config.availabilityLagMs === undefined ? {} : { availabilityLagMs: config.availabilityLagMs }),
   }),
 ): Promise<HistoricalResearchDataset> {
+  const klineOptions = {
+    ...(config.pageDelayMs === undefined ? {} : { pageDelayMs: config.pageDelayMs }),
+    ...(config.maxPages === undefined ? {} : { maxPages: config.maxPages }),
+  };
   const points = await client.historicalKlines(
     config.symbol,
     config.interval,
     config.startTimeMs,
     config.endTimeMs,
-    { pageDelayMs: config.pageDelayMs, maxPages: config.maxPages },
+    klineOptions,
   );
 
   const integrity = validateMarketDataSeries(points, config.expectedIntervalMs);
