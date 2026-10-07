@@ -1,0 +1,29 @@
+import type { FeatureSnapshot, Side } from "../domain/types.js";
+
+export interface SetupAssessment {
+  readonly valid: boolean;
+  readonly side: Side | null;
+  readonly setupId: string;
+  readonly reasons: readonly string[];
+}
+
+export function assessBasicTrendSetup(features: readonly FeatureSnapshot[]): SetupAssessment {
+  const get = (id: string): number | null => features.find((feature) => feature.featureId === id)?.value ?? null;
+  const trend = get("trend.ema_ratio");
+  const rsi = get("momentum.rsi");
+  const volatility = get("volatility.realized");
+  const reasons: string[] = [];
+
+  if (trend === null) reasons.push("missing_trend");
+  if (rsi === null) reasons.push("missing_momentum");
+  if (volatility === null) reasons.push("missing_volatility");
+  if (reasons.length > 0) return { valid: false, side: null, setupId: "basic-trend-v1", reasons };
+
+  if (trend !== null && trend > 0.002 && rsi !== null && rsi >= 50 && rsi <= 70) {
+    return { valid: true, side: "LONG", setupId: "basic-trend-v1", reasons: ["trend_up", "momentum_confirmed"] };
+  }
+  if (trend !== null && trend < -0.002 && rsi !== null && rsi >= 30 && rsi <= 50) {
+    return { valid: true, side: "SHORT", setupId: "basic-trend-v1", reasons: ["trend_down", "momentum_confirmed"] };
+  }
+  return { valid: false, side: null, setupId: "basic-trend-v1", reasons: ["setup_not_confirmed"] };
+}
