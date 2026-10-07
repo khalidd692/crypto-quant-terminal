@@ -6,6 +6,35 @@ import { evaluateReadOnly } from "./terminal/evaluate.js";
 import { loadFrozenTerminalEstimator } from "./terminal/bootstrap-model.js";
 
 const port = Number(process.env.PORT ?? 3000);
+const allowedOrigin = process.env.ALLOWED_ORIGIN ?? "http://localhost:3000";
+const KLINE_CACHE_MS = 15_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
+const klineCache = new Map<string, { expiresAt: number; points: Awaited<ReturnType<BinancePublicClient["klines"]>> }>();
+const rateLimits = new Map<string, { windowStart: number; count: number }>();
+
+function clientIp(request: IncomingMessage): string {
+  const forwarded = request.headers["x-forwarded-for"];
+  return typeof forwarded === "string" ? forwarded.split(",")[0]!.trim() : request.socket.remoteAddress ?? "unknown";
+}
+
+function rateLimitAllowed(request: IncomingMessage): boolean {
+  const now = Date.now();
+  const key = clientIp(request);
+  const current = rateLimits.get(key);
+  if (!current || now - current.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimits.set(key, { windowStart: now, count: 1 });
+    return true;
+  }
+  current.count += 1;
+  return current.count <= RATE_LIMIT_MAX;
+}
+
+function corsHeaders(request: IncomingMessage): Record<string, string> {
+  const origin = request.headers.origin;
+  return origin === allowedOrigin ? { "access-control-allow-origin": allowedOrigin, "vary": "Origin" } : {};
+}
+
 
 function json(response: ServerResponse, status: number, payload: unknown): void {
   response.writeHead(status, {
@@ -55,11 +84,17 @@ async function run(){
 }
 
 async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+  if (!rateLimitAllowed(request)) return json(response, 429, { error: "rate_limited" });
+  if (request.method === "OPTIONS") {
+    response.writeHead(204, { ...corsHeaders(request), "access-control-allow-methods": "GET,OPTIONS", "access-control-allow-headers": "content-type" });
+    response.end();
+    return;
+  }
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
 
   if (url.pathname === "/health") return json(response, 200, { status: "ok", mode: "read-only" });
   if (url.pathname === "/") {
-    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" });
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...corsHeaders(request) });
     response.end(html());
     return;
   }
