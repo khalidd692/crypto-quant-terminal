@@ -16,7 +16,7 @@ export interface HistoricalKlineSource {
   ): Promise<MarketDataPoint[]>;
 }
 
-export interface HistoricalResearchConfig extends ResearchRunnerConfig {
+export interface HistoricalResearchConfig extends Omit<ResearchRunnerConfig, "dataVersion"> {
   readonly market: BinanceMarket;
   readonly symbol: string;
   readonly interval: string;
