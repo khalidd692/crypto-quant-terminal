@@ -13,7 +13,7 @@ jobs:
   research:
     # One-shot gate for the Phase 3 Step 1 merge that was explicitly prepared
     # for the frozen ADR-0002 research run.
-    if: github.event.pull_request.merged == true && github.event.pull_request.number == 41
+    if: github.event.pull_request.merged == true && github.event.pull_request.number == 42
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
@@ -38,6 +38,15 @@ jobs:
             echo "A Phase 3 research artifact already exists for ${GITHUB_SHA}: ${existing}"
             exit 1
           fi
+
+      - name: Probe Binance Vision archive with system curl
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://data.binance.vision/data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-2025-01.zip"
+          curl --fail --silent --show-error --location --max-time 30 --output /tmp/btcusdt-funding-2025-01.zip "$url"
+          test -s /tmp/btcusdt-funding-2025-01.zip
+          unzip -tq /tmp/btcusdt-funding-2025-01.zip
 
       - name: Install exact locked dependencies
         run: npm ci
