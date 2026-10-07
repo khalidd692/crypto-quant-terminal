@@ -50,3 +50,5 @@ if (report.cleanEligibleObservations !== 4) throw new Error("Clean count mismatc
 if (report.long.count !== 2 || report.short.count !== 2) throw new Error("Side counts mismatch");
 if (report.all.mean !== 0) throw new Error("Mean R mismatch");
 if (!report.targetHitRate || report.targetHitRate.probability !== 0.5) throw new Error("Target probability mismatch");
+if (report.drawdown.maxDrawdownR !== -1) throw new Error("Drawdown R mismatch");
+if (report.drawdown.maxDrawdownFraction !== 0.5) throw new Error("Drawdown fraction mismatch");

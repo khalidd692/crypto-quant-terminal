@@ -48,8 +48,10 @@ function summary(values: readonly number[]): ReturnSummary {
 }
 
 function drawdown(values: readonly number[]): DrawdownSummary {
-  let equity = 0;
-  let runningPeakEquity = 0;
+  // Start from a normalized positive equity of 1 R so drawdown fractions
+  // have a standard denominator and remain interpretable.
+  let equity = 1;
+  let runningPeakEquity = 1;
   let peakIndex: number | null = null;
   let troughIndex: number | null = null;
   let maxDrawdownR = 0;
@@ -65,7 +67,7 @@ function drawdown(values: readonly number[]): DrawdownSummary {
     if (dd < maxDrawdownR) {
       maxDrawdownR = dd;
       troughIndex = index;
-      maxDrawdownFraction = dd / Math.max(1, Math.abs(runningPeakEquity));
+      maxDrawdownFraction = Math.abs(dd) / runningPeakEquity;
     }
   });
   return { maxDrawdownR, maxDrawdownFraction, peakIndex, troughIndex };
