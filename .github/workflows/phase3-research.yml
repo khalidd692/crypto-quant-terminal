@@ -1,0 +1,55 @@
+name: Phase 3 research
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
+      - run: node dist/tests/domain-validation.js
+      - run: node dist/tests/core-invariants.js
+      - run: node dist/tests/protocol-invariants.js
+      - run: node dist/tests/dataset-and-indicators.js
+      - run: node dist/tests/baseline-backtest.js
+      - run: node dist/tests/expectancy.js
+      - run: node dist/tests/veto-and-timeframe.js
+      - run: node dist/tests/calibration.js
+      - run: node dist/tests/walk-forward.js
+      - run: node dist/tests/walk-forward-runner.js
+      - run: node dist/tests/research-ledger.js
+      - run: node dist/tests/market-data-integrity.js
+      - run: node dist/tests/historical-dataset.js
+      - run: node dist/tests/statistics-bootstrap.js
+      - run: node dist/tests/research-report.js
+      - run: node dist/tests/purged-split.js
+      - run: node dist/tests/outcome-accounting.js
+      - run: node dist/tests/funding-alignment.js
+      - run: node dist/tests/empirical-probability.js
+      - run: node dist/tests/multi-outcome-probability.js
+      - run: node dist/tests/oos-calibration.js
+      - run: node dist/tests/evidence-gate.js
+      - run: node dist/tests/decision-pipeline.js
+      - run: node dist/tests/experiment-registry.js
+      - run: node dist/tests/risk-sizing.js
+      - run: node dist/tests/final-holdout.js
+      - name: Run frozen Phase 3 research
+        env:
+          PHASE3_TESTS_GREEN: "true"
+        run: npm run research
+      - name: Upload research registry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-research-registry
+          path: research/registry
+          if-no-files-found: warn
