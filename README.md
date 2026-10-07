@@ -2,41 +2,41 @@
 
 V1.2 — architecture-first, validation-first quantitative decision support system.
 
-## Objective
+## Status
 
-Produce reproducible, falsifiable and explainable decisions:
+Core quantitative foundation implemented. V1 remains read-only/simulation-oriented.
 
-- LONG
-- SHORT
-- WAIT
-- NO_TRADE
-- INSUFFICIENT_EVIDENCE
-
-V1 is read-only/simulation-oriented. No live order execution.
-
-## Decision pipeline
+## Architecture
 
 DATA → REGIME → FEATURES → SETUP → PROBABILITY → EXPECTANCY → RISK → LIQUIDITY → VETO → DECISION
 
-## Engineering principles
+## Implemented
 
-- Point-in-time data and provenance
-- Explicit Asset / Instrument / Venue separation
-- Versioned feature definitions and datasets
-- Independent feature computation
-- Explicit statistical observation unit
-- MFE/MAE with fixed sign conventions
-- Probability separated from uncertainty
-- Explicit OHLC intrabar ambiguity
-- Invalidation separated from stop placement
-- Risk separated from leverage
-- Liquidity as a hard execution gate
-- Derivatives context: funding, OI, liquidations, basis
-- Payoff/expectancy gate
-- Portfolio correlation, beta and aggregate risk constraints
-- Walk-forward / purge / embargo / OOS / final holdout
-- Baselines, ablations and multiple-testing controls
-- Reproducible experiments and immutable versions
-- Mandatory explanations and decision logs
+- Explicit Asset / Instrument / Venue domain model
+- Point-in-time market-data representation and validation
+- Versioned feature definitions
+- Core feature families: trend, momentum, volatility, volume and candle structure
+- Empirical probability estimation with Wilson uncertainty intervals
+- Expectancy calculation over an explicit probability space
+- Invalidation-based position sizing with leverage and liquidity caps
+- Liquidity hard gate
+- Decision engine with WAIT / NO_TRADE / INSUFFICIENT_EVIDENCE
+- Outcome simulation with explicit intrabar ambiguity
+- Portfolio risk gate
+- Backtest protocol with chronological splits and explicit purge/embargo policy
+- Experiment registry
+- GitHub Actions CI
 
-See `docs/` for the technical contract and validation protocol.
+## Deliberately not implemented
+
+- Live order execution
+- Exchange credentials
+- Automatic capital deployment
+- Black-box AI-generated probabilities
+- Unvalidated predictive model claims
+
+Those belong only after empirical validation and an explicit promotion decision.
+
+## Next research layer
+
+Connect a real, point-in-time data source through a provider adapter, build setup definitions, then run walk-forward research against immutable dataset versions.
