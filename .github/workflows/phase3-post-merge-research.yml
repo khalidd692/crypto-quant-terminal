@@ -1,0 +1,59 @@
+name: Phase 3 post-merge research
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  research:
+    # One-shot gate for the Phase 3 Step 1 merge that was explicitly prepared
+    # for the frozen ADR-0002 research run.
+    if: contains(github.event.head_commit.message, 'Merge pull request #34')
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      ARTIFACT_NAME: phase3-research-${{ github.sha }}
+
+    steps:
+      - name: Checkout frozen merge commit
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Refuse a duplicate execution for this merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          existing="$(gh api --paginate "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100"             --jq '.artifacts[] | select(.name == env.ARTIFACT_NAME) | .id' | head -n 1)"
+          if [ -n "${existing}" ]; then
+            echo "A Phase 3 research artifact already exists for ${GITHUB_SHA}: ${existing}"
+            exit 1
+          fi
+
+      - name: Install exact locked dependencies
+        run: npm ci
+
+      - name: Run all standard tests first
+        run: npm test
+
+      - name: Execute frozen Phase 3 research exactly once
+        env:
+          PHASE3_TESTS_GREEN: "true"
+        run: npm run research
+
+      - name: Upload immutable Phase 3 registry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: research/registry/*.json
+          if-no-files-found: error
+          retention-days: 90
