@@ -13,7 +13,7 @@ jobs:
   research:
     # One-shot gate for the Phase 3 Step 1 merge that was explicitly prepared
     # for the frozen ADR-0002 research run.
-    if: github.event.pull_request.merged == true && github.event.pull_request.number == 42
+    if: github.event.pull_request.merged == true && github.event.pull_request.number == 43
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
@@ -48,6 +48,26 @@ jobs:
           test -s /tmp/btcusdt-funding-2025-01.zip
           unzip -tq /tmp/btcusdt-funding-2025-01.zip
 
+      - name: Download official Binance Vision funding archives
+        shell: bash
+        env:
+          PHASE3_FUNDING_DIR: /tmp/phase3-funding
+        run: |
+          set -euo pipefail
+          mkdir -p "$PHASE3_FUNDING_DIR"
+          download_one() {
+            local ym="$1"
+            local url="https://data.binance.vision/data/futures/um/monthly/fundingRate/BTCUSDT/BTCUSDT-fundingRate-${ym}.zip"
+            curl --fail --silent --show-error --location --retry 3 --retry-all-errors --max-time 60               --output "$PHASE3_FUNDING_DIR/BTCUSDT-fundingRate-${ym}.zip" "$url"
+            test -s "$PHASE3_FUNDING_DIR/BTCUSDT-fundingRate-${ym}.zip"
+          }
+          export -f download_one
+          for year in 2020 2021 2022 2023 2024 2025; do
+            for month in 01 02 03 04 05 06 07 08 09 10 11 12; do
+              echo "$year-$month"
+            done
+          done | xargs -n1 -P8 bash -c 'download_one "$1"' _
+
       - name: Install exact locked dependencies
         run: npm ci
 
@@ -57,6 +77,7 @@ jobs:
       - name: Execute frozen Phase 3 research exactly once
         env:
           PHASE3_TESTS_GREEN: "true"
+          PHASE3_FUNDING_DIR: /tmp/phase3-funding
         run: npm run research
 
       - name: Upload immutable Phase 3 registry
