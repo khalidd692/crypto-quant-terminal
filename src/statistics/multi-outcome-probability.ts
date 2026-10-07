@@ -100,6 +100,7 @@ export function estimateOutcomeDistribution(
   });
 
   const grossR = probabilities.reduce((sum, item) => {
+    if (item.probability === 0) return sum;
     if (item.meanRealizedR === null) throw new Error(`Missing payoff estimate for ${item.event}`);
     return sum + item.probability * item.meanRealizedR;
   }, 0);
