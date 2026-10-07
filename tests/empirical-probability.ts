@@ -1,7 +1,8 @@
 import { estimateConditionalProbability } from "../src/statistics/empirical-probability.js";
+import { BASELINE_SETUP_ID } from "../src/setup/basic.js";
 import type { ResearchObservation } from "../src/research/observation-ledger.js";
 
-const make = (hour: number, target: boolean, timeExit = false): ResearchObservation => {
+const make = (hour: number, target: boolean, timeExit = false, horizonEndHour: number | null = hour + 1): ResearchObservation => {
   const eventTime = new Date(Date.UTC(2026, 0, 1, hour)).toISOString();
   return {
     observationId: `o-${hour}`,
@@ -13,11 +14,11 @@ const make = (hour: number, target: boolean, timeExit = false): ResearchObservat
     featureVersionPolicy: "test",
     featureSnapshot: [],
     regimeLabel: null,
-    setupId: "baseline.trend.v1",
+    setupId: BASELINE_SETUP_ID,
     side: "LONG",
     entryReferencePrice: 100,
     horizonCandles: 4,
-    horizonEndTime: eventTime,
+    horizonEndTime: horizonEndHour === null ? null : new Date(Date.UTC(2026, 0, 1, horizonEndHour)).toISOString(),
     targetR: 1.5,
     invalidationR: 1,
     outcome: {
@@ -48,15 +49,18 @@ const observations = [
   make(3, false),
   make(4, false),
   make(5, true, true),
+  make(6, true, false, null),
+  make(7, true, false, 9),
   make(8, true),
 ];
 
 const estimate = estimateConditionalProbability(observations, {
-  setupId: "baseline.trend.v1",
+  setupId: BASELINE_SETUP_ID,
   side: "LONG",
-}, new Date(Date.UTC(2026, 0, 1, 6)).toISOString());
+}, new Date(Date.UTC(2026, 0, 1, 8)).toISOString());
 
 if (!estimate) throw new Error("Expected probability estimate");
 if (estimate.estimate.successes !== 2 || estimate.estimate.observations !== 4) throw new Error("Training selection mismatch");
+if (estimate.eligibleTrainingObservations !== 4) throw new Error("Horizon filtering mismatch");
 if (estimate.estimate.probability !== 0.5) throw new Error("Empirical probability mismatch");
 if (estimate.excludedTimeExits !== 1) throw new Error("Time exit exclusion mismatch");
