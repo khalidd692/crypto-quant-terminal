@@ -43,3 +43,4 @@ jobs:
       - run: node dist/tests/evidence-gate.js
       - run: node dist/tests/decision-pipeline.js
       - run: node dist/tests/experiment-registry.js
+      - run: node dist/tests/risk-sizing.js
