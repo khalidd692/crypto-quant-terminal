@@ -27,3 +27,5 @@ jobs:
       - run: node dist/tests/veto-and-timeframe.js
       - run: node dist/tests/calibration.js
       - run: node dist/tests/walk-forward.js
+      - run: node dist/tests/research-ledger.js
+      - run: node dist/tests/market-data-integrity.js
