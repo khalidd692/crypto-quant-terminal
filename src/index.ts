@@ -7,6 +7,7 @@ export * from "./features/feature-engine.js";
 export * from "./statistics/binomial.js";
 export * from "./statistics/empirical-edge.js";
 export * from "./statistics/expectancy.js";
+export * from "./statistics/calibration.js";
 export * from "./risk/position-sizing.js";
 export * from "./liquidity/gate.js";
 export * from "./decision/engine.js";
