@@ -70,7 +70,14 @@ export function buildPhase3PartitionReport(
   const models = (["LONG", "SHORT"] as const)
     .map((side) => estimateConditionalProbability(observations, { setupId: BASELINE_SETUP_ID, side }, trainEnd))
     .filter((value): value is EmpiricalProbabilityEstimate => value !== null);
-  const baselines = [\n    ...buildBaselines(observations, allPoints, fundingRates, costs, 20261007, 1000),\n    buildBuyAndHoldBaseline(allPoints.filter((point) => {\n      const t = Date.parse(point.eventTime);\n      return t >= Date.parse(partition === "validation" ? "2023-01-01T00:00:00.000Z" : "2024-01-01T00:00:00.000Z")\n        && t < Date.parse(partition === "validation" ? "2024-01-01T00:00:00.000Z" : "2026-01-01T00:00:00.000Z");\n    }), costs.feeRate, costs.slippageRate),\n  ];
+  const baselines = [
+    ...buildBaselines(observations, allPoints, fundingRates, costs, 20261007, 1000),
+    buildBuyAndHoldBaseline(allPoints.filter((point) => {
+      const t = Date.parse(point.eventTime);
+      return t >= Date.parse(partition === "validation" ? "2023-01-01T00:00:00.000Z" : "2024-01-01T00:00:00.000Z")
+        && t < Date.parse(partition === "validation" ? "2024-01-01T00:00:00.000Z" : "2026-01-01T00:00:00.000Z");
+    }), costs.feeRate, costs.slippageRate),
+  ];
   const random95 = baselines.find((b) => b.name === "RANDOM_ENTRY")?.randomDistribution?.percentile95MeanR ?? null;
   const setupMean = report.all.mean;
   return {
