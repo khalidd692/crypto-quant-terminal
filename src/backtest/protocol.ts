@@ -17,6 +17,7 @@ export interface BacktestProtocol {
   readonly split: BacktestSplit;
   readonly purgeEmbargo: PurgeEmbargoPolicy;
   readonly finalHoldoutStart: string;
+  readonly finalHoldoutEnd: string;
   readonly costsVersion: string;
   readonly universeVersion: string;
 }
@@ -30,6 +31,7 @@ export function assertChronologicalProtocol(protocol: BacktestProtocol): void {
     protocol.split.testStart,
     protocol.split.testEnd,
     protocol.finalHoldoutStart,
+    protocol.finalHoldoutEnd,
   ];
   for (let i = 1; i < points.length; i += 1) {
     const previous = points[i - 1];

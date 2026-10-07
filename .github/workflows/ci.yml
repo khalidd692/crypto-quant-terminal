@@ -44,3 +44,4 @@ jobs:
       - run: node dist/tests/decision-pipeline.js
       - run: node dist/tests/experiment-registry.js
       - run: node dist/tests/risk-sizing.js
+      - run: node dist/tests/final-holdout.js
