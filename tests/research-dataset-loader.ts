@@ -1,4 +1,5 @@
 import { loadResearchPoints } from "../src/research/research-dataset-loader.js";
+import type { ISO8601 } from "../src/domain/types.js";
 
 const point = (eventTime: string) => ({
   instrumentId: "BTCUSDT",
