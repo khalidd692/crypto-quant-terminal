@@ -1,4 +1,4 @@
-import type { Expectancy, LiquidityAssessment, RiskSnapshot, Signal, Side } from "../domain/types.js";
+import type { Expectancy, Signal, Side } from "../domain/types.js";
 import { assessProbabilityEvidence, type EvidenceGatePolicy } from "../statistics/evidence-gate.js";
 import type { BinomialEstimate } from "../statistics/binomial.js";
 import { calculateNetExpectancy, type OutcomeProbability } from "../statistics/expectancy.js";
@@ -54,18 +54,21 @@ export function evaluateDecisionPipeline(input: DecisionPipelineInput): Decision
   const veto = evaluateHardVetoes({
     dataValid: input.dataValid,
     dataFresh: input.dataFresh,
-    evidenceSufficient: evidence.sufficient,
-    expectancyNetR: expectancy?.expectedValue ?? null,
-    minExpectedValueR: input.minExpectedValueR,
     liquidityPassed: input.liquidityPassed,
     portfolioRiskAllowed: input.portfolioRiskAllowed,
     invalidationDefined: input.invalidationDefined,
   });
 
-  if (!evidence.sufficient) return { decision: "INSUFFICIENT_EVIDENCE", side: null, evidenceSufficient: false, expectancy, vetoReasons: veto.reasons };
-  if (veto.vetoed) return { decision: "NO_TRADE", side: null, evidenceSufficient: true, expectancy, vetoReasons: veto.reasons };
+  if (veto.vetoed) return { decision: "NO_TRADE", side: null, evidenceSufficient: evidence.sufficient, expectancy, vetoReasons: veto.reasons };
+  if (!evidence.sufficient) {
+    return { decision: "INSUFFICIENT_EVIDENCE", side: null, evidenceSufficient: false, expectancy, vetoReasons: [evidence.reason] };
+  }
+  if (expectancy === null) {
+    return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["expectancy_missing"] };
+  }
+  if (expectancy.expectedValue < input.minExpectedValueR) {
+    return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["expectancy_below_threshold"] };
+  }
   if (input.side === null) return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["no_directional_setup"] };
   return { decision: input.side, side: input.side, evidenceSufficient: true, expectancy, vetoReasons: [] };
 }
-
-function sideOrNull(side: Side | null): Side | null { return side; }
