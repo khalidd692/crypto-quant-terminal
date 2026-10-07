@@ -21,6 +21,6 @@ const broken = [...base];
 const invalid = validateMarketDataSeries(broken, 60 * 60 * 1000);
 if (invalid.valid || invalid.invalidRows !== 1) throw new Error("Invalid OHLC fixture accepted");
 
-const duplicate = [...base, base[4]];
+const duplicate = [...base, base[4]!];
 const duplicated = validateMarketDataSeries(duplicate, 60 * 60 * 1000);
 if (duplicated.valid || duplicated.duplicateEventTimes !== 1) throw new Error("Duplicate fixture accepted");
