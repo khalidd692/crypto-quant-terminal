@@ -1,5 +1,6 @@
 import { createExperimentArtifact } from "../src/research/experiment.js";
 import type { ResearchReport } from "../src/research/report.js";
+import { BASELINE_SETUP_ID } from "../src/setup/basic.js";
 
 const report: ResearchReport = {
   totalObservations: 4,
@@ -20,7 +21,7 @@ const spec = {
   codeVersion: "git:test",
   methodologyVersion: "research.v1",
   featureDefinitionVersions: ["trend.ema_ratio@1"],
-  setupVersion: "baseline.trend.v1",
+  setupVersion: BASELINE_SETUP_ID,
   outcomeProtocolVersion: "outcome.v1",
   trainingWindow: { start: "2025-01-01T00:00:00.000Z", end: "2025-06-01T00:00:00.000Z" },
   configuration: { horizonCandles: 8, targetR: 1.5, invalidationR: 1 },
