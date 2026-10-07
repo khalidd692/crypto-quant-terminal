@@ -229,6 +229,7 @@ export function buildRandomEntryStateDiagnostics(
     for (let index = 0; index < counterfactuals.length; index += 1) {
       const cf = counterfactuals[index]!;
       const selected = randomUnit(drawSeed + index * 0x9e3779b9) < 0.5 ? cf.long : cf.short;
+      if (selected === null) continue;
       sums[selected.state].count += 1;
       sums[selected.state].gross += selected.grossR;
       sums[selected.state].net += selected.netR;
