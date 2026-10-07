@@ -17,18 +17,21 @@ function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
   return result;
 }
 
-async function downloadCsv(url: string, fetchImpl: typeof fetch): Promise<{ readonly url: string; readonly csv: string }> {
+async function downloadCsv(url: string, fetchImpl: typeof fetch): Promise<string> {
   const response = await fetchImpl(url);
   if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
   const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
-  const entries = Object.entries(archive);
-  const csv = entries.find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
+  const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
   if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
-  return { url, csv: strFromU8(csv) };
+  return strFromU8(csv);
 }
 
-function fields(line: string): string[] {
-  return line.split(",").map((value) => value.trim());
+function rows(csv: string): string[][] {
+  return csv
+    .split(String.fromCharCode(10))
+    .map((line) => line.replace(String.fromCharCode(13), "").trim())
+    .filter(Boolean)
+    .map((line) => line.split(",").map((value) => value.trim()));
 }
 
 function number(value: string | undefined, name: string): number {
@@ -53,13 +56,9 @@ export class BinanceVisionHistoricalClient {
     const points = new Map<string, MarketDataPoint>();
     for (const month of monthKeys(startTimeMs, endTimeMs)) {
       const url = BASE + "/klines/" + symbol + "/" + interval + "/" + symbol + "-" + interval + "-" + month + ".zip";
-      const { csv } = await downloadCsv(url, this.fetchImpl);
-      const lines = csv.split(/?
-/).filter(Boolean);
-      for (const line of lines) {
-        const row = fields(line);
-        if (row[0] === "open_time") continue;
-        if (row.length < 7) continue;
+      const csv = await downloadCsv(url, this.fetchImpl);
+      for (const row of rows(csv)) {
+        if (row[0] === "open_time" || row.length < 7) continue;
         const openTime = number(row[0], "openTime");
         const closeTime = number(row[6], "closeTime");
         if (closeTime < startTimeMs || closeTime >= endTimeMs) continue;
@@ -89,13 +88,9 @@ export class BinanceVisionHistoricalClient {
     const rates = new Map<string, BinanceFundingRate>();
     for (const month of monthKeys(startTimeMs, endTimeMs)) {
       const url = BASE + "/fundingRate/" + symbol + "/" + symbol + "-fundingRate-" + month + ".zip";
-      const { csv } = await downloadCsv(url, this.fetchImpl);
-      const lines = csv.split(/?
-/).filter(Boolean);
-      for (const line of lines) {
-        const row = fields(line);
-        if (row[0] === "calc_time" || row[0] === "fundingTime") continue;
-        if (row.length < 3) continue;
+      const csv = await downloadCsv(url, this.fetchImpl);
+      for (const row of rows(csv)) {
+        if (row[0] === "calc_time" || row[0] === "fundingTime" || row.length < 3) continue;
         const fundingTime = number(row[0], "fundingTime");
         if (fundingTime < startTimeMs || fundingTime >= endTimeMs) continue;
         rates.set(String(fundingTime), {
