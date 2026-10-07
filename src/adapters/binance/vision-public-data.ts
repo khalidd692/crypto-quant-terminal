@@ -18,12 +18,18 @@ function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
 }
 
 async function downloadCsv(url: string, fetchImpl: typeof fetch): Promise<string> {
-  const response = await fetchImpl(url);
-  if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
-  const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
-  const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
-  if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
-  return strFromU8(csv);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetchImpl(url, { signal: controller.signal });
+    if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
+    const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
+    const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
+    if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
+    return strFromU8(csv);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function rows(csv: string): string[][] {
