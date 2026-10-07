@@ -128,7 +128,7 @@ try {
     dataset.points,
     funding,
     PROTOCOL.train.end,
-    { feeRate: PROTOCOL.feeRate, slippageRate: PROTOCOL.feeRate === 0 ? 0 : PROTOCOL.slippageRate },
+    { feeRate: PROTOCOL.feeRate, slippageRate: PROTOCOL.slippageRate },
   );
   const validationStress = buildResearchReport(
     costAdjustedObservations(validationObservations, 1.5),
