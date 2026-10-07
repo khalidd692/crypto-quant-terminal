@@ -144,7 +144,7 @@ export class BinancePublicClient {
         if (!Array.isArray(row) || row.length < 7) throw new Error("Invalid historical kline row");
         const openTime = finiteNumber(row[0], "openTime");
         const closeTime = finiteNumber(row[6], "closeTime");
-        if (closeTime > receivedAt || closeTime < startTimeMs || openTime > endTimeMs) continue;
+        if (closeTime > receivedAt || closeTime < startTimeMs || openTime >= endTimeMs) continue;
         const point: MarketDataPoint = {
           instrumentId: symbol,
           eventTime: iso(closeTime),
@@ -218,7 +218,7 @@ export class BinancePublicClient {
         if (typeof row !== "object" || row === null) throw new Error("Invalid funding row");
         const item = row as Record<string, unknown>;
         const fundingTime = finiteNumber(item.fundingTime, "fundingTime");
-        if (fundingTime < startTimeMs || fundingTime > endTimeMs) continue;
+        if (fundingTime < startTimeMs || fundingTime >= endTimeMs) continue;
         results.set(String(fundingTime), {
           symbol,
           fundingRate: finiteNumber(item.fundingRate, "fundingRate"),
