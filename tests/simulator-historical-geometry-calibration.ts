@@ -99,7 +99,7 @@ const sums: Record<State, number> = {
 };
 
 for (let observation = 0; observation < OBSERVATIONS; observation += 1) {
-  const entryIndex = observation * HORIZON;
+  const entryIndex = observation * (HORIZON + 1);
   const entry = points[entryIndex]!;
   const future = points.slice(entryIndex + 1, entryIndex + 1 + HORIZON);
   const targetPrice = entry.close + TARGET_R;
