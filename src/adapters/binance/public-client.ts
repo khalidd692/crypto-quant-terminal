@@ -5,6 +5,7 @@ export type BinanceMarket = "spot" | "usdm-futures";
 export interface BinanceClientOptions {
   readonly market: BinanceMarket;
   readonly timeoutMs?: number;
+  readonly availabilityLagMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
 
@@ -60,11 +61,13 @@ export class BinancePublicClient {
   private readonly timeoutMs: number;
   private readonly fetchImpl: typeof fetch;
   private readonly baseUrl: string;
+  private readonly availabilityLagMs: number;
 
   public constructor(options: BinanceClientOptions) {
     this.timeoutMs = options.timeoutMs ?? 10_000;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.baseUrl = endpoint(options.market);
+    this.availabilityLagMs = options.availabilityLagMs ?? 0;
   }
 
   public async klines(symbol: string, interval: string, limit = 200): Promise<MarketDataPoint[]> {
@@ -76,15 +79,17 @@ export class BinancePublicClient {
     url.searchParams.set("interval", interval);
     url.searchParams.set("limit", String(limit));
 
+    const receivedAt = Date.now();
     const rows = await requestJson<unknown[]>(url.toString(), this.timeoutMs, this.fetchImpl);
-    return rows.map((row, index) => {
+    return rows.filter((row) => Array.isArray(row) && Number(row[6]) <= receivedAt).map((row, index) => {
       if (!Array.isArray(row) || row.length < 7) throw new Error(`Invalid kline row at index ${index}`);
       const openTime = finiteNumber(row[0], "openTime");
       const closeTime = finiteNumber(row[6], "closeTime");
+      const availableTime = closeTime + this.availabilityLagMs;
       return {
         instrumentId: symbol,
         eventTime: iso(closeTime),
-        availableTime: iso(closeTime),
+        availableTime: iso(availableTime),
         open: finiteNumber(row[1], "open"),
         high: finiteNumber(row[2], "high"),
         low: finiteNumber(row[3], "low"),
