@@ -162,7 +162,7 @@ export function runResearchLedger(
         mfeR: simulated.mfeR,
         maeR: simulated.maeR,
         realizedR,
-        returnFraction: simulated.returnFraction - fundingReturnFraction,
+        returnFraction: simulated.returnFraction,
         exitPrice: simulated.exitPrice,
         exitEventTime: simulated.exitEventTime,
         feesReturn: simulated.feeReturnFraction,
