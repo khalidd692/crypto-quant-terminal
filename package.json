@@ -13,5 +13,8 @@
   "devDependencies": {
     "typescript": "^5.9.0",
     "@types/node": "^22.0.0"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
   }
 }
