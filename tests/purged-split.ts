@@ -48,7 +48,7 @@ const split = splitObservations(observations, {
 
 if (split.test.length !== 1) throw new Error("Unexpected test count");
 if (split.purged.length !== 1) throw new Error("Overlapping training observation was not purged");
-if (split.train.length !== 1) throw new Error("Non-overlapping training observation missing");
+if (split.train.length !== 2) throw new Error("Non-overlapping training observations missing");
 if (split.embargoed.length !== 1) throw new Error("Embargoed observation missing");
 
 const lateAvailable = make(4, 4);
