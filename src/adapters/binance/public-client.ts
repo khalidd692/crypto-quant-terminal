@@ -7,6 +7,7 @@ export interface BinanceClientOptions {
   readonly timeoutMs?: number;
   readonly availabilityLagMs?: number;
   readonly fetchImpl?: typeof fetch;
+  readonly baseUrlOverride?: string;
 }
 
 export interface BinanceBookTicker {
