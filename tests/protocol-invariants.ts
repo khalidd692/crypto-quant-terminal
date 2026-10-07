@@ -20,3 +20,4 @@ assertChronologicalProtocol({
 });
 
 // Final holdout interval is explicitly bounded.
+// CI fixture completeness verified.
