@@ -1,6 +1,6 @@
 import type { MarketDataPoint } from "../domain/types.js";
 import { computeCoreFeatures } from "../features/feature-engine.js";
-import { assessBasicTrendSetup } from "../setup/basic.js";
+import { assessBasicTrendSetup, BASELINE_SETUP_ID } from "../setup/basic.js";
 import { classifyBasicRegime } from "../regime/classifier.js";
 import { simulateOutcome } from "../simulation/outcomes.js";
 import { createResearchObservation, type ResearchObservation } from "./observation-ledger.js";
@@ -89,7 +89,7 @@ export function runResearchLedger(
         featureVersionPolicy: config.featureVersionPolicy,
         dataAvailabilityRule: "features use points.slice(0,T0+1); PIT eligibility requires availableTime <= decisionTime",
         featureSnapshot: features,
-        setupId: "baseline.trend.v1",
+        setupId: BASELINE_SETUP_ID,
         side: setup.side,
         regimeLabel: regime.label,
         entryReferencePrice: entry.close,
@@ -145,7 +145,7 @@ export function runResearchLedger(
       featureVersionPolicy: config.featureVersionPolicy,
       dataAvailabilityRule: "features use points.slice(0,T0+1); PIT eligibility requires availableTime <= decisionTime",
       featureSnapshot: features,
-      setupId: "baseline.trend.v1",
+      setupId: BASELINE_SETUP_ID,
       side: setup.side,
       regimeLabel: regime.label,
       entryReferencePrice: entry.close,
