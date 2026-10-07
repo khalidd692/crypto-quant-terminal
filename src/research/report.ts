@@ -101,13 +101,14 @@ export function buildResearchReport(
   const invalidations = clean.filter((observation) => observation.outcome!.invalidationHit).length;
   const targetAdjusted = estimateDependenceAdjustedBinomial(clean, (observation) => observation.outcome!.targetHit);
   const realizedR = clean.map((observation) => observation.outcome!.realizedR);
+  const bootstrapOptions = {
+    blockSize: options.blockSize,
+    resamples: options.bootstrapResamples,
+    ...(options.confidenceLevel === undefined ? {} : { confidenceLevel: options.confidenceLevel }),
+    ...(options.bootstrapSeed === undefined ? {} : { seed: options.bootstrapSeed }),
+  };
   const realizedRBootstrap = realizedR.length >= options.blockSize
-    ? movingBlockBootstrapMean(realizedR, {
-        blockSize: options.blockSize,
-        resamples: options.bootstrapResamples,
-        confidenceLevel: options.confidenceLevel,
-        seed: options.bootstrapSeed,
-      })
+    ? movingBlockBootstrapMean(realizedR, bootstrapOptions)
     : null;
 
   return {
