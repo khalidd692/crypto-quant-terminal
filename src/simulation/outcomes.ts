@@ -11,11 +11,26 @@ export interface OutcomeScenario {
 
 export interface SimulatedOutcome {
   readonly returnFraction: number;
+  /** MFE is non-negative R. */
   readonly mfeR: number;
+  /** MAE is non-positive R. */
   readonly maeR: number;
   readonly targetHit: boolean;
   readonly invalidationHit: boolean;
   readonly intrabarAmbiguous: boolean;
+  readonly exitPrice: number;
+}
+
+function applyEntrySlippage(price: number, side: Side, rate: number): number {
+  return side === "LONG" ? price * (1 + rate) : price * (1 - rate);
+}
+
+function applyExitSlippage(price: number, side: Side, rate: number): number {
+  return side === "LONG" ? price * (1 - rate) : price * (1 + rate);
+}
+
+function directionalReturn(entry: number, exit: number, side: Side): number {
+  return side === "LONG" ? (exit - entry) / entry : (entry - exit) / entry;
 }
 
 export function simulateOutcome(
@@ -23,15 +38,17 @@ export function simulateOutcome(
   future: readonly MarketDataPoint[],
   scenario: OutcomeScenario,
 ): SimulatedOutcome {
-  const entryPrice = scenario.entryPrice * (1 + scenario.slippageRate * (scenario.side === "LONG" ? 1 : -1));
+  const entryPrice = applyEntrySlippage(scenario.entryPrice, scenario.side, scenario.slippageRate);
   const riskPerUnit = Math.abs(entryPrice - scenario.invalidationPrice);
   if (riskPerUnit === 0) throw new Error("Invalidation distance cannot be zero");
+  if (scenario.feeRate < 0 || scenario.slippageRate < 0) throw new Error("Costs cannot be negative");
 
-  let bestR = -Infinity;
-  let worstR = Infinity;
+  let bestR = 0;
+  let worstR = 0;
   let targetHit = false;
   let invalidationHit = false;
   let intrabarAmbiguous = false;
+  let exitReference = future.at(-1)?.close ?? entry.close;
 
   for (const candle of future) {
     const favorable = scenario.side === "LONG"
@@ -53,23 +70,32 @@ export function simulateOutcome(
 
     if (targetTouched && invalidationTouched) {
       intrabarAmbiguous = true;
+      exitReference = candle.close;
       break;
     }
-    if (targetTouched) { targetHit = true; break; }
-    if (invalidationTouched) { invalidationHit = true; break; }
+    if (targetTouched) {
+      targetHit = true;
+      exitReference = scenario.targetPrice;
+      break;
+    }
+    if (invalidationTouched) {
+      invalidationHit = true;
+      exitReference = scenario.invalidationPrice;
+      break;
+    }
   }
 
-  const last = future.at(-1)?.close ?? entry.close;
-  const grossReturn = scenario.side === "LONG"
-    ? (last - entryPrice) / entryPrice
-    : (entryPrice - last) / entryPrice;
-  const roundTripCost = 2 * scenario.feeRate;
+  const exitPrice = applyExitSlippage(exitReference, scenario.side, scenario.slippageRate);
+  const grossReturn = directionalReturn(entryPrice, exitPrice, scenario.side);
+  const returnFraction = grossReturn - 2 * scenario.feeRate;
+
   return {
-    returnFraction: grossReturn - roundTripCost,
-    mfeR: Number.isFinite(bestR) ? bestR : 0,
-    maeR: Number.isFinite(worstR) ? worstR : 0,
+    returnFraction,
+    mfeR: Math.max(0, bestR),
+    maeR: Math.min(0, worstR),
     targetHit,
     invalidationHit,
     intrabarAmbiguous,
+    exitPrice,
   };
 }
