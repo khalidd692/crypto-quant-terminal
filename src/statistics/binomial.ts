@@ -8,7 +8,7 @@ export interface BinomialEstimate {
 
 export function estimateBinomial(successes: number, observations: number, z = 1.959963984540054): BinomialEstimate {
   if (!Number.isInteger(successes) || !Number.isInteger(observations) || observations <= 0) {
-    throw new Error("successes and observations must be positive integers");
+    throw new Error("successes and observations must be integers and observations must be positive");
   }
   if (successes < 0 || successes > observations) throw new Error("successes must be within observations");
   if (!Number.isFinite(z) || z <= 0) throw new Error("z must be positive and finite");
@@ -37,5 +37,9 @@ export function expectedValue(probabilities: readonly number[], payoffs: readonl
   }
   const total = probabilities.reduce((sum, p) => sum + p, 0);
   if (Math.abs(total - 1) > 1e-9) throw new Error("Expected value requires a declared probability space summing to 1");
-  return probabilities.reduce((sum, probability, index) => sum + probability * payoffs[index], 0);
+  return probabilities.reduce((sum, probability, index) => {
+    const payoff = payoffs[index];
+    if (payoff === undefined) throw new Error("Payoff is missing");
+    return sum + probability * payoff;
+  }, 0);
 }
