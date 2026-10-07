@@ -40,20 +40,24 @@ export function splitObservations(
 
   for (const observation of observations) {
     const event = time(observation.eventTime);
+    const decisionTime = time(observation.availableTime);
     const horizonEnd = observation.horizonEndTime === null ? event : time(observation.horizonEndTime);
 
-    if (event >= testStart && event < testEnd) {
+    // The walk-forward windows are decision-time windows. A market event can
+    // only enter train/test after its information snapshot is available.
+    if (decisionTime >= testStart && decisionTime < testEnd) {
       test.push(observation);
       continue;
     }
 
-    if (event < trainEnd) {
+    if (decisionTime < trainEnd) {
+      // A label crossing into the OOS interval is not eligible training data.
       if (horizonEnd >= testStart) purged.push(observation);
       else train.push(observation);
       continue;
     }
 
-    if (event >= testEnd && event < embargoEnd) embargoed.push(observation);
+    if (decisionTime >= testEnd && decisionTime < embargoEnd) embargoed.push(observation);
   }
 
   return { train, test, purged, embargoed };
