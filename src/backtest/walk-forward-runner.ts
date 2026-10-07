@@ -113,10 +113,6 @@ export function runWalkForwardOOS(
 
     const predictions: OOSPrediction[] = [];
     for (const observation of split.test) {
-      if (timestamp(observation.availableTime) > timestamp(observation.eventTime)) {
-        // This is expected for historical bars; the test observation itself is
-        // only a valid decision point when its snapshot was available by T0.
-      }
       const estimated = estimator.estimate(train, observation);
       if (estimated === null) continue;
       const probability = finiteProbability(estimated);
