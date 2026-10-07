@@ -70,7 +70,7 @@ export function buildPhase3PartitionReport(
   const models = (["LONG", "SHORT"] as const)
     .map((side) => estimateConditionalProbability(observations, { setupId: BASELINE_SETUP_ID, side }, trainEnd))
     .filter((value): value is EmpiricalProbabilityEstimate => value !== null);
-  const baselines = [
+  const baselines: BaselineSummary[] = [
     ...buildBaselines(observations, allPoints, fundingRates, costs, 20261007, 1000),
     buildBuyAndHoldBaseline(allPoints.filter((point) => {
       const t = Date.parse(point.eventTime);
