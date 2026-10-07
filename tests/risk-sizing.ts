@@ -43,7 +43,7 @@ const blocked = assessPositionRisk({
 });
 
 assert.equal(blocked.allowed, false);
-assert.equal(blocked.maxLossQuote, 200);
+assert.equal(blocked.maxLossQuote, 100);
 assert.equal(blocked.portfolioRiskAfter, 1_050);
 assert.equal(blocked.reason, "portfolio_risk_limit");
 
