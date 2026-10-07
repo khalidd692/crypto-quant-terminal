@@ -2,7 +2,7 @@ import { unzipSync, strFromU8 } from "fflate";
 import type { MarketDataPoint } from "../../domain/types.js";
 import type { BinanceFundingRate } from "./public-client.js";
 
-const BASE = "https://data.binance.vision/data/futures/um/monthly";
+const BASE = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision/data/futures/um/monthly";
 
 function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
   const start = new Date(startTimeMs);
