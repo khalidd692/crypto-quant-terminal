@@ -9,5 +9,6 @@ const windows = buildWalkForwardWindows({
   purgeDurationMs: 7 * 24 * 3600 * 1000,
   embargoDurationMs: 2 * 24 * 3600 * 1000,
 });
-if (windows.length === 0) throw new Error("Walk-forward produced no windows");
-if (Date.parse(windows[0].trainEnd) >= Date.parse(windows[0].testStart)) throw new Error("Purge/embargo separation invalid");
+const first = windows[0];
+if (!first) throw new Error("Walk-forward produced no windows");
+if (Date.parse(first.trainEnd) >= Date.parse(first.testStart)) throw new Error("Purge/embargo separation invalid");
