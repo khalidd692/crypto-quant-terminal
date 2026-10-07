@@ -2,6 +2,7 @@ import type { ResearchObservation } from "./observation-ledger.js";
 import { estimateBinomial } from "../statistics/binomial.js";
 import { estimateDependenceAdjustedBinomial } from "../statistics/dependence-adjustment.js";
 import { movingBlockBootstrapMean, type MeanBootstrapInterval } from "../statistics/bootstrap.js";
+import { buildOutcomeDiagnostics, type OutcomeDiagnostics } from "./outcome-diagnostics.js";
 
 export interface ReturnSummary {
   readonly count: number;
@@ -41,6 +42,7 @@ export interface ResearchReport {
   readonly realizedRBootstrap: MeanBootstrapInterval | null;
   readonly drawdown: DrawdownSummary;
   readonly annual: readonly AnnualSummary[];
+  readonly outcomeDiagnostics: OutcomeDiagnostics;
 }
 
 function summary(values: readonly number[]): ReturnSummary {
@@ -119,6 +121,7 @@ export function buildResearchReport(
 
   return {
     totalObservations: observations.length,
+    outcomeDiagnostics: buildOutcomeDiagnostics(observations),
     cleanEligibleObservations: clean.length,
     ambiguousObservations: observations.filter((observation) => observation.outcome?.intrabarAmbiguous).length,
     long: summary(longReturns),
