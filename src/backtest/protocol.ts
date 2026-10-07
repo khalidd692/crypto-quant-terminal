@@ -32,7 +32,11 @@ export function assertChronologicalProtocol(protocol: BacktestProtocol): void {
     protocol.finalHoldoutStart,
   ];
   for (let i = 1; i < points.length; i += 1) {
-    if (points[i] <= points[i - 1]) throw new Error("Backtest periods must be strictly chronological");
+    const previous = points[i - 1];
+    const current = points[i];
+    if (previous === undefined || current === undefined || current <= previous) {
+      throw new Error("Backtest periods must be strictly chronological");
+    }
   }
   if (protocol.purgeEmbargo.purgeDurationMs < 0 || protocol.purgeEmbargo.embargoDurationMs < 0) {
     throw new Error("Purge and embargo durations cannot be negative");
