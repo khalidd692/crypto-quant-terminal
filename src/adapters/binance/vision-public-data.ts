@@ -2,7 +2,7 @@ import { unzipSync, strFromU8 } from "fflate";
 import type { MarketDataPoint } from "../../domain/types.js";
 import type { BinanceFundingRate } from "./public-client.js";
 
-const BASE = "https://data.binance.vision/data/futures/um/monthly";
+const BASE = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision/data/futures/um/monthly";
 
 function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
   const start = new Date(startTimeMs);
@@ -18,12 +18,18 @@ function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
 }
 
 async function downloadCsv(url: string, fetchImpl: typeof fetch): Promise<string> {
-  const response = await fetchImpl(url);
-  if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
-  const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
-  const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
-  if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
-  return strFromU8(csv);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetchImpl(url, { signal: controller.signal });
+    if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
+    const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
+    const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
+    if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
+    return strFromU8(csv);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function rows(csv: string): string[][] {
