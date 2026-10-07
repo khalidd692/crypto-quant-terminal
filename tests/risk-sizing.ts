@@ -38,13 +38,13 @@ const blocked = assessPositionRisk({
   entryPrice: 100,
   invalidationPrice: 90,
   leverage: 2,
-  existingPortfolioRiskQuote: 900,
+  existingPortfolioRiskQuote: 950,
   portfolioRiskLimitQuote: 1_000,
 });
 
 assert.equal(blocked.allowed, false);
 assert.equal(blocked.maxLossQuote, 200);
-assert.equal(blocked.portfolioRiskAfter, 1_100);
+assert.equal(blocked.portfolioRiskAfter, 1_050);
 assert.equal(blocked.reason, "portfolio_risk_limit");
 
 console.log("risk-sizing: ok");
