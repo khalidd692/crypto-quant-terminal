@@ -15,6 +15,7 @@ const make = (hour: number, horizonHour: number): ResearchObservation => {
     featureSnapshot: [],
     setupId: null,
     side: null,
+    regimeLabel: null,
     entryReferencePrice: 100,
     horizonCandles: 1,
     horizonEndTime: horizon,
