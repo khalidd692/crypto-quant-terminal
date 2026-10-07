@@ -48,3 +48,16 @@ if (split.test.length !== 1) throw new Error("Unexpected test count");
 if (split.purged.length !== 1) throw new Error("Overlapping training observation was not purged");
 if (split.train.length !== 1) throw new Error("Non-overlapping training observation missing");
 if (split.embargoed.length !== 1) throw new Error("Embargoed observation missing");
+
+const lateAvailable = make(4, 4);
+const late = { ...lateAvailable, availableTime: new Date(Date.UTC(2026, 0, 1, 5, 30)).toISOString() };
+const availabilitySplit = splitObservations([late], {
+  trainEnd: new Date(Date.UTC(2026, 0, 1, 5)).toISOString(),
+  testStart: new Date(Date.UTC(2026, 0, 1, 6)).toISOString(),
+  testEnd: new Date(Date.UTC(2026, 0, 1, 7)).toISOString(),
+  embargoDurationMs: 0,
+  rationale: "availability must gate decision-time membership",
+});
+if (availabilitySplit.train.length !== 0 || availabilitySplit.test.length !== 0) {
+  throw new Error("Unavailable observation incorrectly entered train/test");
+}
