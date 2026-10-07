@@ -22,8 +22,8 @@ function observation(
   return {
     observationId: `obs-${label}`,
     instrumentId: "TEST",
-    eventTime: "2026-01-01T00:00:00.000Z",
-    availableTime: "2026-01-01T00:00:00.000Z",
+    eventTime: "2026-01-01T00:00:00.000Z" as ISO8601,
+    availableTime: "2026-01-01T00:00:00.000Z" as ISO8601,
     datasetVersion: "fixture",
     featureDefinitionVersions: ["test@1"],
     featureVersionPolicy: "test",
