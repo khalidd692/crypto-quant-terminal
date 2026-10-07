@@ -66,8 +66,8 @@ if (estimate.estimate.probability !== 0.5) throw new Error("Empirical probabilit
 if (estimate.excludedTimeExits !== 1) throw new Error("Time exit exclusion mismatch");
 
 import { selectNonOverlappingObservations } from "../src/statistics/dependence-adjustment.js";
-const overlapA = make(10, true);
-const overlapB = make(11, false);
-const overlapC = make(12, true);
+const overlapA = make(10, true, false, 12);
+const overlapB = make(11, false, false, 13);
+const overlapC = make(12, true, false, 14);
 const nonOverlap = selectNonOverlappingObservations([overlapA, overlapB, overlapC]);
 if (nonOverlap.sampleSize !== 2) throw new Error("Non-overlapping selection mismatch");
