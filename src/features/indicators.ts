@@ -33,7 +33,9 @@ export function averageTrueRange(points: readonly MarketDataPoint[], period: num
   if (points.length < period || period <= 0) return null;
   const ranges: number[] = [];
   for (let i = 0; i < points.length; i += 1) {
-    ranges.push(trueRange(points[i], i === 0 ? null : points[i - 1].close));
+    const point = points[i];
+    if (!point) return null;
+    ranges.push(trueRange(point, i === 0 ? null : points[i - 1]?.close ?? null));
   }
   return simpleMovingAverage(ranges, period);
 }
@@ -43,7 +45,10 @@ export function rsi(closes: readonly number[], period = 14): number | null {
   let gains = 0;
   let losses = 0;
   for (let i = 1; i <= period; i += 1) {
-    const delta = closes[i] - closes[i - 1];
+    const current = closes[i];
+    const previous = closes[i - 1];
+    if (current === undefined || previous === undefined) return null;
+    const delta = current - previous;
     if (delta >= 0) gains += delta;
     else losses -= delta;
   }
@@ -51,7 +56,10 @@ export function rsi(closes: readonly number[], period = 14): number | null {
   let avgLoss = losses / period;
 
   for (let i = period + 1; i < closes.length; i += 1) {
-    const delta = closes[i] - closes[i - 1];
+    const current = closes[i];
+    const previous = closes[i - 1];
+    if (current === undefined || previous === undefined) return null;
+    const delta = current - previous;
     const gain = Math.max(delta, 0);
     const loss = Math.max(-delta, 0);
     avgGain = (avgGain * (period - 1) + gain) / period;
@@ -64,7 +72,11 @@ export function rsi(closes: readonly number[], period = 14): number | null {
 export function logReturns(closes: readonly number[]): number[] {
   const result: number[] = [];
   for (let i = 1; i < closes.length; i += 1) {
-    if (closes[i] > 0 && closes[i - 1] > 0) result.push(Math.log(closes[i] / closes[i - 1]));
+    const current = closes[i];
+    const previous = closes[i - 1];
+    if (current !== undefined && previous !== undefined && current > 0 && previous > 0) {
+      result.push(Math.log(current / previous));
+    }
   }
   return result;
 }
@@ -85,7 +97,8 @@ export function volumeZScore(points: readonly MarketDataPoint[], period: number)
   const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / (period - 1);
   const sd = Math.sqrt(Math.max(variance, 0));
   if (sd === 0) return 0;
-  return (values[values.length - 1] - mean) / sd;
+  const latest = values.at(-1);
+  return latest === undefined ? null : (latest - mean) / sd;
 }
 
 export function rangePosition(point: MarketDataPoint): number | null {
