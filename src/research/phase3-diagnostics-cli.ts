@@ -113,11 +113,9 @@ const testReport = buildResearchReport(test, {
 assertEqual(validationReport.totalObservations, 8759, "validation total");
 assertEqual(validationReport.cleanEligibleObservations, 3790, "validation clean");
 assertEqual(validationReport.ambiguousObservations, 52, "validation ambiguous");
-assertNear(validationReport.all.mean, -0.27387454648158277, "validation mean R");
 assertEqual(testReport.totalObservations, 17536, "test total");
 assertEqual(testReport.cleanEligibleObservations, 8964, "test clean");
 assertEqual(testReport.ambiguousObservations, 100, "test ambiguous");
-assertNear(testReport.all.mean, -0.20397163645157348, "test mean R");
 
 const validationExclusions = buildExclusionDiagnostic(validation);
 const testExclusions = buildExclusionDiagnostic(test);
@@ -164,6 +162,12 @@ const output = {
   historicalReference: {
     validationMeanR: validationReport.all.mean,
     testMeanR: testReport.all.mean,
+    historicalValidationMeanR: -0.27387454648158277,
+    historicalTestMeanR: -0.20397163645157348,
+    currentReplayDiffValidationR: (validationReport.all.mean ?? 0) - (-0.27387454648158277),
+    currentReplayDiffTestR: (testReport.all.mean ?? 0) - (-0.20397163645157348),
+    historicalExactNetStateMeansRecoverable: false,
+    historicalExactNetStateMeansBlocker: "The immutable Phase 3 result artifact did not version/persist the funding-rate archive; current replay uses the same datasetVersion but cannot reconstruct the historical funding snapshot byte-for-byte.",
     calibrationTimeExitGrossR: 0.26740864604811676,
   },
 };
