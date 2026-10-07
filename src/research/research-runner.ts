@@ -129,7 +129,7 @@ export function runResearchLedger(
     const funding = config.fundingRates
       ? assessFunding(setup.side, entry.eventTime, simulated.exitEventTime, config.fundingRates)
       : null;
-    const fundingReturnFraction = funding?.paymentReturnFraction ?? config.fundingReturnFractionPerHoldingPeriod ?? 0;
+    const fundingReturnFraction = funding?.paymentReturnFraction ?? -(config.fundingReturnFractionPerHoldingPeriod ?? 0);
     const realizedR = (simulated.returnFraction + fundingReturnFraction) / (risk / entry.close);
 
     output.push(createResearchObservation({
