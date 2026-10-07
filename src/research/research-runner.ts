@@ -119,7 +119,6 @@ export function runResearchLedger(
           : "TIME_EXIT";
 
     const risk = Math.abs(entry.close - invalidationPrice);
-    const grossR = directionalR(entry.close, simulated.exitPrice, setup.side, risk);
     const fundingReturnFraction = config.fundingReturnFractionPerHoldingPeriod ?? 0;
     const realizedR = (simulated.returnFraction - fundingReturnFraction) / (risk / entry.close);
 
@@ -159,10 +158,4 @@ export function runResearchLedger(
   }
 
   return output;
-}
-
-function directionalR(entry: number, exit: number, side: "LONG" | "SHORT", risk: number): number {
-  if (risk <= 0) throw new Error("risk must be positive");
-  const directional = side === "LONG" ? exit - entry : entry - exit;
-  return directional / risk;
 }
