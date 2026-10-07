@@ -101,6 +101,70 @@ export class BinancePublicClient {
     });
   }
 
+  public async historicalKlines(
+    symbol: string,
+    interval: string,
+    startTimeMs: number,
+    endTimeMs: number,
+    options: { readonly pageDelayMs?: number; readonly maxPages?: number } = {},
+  ): Promise<MarketDataPoint[]> {
+    if (!Number.isInteger(startTimeMs) || !Number.isInteger(endTimeMs) || startTimeMs >= endTimeMs) {
+      throw new Error("Invalid historical time range");
+    }
+    const pageDelayMs = options.pageDelayMs ?? 200;
+    const maxPages = options.maxPages ?? 1000;
+    if (pageDelayMs < 0 || maxPages <= 0) throw new Error("Invalid pagination configuration");
+
+    const results = new Map<string, MarketDataPoint>();
+    let cursor = startTimeMs;
+    let pages = 0;
+    while (cursor < endTimeMs) {
+      if (pages >= maxPages) throw new Error("Historical pagination exceeded maxPages");
+      const url = new URL(this.baseUrl + (this.baseUrl.includes("fapi") ? "/fapi/v1/klines" : "/api/v3/klines"));
+      url.searchParams.set("symbol", symbol);
+      url.searchParams.set("interval", interval);
+      url.searchParams.set("startTime", String(cursor));
+      url.searchParams.set("endTime", String(endTimeMs));
+      url.searchParams.set("limit", "1000");
+
+      const receivedAt = Date.now();
+      const rows = await requestJson<unknown[]>(url.toString(), this.timeoutMs, this.fetchImpl);
+      if (rows.length === 0) break;
+
+      for (const row of rows) {
+        if (!Array.isArray(row) || row.length < 7) throw new Error("Invalid historical kline row");
+        const openTime = finiteNumber(row[0], "openTime");
+        const closeTime = finiteNumber(row[6], "closeTime");
+        if (closeTime > receivedAt || closeTime < startTimeMs || openTime > endTimeMs) continue;
+        const point: MarketDataPoint = {
+          instrumentId: symbol,
+          eventTime: iso(closeTime),
+          availableTime: iso(closeTime + this.availabilityLagMs),
+          open: finiteNumber(row[1], "open"),
+          high: finiteNumber(row[2], "high"),
+          low: finiteNumber(row[3], "low"),
+          close: finiteNumber(row[4], "close"),
+          volume: finiteNumber(row[5], "volume"),
+          dataQuality: "complete",
+          sourceId: `binance:${this.baseUrl}:klines:${symbol}:${interval}:${openTime}`,
+        };
+        results.set(point.eventTime, point);
+      }
+
+      const last = rows.at(-1);
+      if (!Array.isArray(last)) break;
+      const lastOpen = finiteNumber(last[0], "lastOpenTime");
+      const nextCursor = lastOpen + 1;
+      if (nextCursor <= cursor) throw new Error("Historical pagination cursor did not advance");
+      cursor = nextCursor;
+      pages += 1;
+      if (rows.length < 1000) break;
+      if (pageDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, pageDelayMs));
+    }
+
+    return [...results.values()].sort((a, b) => a.eventTime.localeCompare(b.eventTime));
+  }
+
   public async bookTicker(symbol: string): Promise<BinanceBookTicker> {
     const path = this.baseUrl.includes("fapi") ? "/fapi/v1/ticker/bookTicker" : "/api/v3/ticker/bookTicker";
     const url = new URL(this.baseUrl + path);
