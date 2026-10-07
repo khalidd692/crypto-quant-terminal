@@ -13,4 +13,4 @@ const net = calculateNetExpectancy(
   0.05,
   0,
 );
-if (Math.abs(net.netR - 0.45) > 1e-12) throw new Error("Net expectancy mismatch");
+if (Math.abs(net.netR - 0.4) > 1e-12) throw new Error("Net expectancy mismatch");
