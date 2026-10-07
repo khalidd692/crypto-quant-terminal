@@ -49,6 +49,7 @@ export function estimateConditionalProbability(
 
   const usable = candidates.filter((observation) =>
     !observation.outcome!.intrabarAmbiguous &&
+    !observation.outcome!.timeExit &&
     (observation.outcome!.targetHit || observation.outcome!.invalidationHit),
   );
   if (usable.length === 0) return null;
