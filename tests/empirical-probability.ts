@@ -64,3 +64,10 @@ if (estimate.estimate.successes !== 2 || estimate.estimate.observations !== 4) t
 if (estimate.eligibleTrainingObservations !== 4) throw new Error("Horizon filtering mismatch");
 if (estimate.estimate.probability !== 0.5) throw new Error("Empirical probability mismatch");
 if (estimate.excludedTimeExits !== 1) throw new Error("Time exit exclusion mismatch");
+
+import { selectNonOverlappingObservations } from "../src/statistics/dependence-adjustment.js";
+const overlapA = make(10, true, false, 12);
+const overlapB = make(11, false, false, 13);
+const overlapC = make(12, true, false, 14);
+const nonOverlap = selectNonOverlappingObservations([overlapA, overlapB, overlapC]);
+if (nonOverlap.sampleSize !== 2) throw new Error("Non-overlapping selection mismatch");

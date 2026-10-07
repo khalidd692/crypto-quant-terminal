@@ -1,6 +1,7 @@
 import type { OutcomeLabel } from "../research/observation-ledger.js";
 import type { ResearchObservation } from "../research/observation-ledger.js";
 import { estimateBinomial, type BinomialEstimate } from "./binomial.js";
+import { selectNonOverlappingObservations } from "./dependence-adjustment.js";
 
 export type EmpiricalOutcomeEvent = OutcomeLabel;
 
@@ -8,7 +9,11 @@ export interface OutcomeProbability {
   readonly event: EmpiricalOutcomeEvent;
   readonly probability: number;
   readonly count: number;
+  /** Naive marginal Wilson interval over all eligible observations. */
   readonly uncertainty: BinomialEstimate;
+  /** Dependence-adjusted Wilson interval over the non-overlapping effective sample. */
+  readonly adjustedUncertainty: BinomialEstimate;
+  readonly effectiveSampleSize: number;
   /** Mean realized R conditional on this label. Null when the payoff is not identifiable. */
   readonly meanRealizedR: number | null;
   readonly payoffSampleSize: number;
@@ -26,6 +31,7 @@ export interface EmpiricalExpectancy {
 export interface MultiOutcomeProbabilityEstimate {
   readonly probabilities: readonly OutcomeProbability[];
   readonly sampleSize: number;
+  readonly effectiveSampleSize: number;
   readonly condition: {
     readonly setupId: string;
     readonly side: "LONG" | "SHORT";
@@ -66,9 +72,13 @@ export function estimateOutcomeDistribution(
   if (!candidates.length) return null;
 
   const labels: readonly OutcomeLabel[] = ["TARGET", "INVALIDATION", "TIME_EXIT", "AMBIGUOUS"];
+  const nonOverlapping = selectNonOverlappingObservations(candidates);
+  if (!nonOverlapping.sampleSize) return null;
   const probabilities = labels.map((event) => {
     const matching = candidates.filter((observation) => observation.outcome!.label === event);
+    const adjustedMatching = nonOverlapping.observations.filter((observation) => observation.outcome!.label === event);
     const count = matching.length;
+    const adjustedCount = adjustedMatching.length;
     const payoffObservations = event === "AMBIGUOUS"
       ? []
       : matching
@@ -82,12 +92,15 @@ export function estimateOutcomeDistribution(
       probability: count / candidates.length,
       count,
       uncertainty: estimateBinomial(count, candidates.length),
+      adjustedUncertainty: estimateBinomial(adjustedCount, nonOverlapping.sampleSize),
+      effectiveSampleSize: nonOverlapping.sampleSize,
       meanRealizedR,
       payoffSampleSize: payoffObservations.length,
     };
   });
 
   const grossR = probabilities.reduce((sum, item) => {
+    if (item.probability === 0) return sum;
     if (item.meanRealizedR === null) throw new Error(`Missing payoff estimate for ${item.event}`);
     return sum + item.probability * item.meanRealizedR;
   }, 0);
@@ -95,6 +108,7 @@ export function estimateOutcomeDistribution(
   return {
     probabilities,
     sampleSize: candidates.length,
+    effectiveSampleSize: nonOverlapping.sampleSize,
     condition,
     trainingEnd: new Date(cutoff).toISOString(),
     estimatorVersion: "empirical-multinomial.v1",

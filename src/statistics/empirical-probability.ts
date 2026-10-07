@@ -1,5 +1,6 @@
 import type { ResearchObservation } from "../research/observation-ledger.js";
 import { estimateBinomial, type BinomialEstimate } from "../statistics/binomial.js";
+import { selectNonOverlappingObservations } from "./dependence-adjustment.js";
 
 export interface ProbabilityCondition {
   readonly setupId: string;
@@ -11,6 +12,8 @@ export interface EmpiricalProbabilityEstimate {
   readonly event: "TARGET_BEFORE_INVALIDATION";
   readonly condition: ProbabilityCondition;
   readonly estimate: BinomialEstimate;
+  readonly adjustedEstimate: BinomialEstimate;
+  readonly effectiveSampleSize: number;
   readonly eligibleTrainingObservations: number;
   readonly excludedTimeExits: number;
   readonly excludedAmbiguous: number;
@@ -58,10 +61,15 @@ export function estimateConditionalProbability(
   if (usable.length === 0) return null;
 
   const successes = usable.filter((observation) => observation.outcome!.targetHit).length;
+  const nonOverlapping = selectNonOverlappingObservations(usable);
+  if (!nonOverlapping.sampleSize) return null;
+  const adjustedSuccesses = nonOverlapping.observations.filter((observation) => observation.outcome!.targetHit).length;
   return {
     event: "TARGET_BEFORE_INVALIDATION",
     condition,
     estimate: estimateBinomial(successes, usable.length),
+    adjustedEstimate: estimateBinomial(adjustedSuccesses, nonOverlapping.sampleSize),
+    effectiveSampleSize: nonOverlapping.sampleSize,
     eligibleTrainingObservations: usable.length,
     excludedTimeExits: candidates.filter((observation) => observation.outcome!.timeExit).length,
     excludedAmbiguous: candidates.filter((observation) => observation.outcome!.intrabarAmbiguous).length,

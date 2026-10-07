@@ -15,8 +15,8 @@ const observations = labels.map((label, index) => createResearchObservation({
   setupId: "setup.test",
   side: "LONG",
   entryReferencePrice: 100,
-  horizonCandles: 1,
-  horizonEndTime: new Date(Date.UTC(2025, 0, 1, index + 1)).toISOString(),
+  horizonCandles: 2,
+  horizonEndTime: new Date(Date.UTC(2025, 0, 1, index + 2)).toISOString(),
   targetR: 1,
   invalidationR: 1,
   outcome: {
@@ -52,6 +52,8 @@ assert.equal(estimate.probabilities.length, 4);
 assert.equal(estimate.probabilities.reduce((sum, item) => sum + item.probability, 0), 1);
 for (const item of estimate.probabilities) assert.equal(item.probability, 0.25);
 assert.equal(estimate.expectancy.expectedValueR, 0);
+assert.equal(estimate.effectiveSampleSize, 2);
+assert.equal(estimate.probabilities.find((item) => item.event === "TARGET")?.effectiveSampleSize, 2);
 assert.equal(estimate.probabilities.find((item) => item.event === "TARGET")?.meanRealizedR, 1);
 assert.equal(estimate.probabilities.find((item) => item.event === "INVALIDATION")?.meanRealizedR, -1);
 assert.equal(estimate.probabilities.find((item) => item.event === "AMBIGUOUS")?.meanRealizedR, 0);

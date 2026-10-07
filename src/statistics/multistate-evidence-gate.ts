@@ -46,13 +46,13 @@ export function assessMultistateEvidence(
   const ambiguous = estimate.probabilities.find((item) => item.event === "AMBIGUOUS");
   if (!target || !ambiguous) throw new Error("Multistate estimate is missing required outcome labels");
 
-  const targetIntervalWidth = target.uncertainty.interval.upper - target.uncertainty.interval.lower;
+  const targetIntervalWidth = target.adjustedUncertainty.interval.upper - target.adjustedUncertainty.interval.lower;
   if (targetIntervalWidth > policy.maxTargetIntervalWidth) {
     return {
       sufficient: false,
       reason: "TARGET_INTERVAL_TOO_WIDE",
       targetIntervalWidth,
-      targetLowerBound: target.uncertainty.interval.lower,
+      targetLowerBound: target.adjustedUncertainty.interval.lower,
       ambiguousProbability: ambiguous.probability,
     };
   }

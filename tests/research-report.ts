@@ -45,7 +45,7 @@ const observations = [
   base("SHORT", 0.5, true, false),
   base("SHORT", -0.5, false, true),
 ];
-const report = buildResearchReport(observations);
+const report = buildResearchReport(observations, { blockSize: 2, bootstrapResamples: 200, bootstrapSeed: 123 });
 if (report.cleanEligibleObservations !== 4) throw new Error("Clean count mismatch");
 if (report.long.count !== 2 || report.short.count !== 2) throw new Error("Side counts mismatch");
 if (report.all.mean !== 0) throw new Error("Mean R mismatch");
