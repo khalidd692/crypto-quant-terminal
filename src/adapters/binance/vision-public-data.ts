@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { unzipSync, strFromU8 } from "fflate";
 import type { MarketDataPoint } from "../../domain/types.js";
 import type { BinanceFundingRate } from "./public-client.js";
@@ -48,9 +50,11 @@ function number(value: string | undefined, name: string): number {
 
 export class BinanceVisionHistoricalClient {
   private readonly fetchImpl: typeof fetch;
+  private readonly fundingArchiveDir: string | undefined;
 
-  public constructor(fetchImpl: typeof fetch = fetch) {
+  public constructor(fetchImpl: typeof fetch = fetch, fundingArchiveDir?: string) {
     this.fetchImpl = fetchImpl;
+    this.fundingArchiveDir = fundingArchiveDir;
   }
 
   public async historicalKlines(
@@ -94,8 +98,16 @@ export class BinanceVisionHistoricalClient {
     const rates = new Map<string, BinanceFundingRate>();
     for (const month of monthKeys(startTimeMs, endTimeMs)) {
       const url = BASE + "/fundingRate/" + symbol + "/" + symbol + "-fundingRate-" + month + ".zip";
-      const csv = await downloadCsv(url, this.fetchImpl);
-      for (const row of rows(csv)) {
+      const archive = this.fundingArchiveDir
+        ? unzipSync(new Uint8Array(readFileSync(join(this.fundingArchiveDir, symbol + "-fundingRate-" + month + ".zip"))))
+        : await (async () => {
+            const response = await this.fetchImpl(url, { signal: AbortSignal.timeout(30_000) });
+            if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
+            return unzipSync(new Uint8Array(await response.arrayBuffer()));
+          })();
+      const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
+      if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
+      for (const row of rows(strFromU8(csv))) {
         if (row[0] === "calc_time" || row[0] === "fundingTime" || row.length < 3) continue;
         const fundingTime = number(row[0], "fundingTime");
         if (fundingTime < startTimeMs || fundingTime >= endTimeMs) continue;
