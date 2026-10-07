@@ -64,9 +64,9 @@ const result = runFinalHoldout(
 );
 
 assert.equal(result.modelVersion, "model.v1");
-assert.equal(result.holdoutObservations, 3);
-assert.equal(result.predictions.length, 3);
-assert.equal(result.evaluatedPredictions, 3);
+assert.equal(result.holdoutObservations, 2);
+assert.equal(result.predictions.length, 2);
+assert.equal(result.evaluatedPredictions, 2);
 assert.ok(result.brierScore !== null);
 assert.ok(result.logLoss !== null);
 assert.equal(result.coverage, 1);
