@@ -9,6 +9,18 @@ export interface OutcomeProbability {
   readonly probability: number;
   readonly count: number;
   readonly uncertainty: BinomialEstimate;
+  /** Mean realized R conditional on this label. Null when the payoff is not identifiable. */
+  readonly meanRealizedR: number | null;
+  readonly payoffSampleSize: number;
+}
+
+export interface EmpiricalExpectancy {
+  readonly expectedValueR: number;
+  readonly grossR: number;
+  readonly feesR: number;
+  readonly slippageR: number;
+  readonly fundingR: number;
+  readonly methodologyVersion: "empirical-multistate-expectancy.v1";
 }
 
 export interface MultiOutcomeProbabilityEstimate {
@@ -20,6 +32,7 @@ export interface MultiOutcomeProbabilityEstimate {
   };
   readonly trainingEnd: string;
   readonly estimatorVersion: "empirical-multinomial.v1";
+  readonly expectancy: EmpiricalExpectancy;
 }
 
 /**
@@ -54,14 +67,30 @@ export function estimateOutcomeDistribution(
 
   const labels: readonly OutcomeLabel[] = ["TARGET", "INVALIDATION", "TIME_EXIT", "AMBIGUOUS"];
   const probabilities = labels.map((event) => {
-    const count = candidates.filter((observation) => observation.outcome!.label === event).length;
+    const matching = candidates.filter((observation) => observation.outcome!.label === event);
+    const count = matching.length;
+    const payoffObservations = event === "AMBIGUOUS"
+      ? []
+      : matching
+        .map((observation) => observation.outcome!.realizedR)
+        .filter((value) => Number.isFinite(value));
+    const meanRealizedR = payoffObservations.length
+      ? payoffObservations.reduce((sum, value) => sum + value, 0) / payoffObservations.length
+      : event === "AMBIGUOUS" ? 0 : null;
     return {
       event,
       probability: count / candidates.length,
       count,
       uncertainty: estimateBinomial(count, candidates.length),
+      meanRealizedR,
+      payoffSampleSize: payoffObservations.length,
     };
   });
+
+  const grossR = probabilities.reduce((sum, item) => {
+    if (item.meanRealizedR === null) throw new Error(`Missing payoff estimate for ${item.event}`);
+    return sum + item.probability * item.meanRealizedR;
+  }, 0);
 
   return {
     probabilities,
@@ -69,5 +98,13 @@ export function estimateOutcomeDistribution(
     condition,
     trainingEnd: new Date(cutoff).toISOString(),
     estimatorVersion: "empirical-multinomial.v1",
+    expectancy: {
+      expectedValueR: grossR,
+      grossR,
+      feesR: 0,
+      slippageR: 0,
+      fundingR: 0,
+      methodologyVersion: "empirical-multistate-expectancy.v1",
+    },
   };
 }
