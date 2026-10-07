@@ -18,3 +18,5 @@ assertChronologicalProtocol({
   costsVersion: "costs-v1",
   universeVersion: "universe-v1",
 });
+
+// Final holdout interval is explicitly bounded.
