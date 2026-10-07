@@ -35,3 +35,5 @@ jobs:
       - run: node dist/tests/purged-split.js
       - run: node dist/tests/outcome-accounting.js
       - run: node dist/tests/funding-alignment.js
+      - run: node dist/tests/empirical-probability.js
+      - run: node dist/tests/oos-calibration.js
