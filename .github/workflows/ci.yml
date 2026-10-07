@@ -30,3 +30,5 @@ jobs:
       - run: node dist/tests/research-ledger.js
       - run: node dist/tests/market-data-integrity.js
       - run: node dist/tests/historical-dataset.js
+      - run: node dist/tests/statistics-bootstrap.js
+      - run: node dist/tests/research-report.js
