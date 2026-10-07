@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "terminal": "node --experimental-strip-types src/cli.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.0"
