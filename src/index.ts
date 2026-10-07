@@ -12,3 +12,9 @@ export * from "./simulation/outcomes.js";
 export * from "./portfolio/risk.js";
 export * from "./backtest/protocol.js";
 export * from "./experiments/registry.js";
+
+export * from "./adapters/binance/public-client.js";
+export * from "./regime/classifier.js";
+export * from "./setup/basic.js";
+export * from "./terminal/evaluate.js";
+export * from "./research/dataset.js";
