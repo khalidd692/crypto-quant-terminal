@@ -9,7 +9,8 @@
     "terminal": "node dist/src/cli.js",
     "research": "npm run build && node dist/src/research/cli.js",
     "server": "node dist/src/server.js",
-    "test": "npm run build && for file in dist/tests/*.js; do node \"$file\"; done"
+    "test": "npm run build && for file in dist/tests/*.js; do node \"$file\"; done",
+    "holdout": "npm run build && node dist/src/holdout/cli.js"
   },
   "devDependencies": {
     "typescript": "^5.9.0",
