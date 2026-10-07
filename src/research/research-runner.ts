@@ -1,7 +1,6 @@
 import type { MarketDataPoint } from "../domain/types.js";
 import { computeCoreFeatures } from "../features/feature-engine.js";
 import { assessBasicTrendSetup } from "../setup/basic.js";
-import { averageTrueRange } from "../features/indicators.js";
 import { simulateOutcome } from "../simulation/outcomes.js";
 import { createResearchObservation, type ResearchObservation } from "./observation-ledger.js";
 
@@ -12,7 +11,7 @@ export interface ResearchRunnerConfig {
   readonly invalidationR: number;
   readonly feeRate: number;
   readonly slippageRate: number;
-  readonly fundingRatePerHoldingPeriod?: number;
+  readonly fundingReturnFractionPerHoldingPeriod?: number;
   readonly dataVersion: string;
   readonly featureVersionPolicy: string;
 }
@@ -121,8 +120,8 @@ export function runResearchLedger(
 
     const risk = Math.abs(entry.close - invalidationPrice);
     const grossR = directionalR(entry.close, simulated.exitPrice, setup.side, risk);
-    const funding = config.fundingRatePerHoldingPeriod ?? 0;
-    const realizedR = grossR - (2 * config.feeRate * entry.close / risk) - (2 * config.slippageRate * entry.close / risk) - funding;
+    const fundingReturnFraction = config.fundingReturnFractionPerHoldingPeriod ?? 0;
+    const realizedR = (simulated.returnFraction - fundingReturnFraction) / (risk / entry.close);
 
     output.push(createResearchObservation({
       instrumentId: entry.instrumentId,
@@ -147,12 +146,12 @@ export function runResearchLedger(
         mfeR: simulated.mfeR,
         maeR: simulated.maeR,
         realizedR,
-        returnFraction: simulated.returnFraction - funding * risk / entry.close,
+        returnFraction: simulated.returnFraction - fundingReturnFraction,
         exitPrice: simulated.exitPrice,
         exitEventTime: future.at(-1)?.eventTime ?? entry.eventTime,
         feesReturn: 2 * config.feeRate,
         slippageReturn: 2 * config.slippageRate,
-        fundingReturn: funding * risk / entry.close,
+        fundingReturn: fundingReturnFraction,
       },
       eligible: true,
       exclusionReason: null,
