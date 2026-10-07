@@ -2,7 +2,8 @@ import type { Signal } from "../domain/types.js";
 import { computeCoreFeatures, requireFeatureHistory } from "../features/feature-engine.js";
 import { classifyBasicRegime } from "../regime/classifier.js";
 import { assessBasicTrendSetup } from "../setup/basic.js";
-import { decide } from "../decision/engine.js";
+import { evaluateDecisionPipeline } from "../decision/pipeline.js";
+
 import type { MarketDataPoint } from "../domain/types.js";
 
 export interface TerminalEvaluation {
@@ -31,14 +32,16 @@ export function evaluateReadOnly(
   });
   const regime = classifyBasicRegime({ instrumentId, eventTime: last.eventTime, featureSnapshots: features, version: "basic-regime-v1" });
   const setup = assessBasicTrendSetup(features);
-  const decision = decide({
-    directionalSide: setup.side,
-    evidenceSufficient: false,
-    expectancy: null,
-    minExpectedValue: 0,
-    liquidity: null,
-    risk: null,
-    vetoReasons: [],
+  const decision = evaluateDecisionPipeline({
+    side: setup.side,
+    outcomeDistribution: null,
+    evidencePolicy: { maxTargetIntervalWidth: 0.5, maxAmbiguousProbability: 0.25 },
+    minExpectedValueR: 0,
+    dataValid: true,
+    dataFresh: true,
+    liquidityPassed: true,
+    portfolioRiskAllowed: true,
+    invalidationDefined: true,
   });
 
   const signal: Signal = {
@@ -56,7 +59,7 @@ export function evaluateReadOnly(
     invalidation: null,
     risk: null,
     liquidity: null,
-    vetoReasons: decision.reasons,
+    vetoReasons: decision.vetoReasons,
     datasetVersion: dataVersion,
     modelVersion: null,
     decisionPolicyVersion: "decision-policy-v1",

@@ -38,8 +38,11 @@ export function estimateConditionalProbability(
   const candidates = observations.filter((observation) =>
     Number.isFinite(Date.parse(observation.eventTime)) &&
     Number.isFinite(Date.parse(observation.availableTime)) &&
+    observation.horizonEndTime !== null &&
+    Number.isFinite(Date.parse(observation.horizonEndTime)) &&
     Date.parse(observation.eventTime) < cutoff &&
     Date.parse(observation.availableTime) <= cutoff &&
+    Date.parse(observation.horizonEndTime) <= cutoff &&
     observation.eligible &&
     observation.outcome !== null &&
     observation.setupId === condition.setupId &&
