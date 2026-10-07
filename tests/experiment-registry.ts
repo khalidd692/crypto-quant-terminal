@@ -29,3 +29,6 @@ const spec = {
 const a = createExperimentArtifact(spec, report, "2026-01-01T00:00:00.000Z");
 const b = createExperimentArtifact(spec, report, "2026-01-01T00:00:00.000Z");
 if (a.artifactHash !== b.artifactHash) throw new Error("Experiment artifact is not deterministic");
+
+const c = createExperimentArtifact(spec, report, "2027-01-01T00:00:00.000Z");
+if (a.artifactHash !== c.artifactHash) throw new Error("Artifact hash must exclude creation metadata");
