@@ -27,6 +27,7 @@ export interface ResearchObservation {
   readonly availableTime: string;
   readonly datasetVersion: string;
   readonly featureDefinitionVersions: readonly string[];
+  readonly featureVersionPolicy: string;
   readonly featureSnapshot: readonly FeatureSnapshot[];
   readonly setupId: string | null;
   readonly side: Side | null;
@@ -36,6 +37,7 @@ export interface ResearchObservation {
   readonly targetR: number | null;
   readonly invalidationR: number | null;
   readonly outcome: ResearchOutcome | null;
+  readonly dataAvailabilityRule: string;
   readonly eligible: boolean;
   readonly exclusionReason: string | null;
 }
