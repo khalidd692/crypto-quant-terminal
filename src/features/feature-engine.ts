@@ -5,7 +5,6 @@ import {
   realizedVolatility,
   rangePosition,
   rsi,
-  simpleMovingAverage,
   volumeZScore,
 } from "./indicators.js";
 
@@ -45,13 +44,15 @@ export function computeCoreFeatures(context: FeatureContext): FeatureSnapshot[] 
   const atr = averageTrueRange(context.points, 14);
   const volatility = realizedVolatility(closes, 20);
   const volumeZ = volumeZScore(context.points, 20);
-  const range = rangePosition(context.points[context.points.length - 1]);
+  const current = context.points.at(-1);
+  const range = current ? rangePosition(current) : null;
   const rsi14 = rsi(closes, 14);
+  const latestClose = closes.at(-1);
 
   const values = new Map<string, number | null>([
     ["trend.ema_ratio", ema20 !== null && ema50 !== null && ema50 !== 0 ? ema20 / ema50 - 1 : null],
     ["momentum.rsi", rsi14],
-    ["volatility.atr_ratio", atr !== null && closes.at(-1) !== undefined ? atr / closes.at(-1) : null],
+    ["volatility.atr_ratio", atr !== null && latestClose !== undefined ? atr / latestClose : null],
     ["volatility.realized", volatility],
     ["volume.zscore", volumeZ],
     ["price.range_position", range],
