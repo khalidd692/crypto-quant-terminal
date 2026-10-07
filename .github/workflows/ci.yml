@@ -16,9 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - run: npm run typecheck
-      - run: npm run build
+      - run: npm ci
+      - run: npm test
       - run: node dist/tests/domain-validation.js
       - run: node dist/tests/core-invariants.js
       - run: node dist/tests/protocol-invariants.js
