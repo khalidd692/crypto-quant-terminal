@@ -7,6 +7,7 @@ export interface BinanceClientOptions {
   readonly timeoutMs?: number;
   readonly availabilityLagMs?: number;
   readonly fetchImpl?: typeof fetch;
+  readonly baseUrlOverride?: string;
 }
 
 export interface BinanceBookTicker {
@@ -74,7 +75,7 @@ export class BinancePublicClient {
   public constructor(options: BinanceClientOptions) {
     this.timeoutMs = options.timeoutMs ?? 10_000;
     this.fetchImpl = options.fetchImpl ?? fetch;
-    this.baseUrl = endpoint(options.market);
+    this.baseUrl = options.baseUrlOverride ?? endpoint(options.market);
     this.availabilityLagMs = options.availabilityLagMs ?? 0;
   }
 

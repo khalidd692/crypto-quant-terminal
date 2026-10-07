@@ -13,7 +13,7 @@ jobs:
   research:
     # One-shot gate for the Phase 3 Step 1 merge that was explicitly prepared
     # for the frozen ADR-0002 research run.
-    if: github.event.pull_request.merged == true && github.event.pull_request.number == 37
+    if: github.event.pull_request.merged == true && github.event.pull_request.number == 38
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
