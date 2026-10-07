@@ -50,18 +50,18 @@ function costAdjustedObservations(observations: readonly ResearchObservation[], 
   return observations.map((observation) => {
     if (!observation.outcome) return observation;
     const outcome = observation.outcome;
+    const atrRatio = observation.featureSnapshot.find((feature) => feature.featureId === "volatility.atr_ratio")?.value ?? null;
+    const riskFraction = atrRatio !== null && Number.isFinite(atrRatio)
+      ? atrRatio * (observation.invalidationR ?? 0)
+      : 0;
+    if (!(riskFraction > 0)) return observation;
     const extraFee = outcome.feesReturn * (multiplier - 1);
     const extraSlippage = outcome.slippageReturn * (multiplier - 1);
     return {
       ...observation,
       outcome: {
         ...outcome,
-        realizedR: outcome.realizedR + (extraFee + extraSlippage) /
-          ((observation.entryReferencePrice > 0
-            ? (observation.entryReferencePrice *
-              (observation.featureSnapshot.find((feature) => feature.featureId === "volatility.atr_ratio")?.value ?? 0) *
-              (observation.invalidationR ?? 0))
-            : 0) / observation.entryReferencePrice || 1),
+        realizedR: outcome.realizedR + (extraFee + extraSlippage) / riskFraction,
       },
     };
   });
