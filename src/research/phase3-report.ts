@@ -3,7 +3,7 @@ import { estimateDependenceAdjustedBinomial } from "../statistics/dependence-adj
 import { movingBlockBootstrapMean, type MeanBootstrapInterval } from "../statistics/bootstrap.js";
 import { estimateConditionalProbability, type EmpiricalProbabilityEstimate } from "../statistics/empirical-probability.js";
 import { BASELINE_SETUP_ID } from "../setup/basic.js";
-import { buildBaselines, type BaselineSummary } from "./baselines.js";
+import { buildBaselines, buildBuyAndHoldBaseline, type BaselineSummary } from "./baselines.js";
 import { buildResearchReport, type ResearchReport } from "./report.js";
 import type { MarketDataPoint } from "../domain/types.js";
 import type { BinanceFundingRate } from "../adapters/binance/public-client.js";
@@ -70,7 +70,14 @@ export function buildPhase3PartitionReport(
   const models = (["LONG", "SHORT"] as const)
     .map((side) => estimateConditionalProbability(observations, { setupId: BASELINE_SETUP_ID, side }, trainEnd))
     .filter((value): value is EmpiricalProbabilityEstimate => value !== null);
-  const baselines = buildBaselines(observations, allPoints, fundingRates, costs, 20261007, 1000);
+  const baselines = [
+    ...buildBaselines(observations, allPoints, fundingRates, costs, 20261007, 1000),
+    buildBuyAndHoldBaseline(allPoints.filter((point) => {
+      const t = Date.parse(point.eventTime);
+      return t >= Date.parse(partition === "validation" ? "2023-01-01T00:00:00.000Z" : "2024-01-01T00:00:00.000Z")
+        && t < Date.parse(partition === "validation" ? "2024-01-01T00:00:00.000Z" : "2026-01-01T00:00:00.000Z");
+    }), costs.feeRate, costs.slippageRate),
+  ];
   const random95 = baselines.find((b) => b.name === "RANDOM_ENTRY")?.randomDistribution?.percentile95MeanR ?? null;
   const setupMean = report.all.mean;
   return {
