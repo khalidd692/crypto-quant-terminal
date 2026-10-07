@@ -1,4 +1,4 @@
-import type { ResearchObservation } from "./observation-ledger.js";
+import type { ResearchObservation } from "../research/observation-ledger.js";
 import { estimateBinomial, type BinomialEstimate } from "../statistics/binomial.js";
 
 export interface ProbabilityCondition {
@@ -37,7 +37,10 @@ export function estimateConditionalProbability(
   if (!Number.isFinite(cutoff)) throw new Error("Invalid trainingEnd");
 
   const candidates = observations.filter((observation) =>
-    observation.eventTime < trainingEnd &&
+    Number.isFinite(Date.parse(observation.eventTime)) &&
+    Number.isFinite(Date.parse(observation.availableTime)) &&
+    Date.parse(observation.eventTime) < cutoff &&
+    Date.parse(observation.availableTime) <= cutoff &&
     observation.eligible &&
     observation.outcome !== null &&
     observation.setupId === condition.setupId &&
