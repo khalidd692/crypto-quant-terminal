@@ -50,7 +50,9 @@ export function createExperimentArtifact(
   if (!spec.outcomeProtocolVersion.trim()) throw new Error("outcomeProtocolVersion is required");
   if (!spec.featureDefinitionVersions.length) throw new Error("At least one feature definition version is required");
 
-  const payload = { artifactVersion: "experiment-artifact.v1", spec, report, createdAt };
+  // createdAt is provenance metadata, not experiment content. Excluding it
+  // makes identical semantic artifacts hash-identically across reruns.
+  const payload = { artifactVersion: "experiment-artifact.v1", spec, report };
   return {
     artifactVersion: "experiment-artifact.v1",
     spec,
