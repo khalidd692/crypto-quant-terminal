@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { BinancePublicClient } from "../adapters/binance/public-client.js";
+import { BinanceVisionHistoricalClient } from "../adapters/binance/vision-public-data.js";
 import { buildHistoricalResearchDataset } from "./historical-dataset.js";
 import { runResearchLedger } from "./research-runner.js";
 import { buildResearchReport } from "./report.js";
@@ -83,7 +83,7 @@ writeFileSync(
 );
 
 try {
-  const client = new BinancePublicClient({ market: PROTOCOL.market });
+  const client = new BinanceVisionHistoricalClient();
   const dataset = await buildHistoricalResearchDataset({
     market: PROTOCOL.market,
     symbol: PROTOCOL.symbol,
