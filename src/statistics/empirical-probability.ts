@@ -19,8 +19,7 @@ export interface EmpiricalProbabilityEstimate {
 }
 
 function regimeFor(observation: ResearchObservation): string | null {
-  const regime = observation.featureSnapshot.find((feature) => feature.featureId === "regime.basic");
-  return regime?.value === null || regime?.value === undefined ? null : String(regime.value);
+  return observation.regimeLabel;
 }
 
 /**
