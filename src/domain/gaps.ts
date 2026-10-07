@@ -24,3 +24,45 @@ export function detectTimeGaps(points: readonly MarketDataPoint[], expectedInter
   }
   return gaps;
 }
+
+
+export interface MarketDataIntegrity {
+  readonly valid: boolean;
+  readonly duplicateEventTimes: number;
+  readonly invalidRows: number;
+  readonly nonMonotonicRows: number;
+  readonly gaps: readonly Gap[];
+}
+
+export function validateMarketDataSeries(
+  points: readonly MarketDataPoint[],
+  expectedIntervalMs: number,
+): MarketDataIntegrity {
+  const gaps = detectTimeGaps(points, expectedIntervalMs);
+  let duplicateEventTimes = 0;
+  let invalidRows = 0;
+  let nonMonotonicRows = 0;
+  const seen = new Set<string>();
+
+  for (let i = 0; i < points.length; i += 1) {
+    const point = points[i];
+    if (!point) continue;
+    if (seen.has(point.eventTime)) duplicateEventTimes += 1;
+    seen.add(point.eventTime);
+    if (!(point.high >= Math.max(point.open, point.close)) || !(point.low <= Math.min(point.open, point.close)) ||
+        !(point.low <= point.high) || !Number.isFinite(point.volume) || point.volume < 0 ||
+        !Number.isFinite(point.open) || !Number.isFinite(point.high) || !Number.isFinite(point.low) || !Number.isFinite(point.close)) {
+      invalidRows += 1;
+    }
+    const previous = points[i - 1];
+    if (previous && Date.parse(point.eventTime) <= Date.parse(previous.eventTime)) nonMonotonicRows += 1;
+  }
+
+  return {
+    valid: duplicateEventTimes === 0 && invalidRows === 0 && nonMonotonicRows === 0,
+    duplicateEventTimes,
+    invalidRows,
+    nonMonotonicRows,
+    gaps,
+  };
+}
