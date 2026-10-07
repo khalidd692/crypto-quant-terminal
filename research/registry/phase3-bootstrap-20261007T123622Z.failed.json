@@ -1,0 +1,10 @@
+{
+  "experimentId": "phase3-bootstrap-20261007T123622Z",
+  "status": "FAILED",
+  "failureClass": "INFRASTRUCTURE",
+  "reason": "npm run research was invoked after all 32 prerequisite tests passed, but package.json lacked the research script on main.",
+  "holdoutConsumed": false,
+  "resultObserved": false,
+  "protocol": "ADR-0002",
+  "timestamp": "2026-10-07T12:36:22.000Z"
+}
