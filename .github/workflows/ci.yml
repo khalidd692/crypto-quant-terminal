@@ -24,3 +24,4 @@ jobs:
       - run: node dist/tests/protocol-invariants.js
       - run: node dist/tests/dataset-and-indicators.js
       - run: node dist/tests/baseline-backtest.js
+      - run: node dist/tests/expectancy.js
