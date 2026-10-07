@@ -14,7 +14,8 @@ const report: ResearchReport = {
   drawdown: { maxDrawdownR: -1, maxDrawdownFraction: -1, peakIndex: 0, troughIndex: 1 },
   targetHitRateAdjusted: null,
   effectiveSampleSize: 0,
-  realizedRBootstrap: null,\n  annual: [],
+  realizedRBootstrap: null,
+  annual: [],
 };
 
 const spec = {
