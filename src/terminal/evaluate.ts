@@ -59,7 +59,7 @@ export function evaluateReadOnly(
     invalidation: null,
     risk: null,
     liquidity: null,
-    vetoReasons: decision.reasons,
+    vetoReasons: decision.vetoReasons,
     datasetVersion: dataVersion,
     modelVersion: null,
     decisionPolicyVersion: "decision-policy-v1",
