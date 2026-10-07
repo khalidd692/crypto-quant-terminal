@@ -3,6 +3,7 @@ import { BinancePublicClient } from "./adapters/binance/public-client.js";
 import { validateMarketData } from "./domain/data.js";
 import { createDatasetVersion } from "./research/dataset.js";
 import { evaluateReadOnly } from "./terminal/evaluate.js";
+import { loadFrozenTerminalEstimator } from "./terminal/bootstrap-model.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
@@ -77,7 +78,9 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       "market-data-v1",
       new Date().toISOString(),
     );
-    const evaluation = evaluateReadOnly(symbol, points, dataset.datasetVersion, new Date().toISOString());
+    const estimator = await loadFrozenTerminalEstimator();
+    const bookTicker = await client.bookTicker(symbol);
+    const evaluation = evaluateReadOnly(symbol, points, dataset.datasetVersion, new Date().toISOString(), { bookTicker, estimator, equityQuote: 10_000, existingPortfolioRiskQuote: 0, portfolioRiskLimitQuote: 200, maxRiskFraction: 0.01, maxLeverage: 2 });
     return json(response, 200, {
       symbol,
       interval,
@@ -87,7 +90,8 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       decision: evaluation.signal.decision,
       side: evaluation.signal.side,
       reasons: evaluation.signal.vetoReasons,
-      note: "Directional decisions remain blocked until a validated empirical probability/expectancy model is supplied.",
+      modelVersion: evaluation.signal.modelVersion,
+      note: "Read-only terminal: estimator is trained only on the frozen training window; no execution is performed.",
     });
   } catch (error) {
     return json(response, 502, { error: error instanceof Error ? error.message : "provider_error" });

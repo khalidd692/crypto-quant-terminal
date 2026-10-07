@@ -2,6 +2,7 @@ import { BinancePublicClient } from "./adapters/binance/public-client.js";
 import { validateMarketData } from "./domain/data.js";
 import { evaluateReadOnly } from "./terminal/evaluate.js";
 import { createDatasetVersion } from "./research/dataset.js";
+import { loadFrozenTerminalEstimator } from "./terminal/bootstrap-model.js";
 
 const symbol = (process.argv[2] ?? "BTCUSDT").toUpperCase();
 const interval = process.argv[3] ?? "1h";
@@ -14,7 +15,9 @@ if (!validation.valid) {
   process.exitCode = 1;
 } else {
   const dataset = createDatasetVersion(points, [`binance:usdm-futures:${symbol}:${interval}`], "market-data-v1", new Date().toISOString());
-  const evaluation = evaluateReadOnly(symbol, points, dataset.datasetVersion, new Date().toISOString());
+  const estimator = await loadFrozenTerminalEstimator();
+  const bookTicker = await client.bookTicker(symbol);
+  const evaluation = evaluateReadOnly(symbol, points, dataset.datasetVersion, new Date().toISOString(), { bookTicker, estimator, equityQuote: 10_000, existingPortfolioRiskQuote: 0, portfolioRiskLimitQuote: 200, maxRiskFraction: 0.01, maxLeverage: 2 });
   console.log(JSON.stringify({
     symbol,
     interval,
@@ -23,6 +26,7 @@ if (!validation.valid) {
     setup: evaluation.setup,
     decision: evaluation.signal.decision,
     reasons: evaluation.signal.vetoReasons,
-    note: "No empirical probability model is installed; directional decisions remain blocked by INSUFFICIENT_EVIDENCE.",
+    modelVersion: evaluation.signal.modelVersion,
+    note: "Read-only terminal: estimator is trained only on the frozen training window; no execution is performed.",
   }, null, 2));
 }
