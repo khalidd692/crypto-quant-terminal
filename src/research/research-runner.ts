@@ -1,6 +1,7 @@
 import type { MarketDataPoint } from "../domain/types.js";
 import { computeCoreFeatures } from "../features/feature-engine.js";
 import { assessBasicTrendSetup } from "../setup/basic.js";
+import { classifyBasicRegime } from "../regime/classifier.js";
 import { simulateOutcome } from "../simulation/outcomes.js";
 import { createResearchObservation, type ResearchObservation } from "./observation-ledger.js";
 import { assessFunding } from "./funding.js";
@@ -48,6 +49,7 @@ export function runResearchLedger(
     if (!entry) continue;
 
     const features = featuresFor(points, i, config);
+    const regime = classifyBasicRegime({ instrumentId: entry.instrumentId, eventTime: entry.eventTime, featureSnapshots: features, version: "basic-regime-v1" });
     const setup = assessBasicTrendSetup(features);
     const featureVersions = features.map((f) => `${f.featureId}@${f.featureVersion}`).sort();
 
@@ -59,10 +61,11 @@ export function runResearchLedger(
         datasetVersion: config.dataVersion,
         featureDefinitionVersions: featureVersions,
         featureVersionPolicy: config.featureVersionPolicy,
-        dataAvailabilityRule: "features use points.slice(0,T0+1); availableTime must be <= decision event time plus declared lag",
+        dataAvailabilityRule: "features use points.slice(0,T0+1); PIT eligibility requires availableTime <= decisionTime",
         featureSnapshot: features,
         setupId: null,
         side: null,
+        regimeLabel: regime.label,
         entryReferencePrice: entry.close,
         horizonCandles: config.horizonCandles,
         horizonEndTime: points[i + config.horizonCandles]?.eventTime ?? null,
@@ -86,8 +89,10 @@ export function runResearchLedger(
         featureVersionPolicy: config.featureVersionPolicy,
         dataAvailabilityRule: "features use points.slice(0,T0+1); availableTime must be <= decision event time plus declared lag",
         featureSnapshot: features,
+        regimeLabel: regime.label,
         setupId: "baseline.trend.v1",
         side: setup.side,
+        regimeLabel: regime.label,
         entryReferencePrice: entry.close,
         horizonCandles: config.horizonCandles,
         horizonEndTime: points[i + config.horizonCandles]?.eventTime ?? null,
