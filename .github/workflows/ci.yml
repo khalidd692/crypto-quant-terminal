@@ -6,8 +6,10 @@ on:
   pull_request:
 
 jobs:
-  typecheck-and-tests:
+  build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,6 +18,9 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run typecheck
-      - run: node --experimental-strip-types tests/domain-validation.ts
-      - run: node --experimental-strip-types tests/core-invariants.ts
-      - run: node --experimental-strip-types tests/protocol-invariants.ts
+      - run: npm run build
+      - run: node dist/tests/domain-validation.js
+      - run: node dist/tests/core-invariants.js
+      - run: node dist/tests/protocol-invariants.js
+      - run: node dist/tests/dataset-and-indicators.js
+      - run: node dist/tests/baseline-backtest.js
