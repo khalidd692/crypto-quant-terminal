@@ -5,6 +5,7 @@ on:
 
 jobs:
   research:
+    if: startsWith(github.event.head_commit.message, 'phase3: step1 research')
     runs-on: ubuntu-latest
     permissions:
       contents: read
