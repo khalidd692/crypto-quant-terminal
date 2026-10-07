@@ -37,5 +37,6 @@ jobs:
       - run: node dist/tests/outcome-accounting.js
       - run: node dist/tests/funding-alignment.js
       - run: node dist/tests/empirical-probability.js
+      - run: node dist/tests/multi-outcome-probability.js
       - run: node dist/tests/oos-calibration.js
       - run: node dist/tests/experiment-registry.js
