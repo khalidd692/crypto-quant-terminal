@@ -209,12 +209,31 @@ export class BinancePublicClient {
     let pages = 0;
     while (cursor < endTimeMs) {
       if (pages >= maxPages) throw new Error("Funding pagination exceeded maxPages");
-      const url = new URL(this.baseUrl + "/fapi/v1/fundingRate");
-      url.searchParams.set("symbol", symbol);
-      url.searchParams.set("startTime", String(cursor));
-      url.searchParams.set("endTime", String(endTimeMs));
-      url.searchParams.set("limit", "1000");
-      const rows = await requestJson<unknown[]>(url.toString(), this.timeoutMs, this.fetchImpl);
+      const fundingBases = this.baseUrl === "https://data-api.binance.vision"
+        ? [
+            "https://fapi.binance.com",
+            "https://fapi1.binance.com",
+            "https://fapi2.binance.com",
+            "https://fapi3.binance.com",
+            "https://fapi4.binance.com",
+          ]
+        : [this.baseUrl];
+      let rows: unknown[] | null = null;
+      let lastError: unknown = null;
+      for (const base of fundingBases) {
+        const url = new URL(base + "/fapi/v1/fundingRate");
+        url.searchParams.set("symbol", symbol);
+        url.searchParams.set("startTime", String(cursor));
+        url.searchParams.set("endTime", String(endTimeMs));
+        url.searchParams.set("limit", "1000");
+        try {
+          rows = await requestJson<unknown[]>(url.toString(), this.timeoutMs, this.fetchImpl);
+          break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (rows === null) throw lastError instanceof Error ? lastError : new Error(String(lastError));
       if (rows.length === 0) break;
       for (const row of rows) {
         if (typeof row !== "object" || row === null) throw new Error("Invalid funding row");
