@@ -5,7 +5,7 @@ const capped = assessPositionRisk({
   equityQuote: 1_000,
   maxRiskFraction: 0.1,
   entryPrice: 100,
-  invalidationPrice: 90,
+  invalidationPrice: 99,
   leverage: 2,
   existingPortfolioRiskQuote: 0,
   portfolioRiskLimitQuote: 1_000,
@@ -14,8 +14,8 @@ const capped = assessPositionRisk({
 assert.equal(capped.allowed, true);
 assert.equal(capped.quantity, 20);
 assert.equal(capped.positionNotionalQuote, 2_000);
-assert.equal(capped.maxLossQuote, 200);
-assert.equal(capped.portfolioRiskAfter, 200);
+assert.equal(capped.maxLossQuote, 20);
+assert.equal(capped.portfolioRiskAfter, 20);
 assert.equal(capped.methodologyVersion, "risk-sizing.v2");
 
 const riskBudgetBound = assessPositionRisk({
