@@ -13,6 +13,7 @@ function observation(index: number, availableLagMs = 0, outcome: "TARGET" | "INV
     featureDefinitionVersions: ["feature.test.v1"],
     featureVersionPolicy: "test",
     featureSnapshot: [],
+    regimeLabel: null,
     setupId: "setup.test",
     side: "LONG",
     entryReferencePrice: 100,

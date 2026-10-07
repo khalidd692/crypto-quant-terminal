@@ -37,7 +37,6 @@ const result = await buildHistoricalResearchDataset({
   invalidationR: 1,
   feeRate: 0.0004,
   slippageRate: 0.0002,
-  dataVersion: "temporary",
   featureVersionPolicy: "core-v1",
   rejectGaps: true,
 }, source);

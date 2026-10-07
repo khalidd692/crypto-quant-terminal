@@ -59,11 +59,14 @@ for (let i = 100; i < mutated.length; i += 1) {
   (mutated as any)[i] = { ...p, high: p.high * 5, low: p.low * 0.2, close: p.close * 3 };
 }
 const ledgerMutated = runResearchLedger(mutated, config);
-const comparable = Math.min(100, ledger.length, ledgerMutated.length);
+const mutationStartEventTime = mutated[100]?.eventTime;
+if (!mutationStartEventTime) throw new Error("Mutation boundary missing");
+const comparable = Math.min(ledger.length, ledgerMutated.length);
 for (let i = 0; i < comparable; i += 1) {
   const a = ledger[i];
   const b = ledgerMutated[i];
   if (!a || !b) continue;
+  if (a.eventTime >= mutationStartEventTime) break;
   if (a.eventTime !== b.eventTime) throw new Error("T0 ordering changed");
   if (JSON.stringify(a.featureSnapshot) !== JSON.stringify(b.featureSnapshot)) {
     throw new Error("Future data leaked into T0 features");

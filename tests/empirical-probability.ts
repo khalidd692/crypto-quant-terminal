@@ -12,6 +12,7 @@ const make = (hour: number, target: boolean, timeExit = false): ResearchObservat
     featureDefinitionVersions: [],
     featureVersionPolicy: "test",
     featureSnapshot: [],
+    regimeLabel: null,
     setupId: "baseline.trend.v1",
     side: "LONG",
     entryReferencePrice: 100,

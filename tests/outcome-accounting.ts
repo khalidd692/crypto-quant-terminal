@@ -1,15 +1,16 @@
 import { simulateOutcome } from "../src/simulation/outcomes.js";
-import type { MarketDataPoint } from "../src/domain/types.js";
+import type { ISO8601, MarketDataPoint } from "../src/domain/types.js";
 
 const candle = (hour: number, open: number, high: number, low: number, close: number): MarketDataPoint => ({
   instrumentId: "TEST",
-  eventTime: new Date(Date.UTC(2026, 0, 1, hour)).toISOString(),
-  availableTime: new Date(Date.UTC(2026, 0, 1, hour, 1)).toISOString(),
+  eventTime: new Date(Date.UTC(2026, 0, 1, hour)).toISOString() as ISO8601,
+  availableTime: new Date(Date.UTC(2026, 0, 1, hour, 1)).toISOString() as ISO8601,
   open,
   high,
   low,
   close,
   volume: 100,
+  dataQuality: "complete",
   sourceId: "fixture",
 });
 
