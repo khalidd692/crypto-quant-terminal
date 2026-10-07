@@ -29,7 +29,7 @@ export function splitObservations(
   const trainEnd = time(policy.trainEnd);
   const testStart = time(policy.testStart);
   const testEnd = time(policy.testEnd);
-  if (!(trainEnd < testStart && testStart < testEnd)) throw new Error("Split periods must be strictly chronological");
+  if (!(trainEnd <= testStart && testStart < testEnd)) throw new Error("Split periods must be chronologically ordered");
   if (policy.embargoDurationMs < 0) throw new Error("Embargo duration cannot be negative");
 
   const embargoEnd = testEnd + policy.embargoDurationMs;
