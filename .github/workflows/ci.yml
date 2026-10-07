@@ -34,3 +34,4 @@ jobs:
       - run: node dist/tests/research-report.js
       - run: node dist/tests/purged-split.js
       - run: node dist/tests/outcome-accounting.js
+      - run: node dist/tests/funding-alignment.js
