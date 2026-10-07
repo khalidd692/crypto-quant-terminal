@@ -31,6 +31,7 @@ export interface ResearchObservation {
   readonly featureSnapshot: readonly FeatureSnapshot[];
   readonly setupId: string | null;
   readonly side: Side | null;
+  readonly regimeLabel: string | null;
   readonly entryReferencePrice: number;
   readonly horizonCandles: number;
   readonly horizonEndTime: string | null;
