@@ -12,6 +12,9 @@ const report: ResearchReport = {
   targetHitRate: null,
   invalidationHitRate: null,
   drawdown: { maxDrawdownR: -1, maxDrawdownFraction: -1, peakIndex: 0, troughIndex: 1 },
+  targetHitRateAdjusted: null,
+  effectiveSampleSize: 0,
+  realizedRBootstrap: null,
 };
 
 const spec = {
