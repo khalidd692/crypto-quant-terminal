@@ -13,7 +13,7 @@ export interface ReturnSummary {
   readonly min: number | null;
 }
 
-export interface DrawdownSummary {
+export interface AnnualSummary {\n  readonly year: number;\n  readonly returns: ReturnSummary;\n}\n\nexport interface DrawdownSummary {
   readonly maxDrawdownR: number;
   readonly maxDrawdownFraction: number;
   readonly peakIndex: number | null;
@@ -34,7 +34,7 @@ export interface ResearchReport {
   readonly effectiveSampleSize: number;
   readonly invalidationHitRate: ReturnType<typeof estimateBinomial> | null;
   readonly realizedRBootstrap: MeanBootstrapInterval | null;
-  readonly drawdown: DrawdownSummary;
+  readonly drawdown: DrawdownSummary;\n  readonly annual: readonly AnnualSummary[];
 }
 
 function summary(values: readonly number[]): ReturnSummary {
@@ -123,6 +123,6 @@ export function buildResearchReport(
     effectiveSampleSize: targetAdjusted?.effectiveSampleSize ?? 0,
     invalidationHitRate: clean.length ? estimateBinomial(invalidations, clean.length) : null,
     realizedRBootstrap,
-    drawdown: drawdown(allReturns),
+    drawdown: drawdown(allReturns),\n    annual: [...new Set(clean.map((observation) => Number(observation.eventTime.slice(0, 4))))].sort((a, b) => a - b).map((year) => ({\n      year,\n      returns: summary(clean.filter((observation) => Number(observation.eventTime.slice(0, 4)) === year).map((observation) => observation.outcome!.realizedR)),\n    })),
   };
 }
