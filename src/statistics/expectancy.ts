@@ -1,4 +1,4 @@
-import { assertProbability, estimateBinomial, type BinomialEstimate } from "./binomial.js";
+import { estimateBinomial, type BinomialEstimate } from "./binomial.js";
 
 export interface OutcomeProbability {
   readonly event: string;
@@ -19,6 +19,10 @@ export interface BinaryExpectancy {
   readonly breakEvenProbability: number;
   readonly expectedValueR: number;
   readonly conservativeExpectedValueR: number;
+}
+
+function assertProbability(value: number): void {
+  if (!Number.isFinite(value) || value < 0 || value > 1) throw new Error("Probability must be within [0,1]");
 }
 
 export function calculateNetExpectancy(
