@@ -20,12 +20,15 @@ export function createDatasetVersion(
 ): DatasetVersion {
   if (points.length === 0) throw new Error("Cannot version an empty dataset");
   const ordered = [...points].sort((a, b) => a.eventTime.localeCompare(b.eventTime));
+  const first = ordered[0];
+  const last = ordered.at(-1);
+  if (!first || !last) throw new Error("Cannot version an empty dataset");
   return {
     datasetVersion: `sha256:${hashDataset(ordered)}`,
     createdAt: createdAt as DatasetVersion["createdAt"],
     sourceIds: [...sourceIds],
-    coverageStart: ordered[0].eventTime,
-    coverageEnd: ordered[ordered.length - 1].eventTime,
+    coverageStart: first.eventTime,
+    coverageEnd: last.eventTime,
     methodologyVersion,
     immutable: true,
   };
