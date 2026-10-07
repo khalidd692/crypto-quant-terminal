@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { unzipSync, strFromU8 } from "fflate";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
 import type { MarketDataPoint } from "../../domain/types.js";
 import type { BinanceFundingRate } from "./public-client.js";
 
@@ -20,17 +24,36 @@ function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
 }
 
 async function downloadCsv(url: string, fetchImpl: typeof fetch): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30_000);
+  let fetchError: unknown = null;
   try {
-    const response = await fetchImpl(url, { signal: controller.signal });
-    if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
-    const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30_000);
+    try {
+      const response = await fetchImpl(url, { signal: controller.signal });
+      if (!response.ok) throw new Error("Binance Vision HTTP " + response.status + " for " + url);
+      const archive = unzipSync(new Uint8Array(await response.arrayBuffer()));
+      const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
+      if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
+      return strFromU8(csv);
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch (error) {
+    fetchError = error;
+  }
+
+  try {
+    const { stdout } = await execFileAsync("curl", [
+      "--fail", "--location", "--silent", "--show-error",
+      "--retry", "3", "--retry-delay", "2", "--connect-timeout", "10", "--max-time", "60",
+      url,
+    ], { maxBuffer: 64 * 1024 * 1024 });
+    const archive = unzipSync(new Uint8Array(Buffer.from(stdout, "binary")));
     const csv = Object.entries(archive).find(([name]) => name.toLowerCase().endsWith(".csv"))?.[1];
     if (!csv) throw new Error("Binance Vision archive has no CSV: " + url);
     return strFromU8(csv);
-  } finally {
-    clearTimeout(timer);
+  } catch (curlError) {
+    throw new Error("Binance Vision download failed via fetch and curl: " + String(fetchError) + "; " + String(curlError));
   }
 }
 
