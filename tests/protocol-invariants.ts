@@ -15,6 +15,7 @@ assertChronologicalProtocol({
     rationale: "Configured from maximum outcome overlap duration.",
   },
   finalHoldoutStart: "2024-01-02",
+  finalHoldoutEnd: "2025-01-01",
   costsVersion: "costs-v1",
   universeVersion: "universe-v1",
 });
