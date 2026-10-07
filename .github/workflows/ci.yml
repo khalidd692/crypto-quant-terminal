@@ -40,4 +40,5 @@ jobs:
       - run: node dist/tests/multi-outcome-probability.js
       - run: node dist/tests/oos-calibration.js
       - run: node dist/tests/evidence-gate.js
+      - run: node dist/tests/decision-pipeline.js
       - run: node dist/tests/experiment-registry.js
