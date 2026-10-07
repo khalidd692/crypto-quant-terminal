@@ -6,6 +6,16 @@ import { createDatasetVersion } from "./dataset.js";
 import { runResearchLedger, type ResearchRunnerConfig } from "./research-runner.js";
 import { serializeObservationLedger, type ResearchObservation } from "./observation-ledger.js";
 
+export interface HistoricalKlineSource {
+  historicalKlines(
+    symbol: string,
+    interval: string,
+    startTimeMs: number,
+    endTimeMs: number,
+    options?: { readonly pageDelayMs?: number; readonly maxPages?: number },
+  ): Promise<MarketDataPoint[]>;
+}
+
 export interface HistoricalResearchConfig extends ResearchRunnerConfig {
   readonly market: BinanceMarket;
   readonly symbol: string;
@@ -52,7 +62,7 @@ function canonical(value: unknown): string {
 
 export async function buildHistoricalResearchDataset(
   config: HistoricalResearchConfig,
-  client = new BinancePublicClient({
+  client: HistoricalKlineSource = new BinancePublicClient({
     market: config.market,
     availabilityLagMs: config.availabilityLagMs,
   }),
