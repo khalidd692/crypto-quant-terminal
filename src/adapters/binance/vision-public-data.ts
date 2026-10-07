@@ -12,7 +12,7 @@ function monthKeys(startTimeMs: number, endTimeMs: number): string[] {
   const cursor = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
   const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
   const result: string[] = [];
-  while (cursor <= last) {
+  while (cursor.getTime() < endTimeMs) {
     result.push(cursor.toISOString().slice(0, 7));
     cursor.setUTCMonth(cursor.getUTCMonth() + 1);
   }
