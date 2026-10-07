@@ -71,9 +71,11 @@ export class BinancePublicClient {
   private readonly fetchImpl: typeof fetch;
   private readonly baseUrl: string;
   private readonly availabilityLagMs: number;
+  private readonly market: BinanceMarket;
 
   public constructor(options: BinanceClientOptions) {
     this.timeoutMs = options.timeoutMs ?? 10_000;
+    this.market = options.market;
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.baseUrl = options.baseUrlOverride ?? endpoint(options.market);
     this.availabilityLagMs = options.availabilityLagMs ?? 0;
@@ -196,7 +198,7 @@ export class BinancePublicClient {
     endTimeMs: number,
     options: { readonly pageDelayMs?: number; readonly maxPages?: number } = {},
   ): Promise<BinanceFundingRate[]> {
-    if (!this.baseUrl.includes("fapi")) throw new Error("Funding history requires the USDⓈ-M futures client");
+    if (this.market !== "usdm-futures") throw new Error("Funding history requires the USDⓈ-M futures client");
     if (!Number.isInteger(startTimeMs) || !Number.isInteger(endTimeMs) || startTimeMs >= endTimeMs) {
       throw new Error("Invalid funding time range");
     }
@@ -241,7 +243,7 @@ export class BinancePublicClient {
   }
 
   public async futuresContext(symbol: string): Promise<BinanceFuturesContext> {
-    if (!this.baseUrl.includes("fapi")) throw new Error("Futures context requires the USDⓈ-M futures client");
+    if (this.market !== "usdm-futures") throw new Error("Futures context requires the USDⓈ-M futures client");
 
     const oiUrl = new URL(this.baseUrl + "/fapi/v1/openInterest");
     oiUrl.searchParams.set("symbol", symbol);
