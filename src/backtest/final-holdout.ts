@@ -69,6 +69,11 @@ function metrics(predictions: readonly FinalHoldoutPrediction[]): { readonly bri
 /**
  * Evaluates a frozen model on an untouched final holdout.
  * No fitting, feature selection, threshold tuning, or calibration is allowed here.
+ *
+ * Point-in-time rule: each holdout observation is eligible when its features were
+ * available by its own decision/event time. The entire holdout does not need to
+ * have been available at the holdout start; otherwise later valid observations
+ * would be incorrectly discarded.
  */
 export function runFinalHoldout(
   observations: readonly ResearchObservation[],
@@ -85,7 +90,7 @@ export function runFinalHoldout(
   const holdout = observations.filter((observation) => {
     const event = timestamp(observation.eventTime);
     const available = timestamp(observation.availableTime);
-    return event >= start && event < end && available <= start;
+    return event >= start && event < end && available <= event;
   });
 
   const predictions: FinalHoldoutPrediction[] = [];
