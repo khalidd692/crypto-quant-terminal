@@ -97,7 +97,7 @@ export function finalizeCriteria(
   stressedBootstrap: MeanBootstrapInterval | null,
 ): Phase3PartitionReport {
   const c1 = base.criteria.criterion1Pass;
-  const lower = stressedBootstrap?.interval.lower ?? null;
+  const lower = stressedBootstrap?.lower ?? null;
   const c2 = lower !== null && lower > 0;
   const c3 = base.criteria.criterion3Pass;
   const criteria = {
