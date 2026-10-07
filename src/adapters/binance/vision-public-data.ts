@@ -96,7 +96,7 @@ export class BinanceVisionHistoricalClient {
         rates.set(String(fundingTime), {
           symbol,
           fundingRate: number(row[2], "fundingRate"),
-          fundingTime: new Date(fundingTime).toISOString(),
+          fundingTime: new Date(fundingTime).toISOString() as BinanceFundingRate["fundingTime"],
           markPrice: null,
           rateType: "binance-vision-fundingRate",
         });
