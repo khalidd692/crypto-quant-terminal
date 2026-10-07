@@ -1,12 +1,12 @@
 import type { Expectancy, LiquidityAssessment, RiskSnapshot, Signal, Side } from "../domain/types.js";
 import { assessProbabilityEvidence, type EvidenceGatePolicy } from "../statistics/evidence-gate.js";
+import type { BinomialEstimate } from "../statistics/binomial.js";
 import { calculateNetExpectancy, type OutcomeProbability } from "../statistics/expectancy.js";
 import { evaluateHardVetoes } from "./veto.js";
 
 export interface DecisionPipelineInput {
   readonly side: Side | null;
-  readonly probability: number | null;
-  readonly probabilityInterval: { readonly lower: number; readonly upper: number } | null;
+  readonly probabilityEstimate: BinomialEstimate | null;
   readonly breakEvenProbability: number;
   readonly evidencePolicy: EvidenceGatePolicy;
   readonly outcomePayoffsR: readonly { readonly probability: number; readonly payoffR: number; readonly event: string }[];
@@ -30,14 +30,7 @@ export interface DecisionPipelineResult {
 }
 
 export function evaluateDecisionPipeline(input: DecisionPipelineInput): DecisionPipelineResult {
-  const estimate = input.probability === null || input.probabilityInterval === null ? null : {
-    probability: input.probability,
-    successes: 0,
-    observations: 1,
-    interval: input.probabilityInterval,
-    method: "wilson" as const,
-  };
-  const evidence = assessProbabilityEvidence(estimate, input.breakEvenProbability, input.evidencePolicy);
+  const evidence = assessProbabilityEvidence(input.probabilityEstimate, input.breakEvenProbability, input.evidencePolicy);
 
   let expectancy: Expectancy | null = null;
   if (input.outcomePayoffsR.length > 0) {
@@ -71,7 +64,7 @@ export function evaluateDecisionPipeline(input: DecisionPipelineInput): Decision
 
   if (!evidence.sufficient) return { decision: "INSUFFICIENT_EVIDENCE", side: null, evidenceSufficient: false, expectancy, vetoReasons: veto.reasons };
   if (veto.vetoed) return { decision: "NO_TRADE", side: null, evidenceSufficient: true, expectancy, vetoReasons: veto.reasons };
-  if (sideOrNull(input.side) === null) return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["no_directional_setup"] };
+  if (input.side === null) return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["no_directional_setup"] };
   return { decision: input.side, side: input.side, evidenceSufficient: true, expectancy, vetoReasons: [] };
 }
 
