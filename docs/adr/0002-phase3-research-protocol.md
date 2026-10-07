@@ -177,4 +177,42 @@ This ADR does **not** add:
 - execution;
 - new signal families.
 
-It freezes the research protocol required before Phase 3 implementation and execution.
+It freezes the research protocol required before Phase 3 implementation and execution.## 7. Success criterion
+
+The Phase 3 verdict is **PAS D'EDGE** unless **all three criteria below pass separately on both validation and test**, with no reformulation after observing results. The validation set may not be used to tune any frozen parameter.
+
+### Criterion 1 — dependence-adjusted Wilson vs cost-derived break-even
+
+For each partition, compute the dependence-adjusted Wilson lower bound on the target-before-invalidation probability using the non-overlapping sample from Phase 2. Compare it to the break-even probability implied by the **actual per-trade costs in that partition**. The break-even probability is not a fixed magic number: for each observation it is derived from the target/invalidation payoff after its realized fee+slippage cost, and the partition threshold is the declared aggregate break-even probability for the same observation set. The criterion passes only if the adjusted Wilson lower bound is strictly greater than that cost-derived break-even threshold.
+
+### Criterion 2 — cost-stressed block bootstrap
+
+For each partition, under fee and slippage ×1.5, the 95% lower bound of the moving-block bootstrap mean of realizedR must be strictly greater than 0.
+
+### Criterion 3 — random-entry null distribution
+
+For each partition, run a declared fixed number of independent seeded random-entry draws. Every draw uses **exactly the same eligible timestamps and the same exits/targets/invalidation/horizon (ATR 1.5R / 1.0R / 8h), fees, slippage and funding accounting** as the strategy; only the entry side is randomized. The strategy's realizedR mean must be strictly greater than the **95th percentile** of that random-entry mean distribution. The number of draws and seed derivation are frozen before the run.
+
+### Frozen declaration
+
+- Random-entry draws: **1,000**.
+- Master seed: **20261007**.
+- Draw seed: deterministic `masterSeed + drawIndex`.
+- Confidence level: **95%**.
+- Bootstrap block size: **8 observations / 8h**, derived from the frozen outcome horizon.
+- Bootstrap resamples: **2,000**.
+
+Failure of any one criterion on validation or test yields exactly **`PAS D'EDGE`**. No alternative threshold, metric, partition, baseline, or interpretation may be substituted after results are observed.
+
+## 8. Baselines
+
+Every Phase 3 report MUST include:
+
+1. **NO_TRADE:** zero trades and zero strategy return/drawdown.
+2. **BUY_AND_HOLD:** BTCUSDT buy-and-hold over the same evaluation interval, with explicit semi-open UTC boundaries.
+3. **RANDOM_ENTRY:** 1,000 fixed-seed draws using the same eligible timestamps and same exits/costs/funding as the strategy; report the full mean-distribution summary including its 95th percentile.
+4. **ALWAYS_LONG:** LONG on the same eligible timestamps with the same exits/costs/funding.
+
+The report MUST include results by calendar year and cost sensitivity at ×1, ×1.5 and ×2 for strategy and applicable baselines.
+
+
