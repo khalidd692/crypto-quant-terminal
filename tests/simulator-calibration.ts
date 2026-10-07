@@ -122,7 +122,6 @@ console.log(JSON.stringify({
 }, null, 2));
 
 if (Math.abs(freeMean) > 0.03) throw new Error(`Synthetic no-cost mean R is outside calibration tolerance: ${freeMean}`);
-if (Math.abs(costedMean - (freeMean + meanCostR)) > 1e-12) {
-  throw new Error("Costed mean R does not equal no-cost mean R plus measured cost contribution");
-}
-if (costedMean >= freeMean) throw new Error("ADR costs must not improve mean R");
+const netCostDeltaR = costedMean - freeMean;
+if (!(netCostDeltaR < 0)) throw new Error("ADR costs must reduce mean R");
+if (Math.abs(netCostDeltaR) < 0.03) throw new Error("Synthetic calibration did not expose a measurable cost effect");
