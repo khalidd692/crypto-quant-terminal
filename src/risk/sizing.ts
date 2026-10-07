@@ -19,7 +19,7 @@ export interface PositionRiskAssessment {
   readonly portfolioRiskBefore: number;
   readonly portfolioRiskAfter: number;
   readonly reason: string | null;
-  readonly methodologyVersion: "risk-sizing.v1";
+  readonly methodologyVersion: "risk-sizing.v2";
 }
 
 export function assessPositionRisk(input: PositionRiskInput): PositionRiskAssessment {
@@ -32,11 +32,15 @@ export function assessPositionRisk(input: PositionRiskInput): PositionRiskAssess
   if (!(multiplier > 0)) throw new Error("contractMultiplier must be positive");
 
   const riskPerUnitQuote = Math.abs(input.entryPrice - input.invalidationPrice) * multiplier;
-  const maxLossQuote = input.equityQuote * input.maxRiskFraction;
-  const quantity = riskPerUnitQuote === 0 ? 0 : maxLossQuote / riskPerUnitQuote;
+  const riskBudgetQuote = input.equityQuote * input.maxRiskFraction;
+  const riskBasedQuantity = riskPerUnitQuote === 0 ? 0 : riskBudgetQuote / riskPerUnitQuote;
+  const maxNotionalQuote = input.equityQuote * input.leverage;
+  const leverageCappedQuantity = maxNotionalQuote / (input.entryPrice * multiplier);
+  const quantity = Math.min(riskBasedQuantity, leverageCappedQuantity);
+  const maxLossQuote = quantity * riskPerUnitQuote;
   const positionNotionalQuote = quantity * input.entryPrice * multiplier;
   const portfolioRiskAfter = input.existingPortfolioRiskQuote + maxLossQuote;
-  const allowed = riskPerUnitQuote > 0 && portfolioRiskAfter <= input.portfolioRiskLimitQuote;
+  const allowed = riskPerUnitQuote > 0 && quantity > 0 && portfolioRiskAfter <= input.portfolioRiskLimitQuote;
   return {
     allowed,
     riskPerUnitQuote,
@@ -47,6 +51,6 @@ export function assessPositionRisk(input: PositionRiskInput): PositionRiskAssess
     portfolioRiskBefore: input.existingPortfolioRiskQuote,
     portfolioRiskAfter,
     reason: allowed ? null : (riskPerUnitQuote === 0 ? "invalidation_distance_zero" : "portfolio_risk_limit"),
-    methodologyVersion: "risk-sizing.v1",
+    methodologyVersion: "risk-sizing.v2",
   };
 }
