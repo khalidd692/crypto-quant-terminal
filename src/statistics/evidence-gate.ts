@@ -57,23 +57,23 @@ export function assessProbabilityEvidence(
     };
   }
 
-  const intervalWidth = estimate.upper - estimate.lower;
+  const intervalWidth = estimate.interval.upper - estimate.interval.lower;
   if (intervalWidth > policy.maxProbabilityIntervalWidth) {
     return {
       sufficient: false,
       reason: "INTERVAL_TOO_WIDE",
       intervalWidth,
-      lowerBound: estimate.lower,
+      lowerBound: estimate.interval.lower,
       breakEvenProbability,
     };
   }
 
-  if (estimate.lower < breakEvenProbability + policy.minimumLowerBoundEdge) {
+  if (estimate.interval.lower < breakEvenProbability + policy.minimumLowerBoundEdge) {
     return {
       sufficient: false,
       reason: "LOWER_BOUND_BELOW_BREAK_EVEN",
       intervalWidth,
-      lowerBound: estimate.lower,
+      lowerBound: estimate.interval.lower,
       breakEvenProbability,
     };
   }
@@ -82,7 +82,7 @@ export function assessProbabilityEvidence(
     sufficient: true,
     reason: "SUFFICIENT",
     intervalWidth,
-    lowerBound: estimate.lower,
+    lowerBound: estimate.interval.lower,
     breakEvenProbability,
   };
 }
