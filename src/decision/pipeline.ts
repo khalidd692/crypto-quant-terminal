@@ -1,18 +1,12 @@
 import type { Expectancy, Signal, Side } from "../domain/types.js";
-import { assessProbabilityEvidence, type EvidenceGatePolicy } from "../statistics/evidence-gate.js";
-import type { BinomialEstimate } from "../statistics/binomial.js";
-import { calculateNetExpectancy, type OutcomeProbability } from "../statistics/expectancy.js";
+import { assessMultistateEvidence, type MultistateEvidencePolicy } from "../statistics/multistate-evidence-gate.js";
+import type { MultiOutcomeProbabilityEstimate } from "../statistics/multi-outcome-probability.js";
 import { evaluateHardVetoes } from "./veto.js";
 
 export interface DecisionPipelineInput {
   readonly side: Side | null;
-  readonly probabilityEstimate: BinomialEstimate | null;
-  readonly breakEvenProbability: number;
-  readonly evidencePolicy: EvidenceGatePolicy;
-  readonly outcomePayoffsR: readonly { readonly probability: number; readonly payoffR: number; readonly event: string }[];
-  readonly feesR: number;
-  readonly slippageR: number;
-  readonly fundingR: number;
+  readonly outcomeDistribution: MultiOutcomeProbabilityEstimate | null;
+  readonly evidencePolicy: MultistateEvidencePolicy;
   readonly minExpectedValueR: number;
   readonly dataValid: boolean;
   readonly dataFresh: boolean;
@@ -30,26 +24,19 @@ export interface DecisionPipelineResult {
 }
 
 export function evaluateDecisionPipeline(input: DecisionPipelineInput): DecisionPipelineResult {
-  const evidence = assessProbabilityEvidence(input.probabilityEstimate, input.breakEvenProbability, input.evidencePolicy);
+  const evidence = assessMultistateEvidence(input.outcomeDistribution, input.evidencePolicy);
 
-  let expectancy: Expectancy | null = null;
-  if (input.outcomePayoffsR.length > 0) {
-    const outcomes: OutcomeProbability[] = input.outcomePayoffsR.map((item) => ({
-      event: item.event,
-      probability: item.probability,
-      payoffR: item.payoffR,
-    }));
-    const net = calculateNetExpectancy(outcomes, input.feesR, input.slippageR, input.fundingR);
-    expectancy = {
-      expectedValue: net.netR,
-      unit: "R",
-      gross: net.grossR,
-      fees: net.feesR,
-      slippage: net.slippageR,
-      funding: net.fundingR,
-      methodologyVersion: "expectancy.v2",
-    };
-  }
+  const expectancy: Expectancy | null = input.outcomeDistribution
+    ? {
+        expectedValue: input.outcomeDistribution.expectancy.expectedValueR,
+        unit: "R",
+        gross: input.outcomeDistribution.expectancy.grossR,
+        fees: input.outcomeDistribution.expectancy.feesR,
+        slippage: input.outcomeDistribution.expectancy.slippageR,
+        funding: input.outcomeDistribution.expectancy.fundingR,
+        methodologyVersion: input.outcomeDistribution.expectancy.methodologyVersion,
+      }
+    : null;
 
   const veto = evaluateHardVetoes({
     dataValid: input.dataValid,
@@ -59,7 +46,9 @@ export function evaluateDecisionPipeline(input: DecisionPipelineInput): Decision
     invalidationDefined: input.invalidationDefined,
   });
 
-  if (veto.vetoed) return { decision: "NO_TRADE", side: null, evidenceSufficient: evidence.sufficient, expectancy, vetoReasons: veto.reasons };
+  if (veto.vetoed) {
+    return { decision: "NO_TRADE", side: null, evidenceSufficient: evidence.sufficient, expectancy, vetoReasons: veto.reasons };
+  }
   if (!evidence.sufficient) {
     return { decision: "INSUFFICIENT_EVIDENCE", side: null, evidenceSufficient: false, expectancy, vetoReasons: [evidence.reason] };
   }
@@ -69,6 +58,8 @@ export function evaluateDecisionPipeline(input: DecisionPipelineInput): Decision
   if (expectancy.expectedValue < input.minExpectedValueR) {
     return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["expectancy_below_threshold"] };
   }
-  if (input.side === null) return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["no_directional_setup"] };
+  if (input.side === null) {
+    return { decision: "WAIT", side: null, evidenceSufficient: true, expectancy, vetoReasons: ["no_directional_setup"] };
+  }
   return { decision: input.side, side: input.side, evidenceSufficient: true, expectancy, vetoReasons: [] };
 }
