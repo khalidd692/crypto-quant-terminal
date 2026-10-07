@@ -4,6 +4,8 @@ export interface WalkForwardWindow {
   readonly trainEnd: string;
   readonly testStart: string;
   readonly testEnd: string;
+  readonly embargoStart: string;
+  readonly embargoEnd: string;
 }
 
 export interface WalkForwardConfig {
@@ -32,7 +34,7 @@ export function buildWalkForwardWindows(config: WalkForwardConfig): readonly Wal
   let index = 0;
   while (cursor + config.trainDurationMs + config.purgeDurationMs + config.testDurationMs <= end) {
     const trainEnd = cursor + config.trainDurationMs;
-    const testStart = trainEnd + config.purgeDurationMs + config.embargoDurationMs;
+    const testStart = trainEnd + config.purgeDurationMs;
     const testEnd = testStart + config.testDurationMs;
     if (testEnd > end) break;
 
@@ -42,6 +44,8 @@ export function buildWalkForwardWindows(config: WalkForwardConfig): readonly Wal
       trainEnd: new Date(trainEnd).toISOString(),
       testStart: new Date(testStart).toISOString(),
       testEnd: new Date(testEnd).toISOString(),
+      embargoStart: new Date(testEnd).toISOString(),
+      embargoEnd: new Date(testEnd + config.embargoDurationMs).toISOString(),
     });
     cursor += config.stepDurationMs;
     index += 1;
