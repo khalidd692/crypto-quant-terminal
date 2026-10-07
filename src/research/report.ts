@@ -1,5 +1,7 @@
 import type { ResearchObservation } from "./observation-ledger.js";
 import { estimateBinomial } from "../statistics/binomial.js";
+import { estimateDependenceAdjustedBinomial } from "../statistics/dependence-adjustment.js";
+import { movingBlockBootstrapMean, type MeanBootstrapInterval } from "../statistics/bootstrap.js";
 
 export interface ReturnSummary {
   readonly count: number;
@@ -25,8 +27,13 @@ export interface ResearchReport {
   readonly long: ReturnSummary;
   readonly short: ReturnSummary;
   readonly all: ReturnSummary;
+  /** Naive Wilson target interval over all clean observations. */
   readonly targetHitRate: ReturnType<typeof estimateBinomial> | null;
+  /** Dependence-adjusted Wilson target interval over non-overlapping observations. */
+  readonly targetHitRateAdjusted: ReturnType<typeof estimateBinomial> | null;
+  readonly effectiveSampleSize: number;
   readonly invalidationHitRate: ReturnType<typeof estimateBinomial> | null;
+  readonly realizedRBootstrap: MeanBootstrapInterval | null;
   readonly drawdown: DrawdownSummary;
 }
 
@@ -73,7 +80,17 @@ function drawdown(values: readonly number[]): DrawdownSummary {
   return { maxDrawdownR, maxDrawdownFraction, peakIndex, troughIndex };
 }
 
-export function buildResearchReport(observations: readonly ResearchObservation[]): ResearchReport {
+export interface ResearchReportOptions {
+  readonly blockSize: number;
+  readonly bootstrapResamples: number;
+  readonly confidenceLevel?: number;
+  readonly bootstrapSeed?: number;
+}
+
+export function buildResearchReport(
+  observations: readonly ResearchObservation[],
+  options: ResearchReportOptions,
+): ResearchReport {
   const clean = observations.filter((observation) =>
     observation.eligible && observation.outcome !== null && !observation.outcome.intrabarAmbiguous,
   );
@@ -82,6 +99,16 @@ export function buildResearchReport(observations: readonly ResearchObservation[]
   const shortReturns = clean.filter((observation) => observation.side === "SHORT").map((observation) => observation.outcome!.realizedR);
   const targets = clean.filter((observation) => observation.outcome!.targetHit).length;
   const invalidations = clean.filter((observation) => observation.outcome!.invalidationHit).length;
+  const targetAdjusted = estimateDependenceAdjustedBinomial(clean, (observation) => observation.outcome!.targetHit);
+  const realizedR = clean.map((observation) => observation.outcome!.realizedR);
+  const realizedRBootstrap = realizedR.length >= options.blockSize
+    ? movingBlockBootstrapMean(realizedR, {
+        blockSize: options.blockSize,
+        resamples: options.bootstrapResamples,
+        confidenceLevel: options.confidenceLevel,
+        seed: options.bootstrapSeed,
+      })
+    : null;
 
   return {
     totalObservations: observations.length,
@@ -91,7 +118,10 @@ export function buildResearchReport(observations: readonly ResearchObservation[]
     short: summary(shortReturns),
     all: summary(allReturns),
     targetHitRate: clean.length ? estimateBinomial(targets, clean.length) : null,
+    targetHitRateAdjusted: targetAdjusted?.adjusted ?? null,
+    effectiveSampleSize: targetAdjusted?.effectiveSampleSize ?? 0,
     invalidationHitRate: clean.length ? estimateBinomial(invalidations, clean.length) : null,
+    realizedRBootstrap,
     drawdown: drawdown(allReturns),
   };
 }
