@@ -29,3 +29,4 @@ jobs:
       - run: node dist/tests/walk-forward.js
       - run: node dist/tests/research-ledger.js
       - run: node dist/tests/market-data-integrity.js
+      - run: node dist/tests/historical-dataset.js
