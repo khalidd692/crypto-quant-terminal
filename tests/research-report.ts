@@ -10,6 +10,8 @@ const base = (side: "LONG" | "SHORT", r: number, targetHit: boolean, invalidatio
   featureDefinitionVersions: ["trend@1"],
   featureVersionPolicy: "core-v1",
   featureSnapshot: [],
+  dataAvailabilityRule: "availableTime <= decisionTime",
+  regimeLabel: null,
   setupId: "baseline.trend.v1",
   side,
   entryReferencePrice: 100,
