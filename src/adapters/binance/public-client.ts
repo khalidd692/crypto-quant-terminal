@@ -18,6 +18,14 @@ export interface BinanceBookTicker {
   readonly eventTime: ISO8601;
 }
 
+export interface BinanceFundingRate {
+  readonly symbol: string;
+  readonly fundingRate: number;
+  readonly fundingTime: ISO8601;
+  readonly markPrice: number | null;
+  readonly rateType: string | null;
+}
+
 export interface BinanceFuturesContext {
   readonly symbol: string;
   readonly fundingRate: number | null;
@@ -179,6 +187,56 @@ export class BinancePublicClient {
       askQty: finiteNumber(row.askQty, "askQty"),
       eventTime: iso(eventMs),
     };
+  }
+
+  public async historicalFundingRates(
+    symbol: string,
+    startTimeMs: number,
+    endTimeMs: number,
+    options: { readonly pageDelayMs?: number; readonly maxPages?: number } = {},
+  ): Promise<BinanceFundingRate[]> {
+    if (!this.baseUrl.includes("fapi")) throw new Error("Funding history requires the USDⓈ-M futures client");
+    if (!Number.isInteger(startTimeMs) || !Number.isInteger(endTimeMs) || startTimeMs >= endTimeMs) {
+      throw new Error("Invalid funding time range");
+    }
+    const pageDelayMs = options.pageDelayMs ?? 200;
+    const maxPages = options.maxPages ?? 1000;
+    const results = new Map<string, BinanceFundingRate>();
+    let cursor = startTimeMs;
+    let pages = 0;
+    while (cursor < endTimeMs) {
+      if (pages >= maxPages) throw new Error("Funding pagination exceeded maxPages");
+      const url = new URL(this.baseUrl + "/fapi/v1/fundingRate");
+      url.searchParams.set("symbol", symbol);
+      url.searchParams.set("startTime", String(cursor));
+      url.searchParams.set("endTime", String(endTimeMs));
+      url.searchParams.set("limit", "1000");
+      const rows = await requestJson<unknown[]>(url.toString(), this.timeoutMs, this.fetchImpl);
+      if (rows.length === 0) break;
+      for (const row of rows) {
+        if (typeof row !== "object" || row === null) throw new Error("Invalid funding row");
+        const item = row as Record<string, unknown>;
+        const fundingTime = finiteNumber(item.fundingTime, "fundingTime");
+        if (fundingTime < startTimeMs || fundingTime > endTimeMs) continue;
+        results.set(String(fundingTime), {
+          symbol,
+          fundingRate: finiteNumber(item.fundingRate, "fundingRate"),
+          fundingTime: iso(fundingTime),
+          markPrice: item.markPrice === undefined ? null : finiteNumber(item.markPrice, "markPrice"),
+          rateType: typeof item.rateType === "string" ? item.rateType : null,
+        });
+      }
+      const last = rows.at(-1);
+      if (!last || typeof last !== "object" || last === null) break;
+      const lastTime = finiteNumber((last as Record<string, unknown>).fundingTime, "lastFundingTime");
+      const nextCursor = lastTime + 1;
+      if (nextCursor <= cursor) throw new Error("Funding pagination cursor did not advance");
+      cursor = nextCursor;
+      pages += 1;
+      if (rows.length < 1000) break;
+      if (pageDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, pageDelayMs));
+    }
+    return [...results.values()].sort((a, b) => a.fundingTime.localeCompare(b.fundingTime));
   }
 
   public async futuresContext(symbol: string): Promise<BinanceFuturesContext> {
