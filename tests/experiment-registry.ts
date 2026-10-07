@@ -16,6 +16,18 @@ const report: ResearchReport = {
   effectiveSampleSize: 0,
   realizedRBootstrap: null,
   annual: [],
+  outcomeDiagnostics: {
+    totalObservations: 4,
+    cleanEligibleObservations: 4,
+    excludedAmbiguous: 0,
+    excludedOther: 0,
+    exclusionReasons: {},
+    states: {
+      TARGET: { count: 2, meanGrossR: 0.5, meanNetR: 0.5 },
+      INVALIDATION: { count: 0, meanGrossR: null, meanNetR: null },
+      TIME_EXIT: { count: 2, meanGrossR: 0.5, meanNetR: 0.5 },
+    },
+  },
 };
 
 const spec = {
