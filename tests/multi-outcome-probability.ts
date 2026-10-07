@@ -52,6 +52,8 @@ assert.equal(estimate.probabilities.length, 4);
 assert.equal(estimate.probabilities.reduce((sum, item) => sum + item.probability, 0), 1);
 for (const item of estimate.probabilities) assert.equal(item.probability, 0.25);
 assert.equal(estimate.expectancy.expectedValueR, 0);
+assert.equal(estimate.effectiveSampleSize, 2);
+assert.equal(estimate.probabilities.find((item) => item.event === "TARGET")?.effectiveSampleSize, 2);
 assert.equal(estimate.probabilities.find((item) => item.event === "TARGET")?.meanRealizedR, 1);
 assert.equal(estimate.probabilities.find((item) => item.event === "INVALIDATION")?.meanRealizedR, -1);
 assert.equal(estimate.probabilities.find((item) => item.event === "AMBIGUOUS")?.meanRealizedR, 0);
