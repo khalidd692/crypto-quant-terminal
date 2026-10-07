@@ -1,7 +1,8 @@
 name: Phase 3 post-merge research
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: ["main"]
 
 permissions:
@@ -12,7 +13,7 @@ jobs:
   research:
     # One-shot gate for the Phase 3 Step 1 merge that was explicitly prepared
     # for the frozen ADR-0002 research run.
-    if: contains(github.event.head_commit.message, 'Merge pull request #34')
+    if: github.event.pull_request.merged == true && github.event.pull_request.number == 35
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ github.token }}
