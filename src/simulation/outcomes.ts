@@ -19,6 +19,11 @@ export interface SimulatedOutcome {
   readonly invalidationHit: boolean;
   readonly intrabarAmbiguous: boolean;
   readonly exitPrice: number;
+  readonly exitEventTime: string;
+  readonly exitCandleIndex: number;
+  readonly grossReturnFraction: number;
+  readonly feeReturnFraction: number;
+  readonly slippageReturnFraction: number;
 }
 
 function applyEntrySlippage(price: number, side: Side, rate: number): number {
@@ -49,8 +54,10 @@ export function simulateOutcome(
   let invalidationHit = false;
   let intrabarAmbiguous = false;
   let exitReference = future.at(-1)?.close ?? entry.close;
+  let exitEventTime = future.at(-1)?.eventTime ?? entry.eventTime;
+  let exitCandleIndex = Math.max(0, future.length - 1);
 
-  for (const candle of future) {
+  for (const [candleIndex, candle] of future.entries()) {
     const favorable = scenario.side === "LONG"
       ? (candle.high - entryPrice) / riskPerUnit
       : (entryPrice - candle.low) / riskPerUnit;
@@ -71,23 +78,32 @@ export function simulateOutcome(
     if (targetTouched && invalidationTouched) {
       intrabarAmbiguous = true;
       exitReference = candle.close;
+      exitEventTime = candle.eventTime;
+      exitCandleIndex = candleIndex;
       break;
     }
     if (targetTouched) {
       targetHit = true;
       exitReference = scenario.targetPrice;
+      exitEventTime = candle.eventTime;
+      exitCandleIndex = candleIndex;
       break;
     }
     if (invalidationTouched) {
       invalidationHit = true;
       exitReference = scenario.invalidationPrice;
+      exitEventTime = candle.eventTime;
+      exitCandleIndex = candleIndex;
       break;
     }
   }
 
   const exitPrice = applyExitSlippage(exitReference, scenario.side, scenario.slippageRate);
   const grossReturn = directionalReturn(entryPrice, exitPrice, scenario.side);
-  const returnFraction = grossReturn - 2 * scenario.feeRate;
+  const feeReturnFraction = 2 * scenario.feeRate;
+  const slippageFreeGrossReturn = directionalReturn(scenario.entryPrice, exitReference, scenario.side);
+  const slippageReturnFraction = grossReturn - slippageFreeGrossReturn;
+  const returnFraction = grossReturn - feeReturnFraction;
 
   return {
     returnFraction,
@@ -97,5 +113,10 @@ export function simulateOutcome(
     invalidationHit,
     intrabarAmbiguous,
     exitPrice,
+    exitEventTime,
+    exitCandleIndex,
+    grossReturnFraction: grossReturn,
+    feeReturnFraction,
+    slippageReturnFraction,
   };
 }

@@ -33,3 +33,4 @@ jobs:
       - run: node dist/tests/statistics-bootstrap.js
       - run: node dist/tests/research-report.js
       - run: node dist/tests/purged-split.js
+      - run: node dist/tests/outcome-accounting.js
