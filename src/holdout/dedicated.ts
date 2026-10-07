@@ -80,8 +80,7 @@ export function executeDedicatedHoldout(
     holdoutStart: result.holdoutStart,
     holdoutEnd: result.holdoutEnd,
     result,
-  }, null, 2) + "
-");
+  }, null, 2) + String.fromCharCode(10));
   return { registryPath, artifactHash: artifact.contentHash, result };
 }
 
