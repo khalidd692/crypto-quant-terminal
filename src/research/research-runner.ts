@@ -3,6 +3,8 @@ import { computeCoreFeatures } from "../features/feature-engine.js";
 import { assessBasicTrendSetup } from "../setup/basic.js";
 import { simulateOutcome } from "../simulation/outcomes.js";
 import { createResearchObservation, type ResearchObservation } from "./observation-ledger.js";
+import { assessFunding } from "./funding.js";
+import type { BinanceFundingRate } from "../adapters/binance/public-client.js";
 
 export interface ResearchRunnerConfig {
   readonly lookback: number;
@@ -12,6 +14,7 @@ export interface ResearchRunnerConfig {
   readonly feeRate: number;
   readonly slippageRate: number;
   readonly fundingReturnFractionPerHoldingPeriod?: number;
+  readonly fundingRates?: readonly BinanceFundingRate[];
   readonly dataVersion: string;
   readonly featureVersionPolicy: string;
 }
@@ -123,8 +126,11 @@ export function runResearchLedger(
           : "TIME_EXIT";
 
     const risk = Math.abs(entry.close - invalidationPrice);
-    const fundingReturnFraction = config.fundingReturnFractionPerHoldingPeriod ?? 0;
-    const realizedR = (simulated.returnFraction - fundingReturnFraction) / (risk / entry.close);
+    const funding = config.fundingRates
+      ? assessFunding(setup.side, entry.eventTime, simulated.exitEventTime, config.fundingRates)
+      : null;
+    const fundingReturnFraction = funding?.paymentReturnFraction ?? config.fundingReturnFractionPerHoldingPeriod ?? 0;
+    const realizedR = (simulated.returnFraction + fundingReturnFraction) / (risk / entry.close);
 
     output.push(createResearchObservation({
       instrumentId: entry.instrumentId,
