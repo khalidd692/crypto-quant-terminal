@@ -107,6 +107,7 @@ export function estimateOutcomeDistribution(
   return {
     probabilities,
     sampleSize: candidates.length,
+    effectiveSampleSize: nonOverlapping.sampleSize,
     condition,
     trainingEnd: new Date(cutoff).toISOString(),
     estimatorVersion: "empirical-multinomial.v1",
