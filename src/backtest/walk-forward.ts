@@ -32,7 +32,7 @@ export function buildWalkForwardWindows(config: WalkForwardConfig): readonly Wal
   let index = 0;
   while (cursor + config.trainDurationMs + config.purgeDurationMs + config.testDurationMs <= end) {
     const trainEnd = cursor + config.trainDurationMs;
-    const testStart = trainEnd + config.purgeDurationMs + config.embargoDurationMs;
+    const testStart = trainEnd + config.purgeDurationMs;
     const testEnd = testStart + config.testDurationMs;
     if (testEnd > end) break;
 
