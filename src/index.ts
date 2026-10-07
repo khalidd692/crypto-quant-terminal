@@ -15,6 +15,7 @@ export * from "./decision/veto.js";
 export * from "./simulation/outcomes.js";
 export * from "./portfolio/risk.js";
 export * from "./backtest/protocol.js";
+export * from "./backtest/walk-forward.js";
 export * from "./experiments/registry.js";
 export * from "./adapters/binance/public-client.js";
 export * from "./regime/classifier.js";
