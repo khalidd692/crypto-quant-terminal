@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "terminal": "node dist/src/cli.js"
+    "terminal": "node dist/src/cli.js",
+    "server": "node dist/src/server.js"
   },
   "devDependencies": {
     "typescript": "^5.9.0",
