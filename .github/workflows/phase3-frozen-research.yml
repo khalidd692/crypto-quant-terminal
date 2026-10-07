@@ -5,7 +5,6 @@ on:
 
 jobs:
   research:
-    if: github.sha == '558bba8e76d3afc9a3fb6ac1e45de4e50d637e53'
     runs-on: ubuntu-latest
     permissions:
       contents: read
