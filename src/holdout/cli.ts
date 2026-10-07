@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { executeDedicatedHoldout, loadFrozenHoldoutArtifact } from "./dedicated.js";
+import type { ResearchObservation } from "../research/observation-ledger.js";
 
 const artifactPath = process.env.HOLDOUT_ARTIFACT_PATH ?? "research/holdout/holdout-observations.json";
 const registryPath = process.env.HOLDOUT_REGISTRY_PATH ?? "research/registry/final-holdout.execution.json";
@@ -14,7 +15,7 @@ const modelFile = JSON.parse(readFileSync(modelPath, "utf8")) as {
 
 const model = {
   version: modelFile.version,
-  predict: (observation: Parameters<typeof artifact.observations.at>[0] extends never ? never : (typeof artifact.observations)[number]) => {
+  predict: (observation: ResearchObservation) => {
     if (observation.side === "LONG") return modelFile.longProbability;
     if (observation.side === "SHORT") return modelFile.shortProbability;
     return null;
