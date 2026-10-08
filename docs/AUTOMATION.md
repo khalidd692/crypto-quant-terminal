@@ -1,0 +1,5 @@
+# Prospective automation
+Le workflow `prospective-surveillance.yml` s'exécute toutes les 15 minutes et peut aussi être lancé manuellement. Il surveille les actifs définis dans `config/surveillance-assets.json`, utilise KuCoin comme source primaire et MEXC comme contrôle pour les actifs configurés.
+Chaque observation est ajoutée à `research/prospective/journal.jsonl` sans réécriture des lignes précédentes. Chaque ligne porte un hash et le hash de la ligne précédente, ce qui rend toute altération détectable.
+Les observations sont prospectives : elles enregistrent décision, raisons et hash du snapshot de contexte au moment t ; elles ne modifient aucun résultat historique et n'exécutent aucun ordre.
+Les décisions sensibles sont signalées dans les logs GitHub Actions. Un webhook d'alerte peut être ajouté ultérieurement sans être nécessaire au fonctionnement de base.

@@ -1,0 +1,39 @@
+name: Prospective surveillance
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  surveillance:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      - name: Run prospective surveillance
+        env:
+          PROSPECTIVE_JOURNAL: research/prospective/journal.jsonl
+          SURVEILLANCE_CONFIG: config/surveillance-assets.json
+        run: node dist/src/automation/runner.js
+      - name: Append journal commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/prospective/journal.jsonl
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "automation: append prospective surveillance journal"
+          git push origin HEAD:main
+      - name: Alert summary
+        if: always()
+        run: |
+          echo "Prospective surveillance completed; journal is append-only and hash chained." >> "$GITHUB_STEP_SUMMARY"
