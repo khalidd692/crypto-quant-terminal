@@ -32,6 +32,7 @@ jobs:
         run: node scripts/generate-context-snapshot.mjs
       - name: Build and verify KHALYON
         run: |
+          echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
           node tests/khalyon-ui-integrity.mjs
       - name: Upload KHALYON
