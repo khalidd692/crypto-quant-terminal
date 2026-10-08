@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 export const EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256 =
-  "137d7f4f0d41fbdae1b93d9aa3b50cf3193e91630eb46fc09262d8a53fbeaf8";
+  "137d7f4f0d41fbdae1b93d9aa3b50cf3193e91630eb46fc09262d8a53fbeaf8a";
 
 export interface FrozenFundingFile {
   readonly filename: string;
