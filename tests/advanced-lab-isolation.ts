@@ -1,4 +1,4 @@
-import {readdirSync,readFileSync,statSync} from "node:fs";
+import {readdirSync,readFileSync} from "node:fs";
 import {join,relative} from "node:path";
 
 const ROOT=join(process.cwd(),"src","research","advanced_lab");
@@ -14,8 +14,9 @@ function walk(dir:string):string[]{
 const forbidden=[
   /(?:^|[\/'"])(?:\.\.\/)+holdout(?:[\/'"]|$)/,
   /(?:^|[\/'"])(?:\.\.\/)+terminal(?:[\/'"]|$)/,
-  /(?:^|[\/'"])src\/(?:holdout|terminal)(?:[\/'"]|$)/,
-  /(?:from|import|require)\s*\(?\s*["'][^"']*\/(?:holdout|terminal)(?:\/[^"]*)?["']/,
+  /(?:^|[\/'"])(?:\.\.\/)+surveillance(?:[\/'"]|$)/,
+  /(?:^|[\/'"])src\/(?:holdout|terminal|surveillance)(?:[\/'"]|$)/,
+  /(?:from|import|require)\s*\(?\s*["'][^"']*\/(?:holdout|terminal|surveillance)(?:\/[^"]*)?["']/,
 ];
 
 const violations:string[]=[];
