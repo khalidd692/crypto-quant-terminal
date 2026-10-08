@@ -1,0 +1,6 @@
+import{createHash}from"node:crypto";import type{ContextProvenance}from"../types.js";
+export function numberOrNull(v:unknown):number|null{const n=Number(v);return Number.isFinite(n)?n:null;}
+export function rawHash(v:unknown):`sha256:${string}`{return `sha256:${createHash("sha256").update(JSON.stringify(v)).digest("hex")}`;}
+export function provenance(field:string,source:string,at:string,raw:unknown,status:"OK"|"UNAVAILABLE"="OK",reason?:string):ContextProvenance{const p={field,source,availableAt:at,sourceSnapshotHash:rawHash(raw),status};return reason===undefined?p:{...p,reason};}
+export function unavailableProvenance(field:string,source:string,at:string,reason:string):ContextProvenance{return provenance(field,source,at,{unavailable:true,reason},"UNAVAILABLE",reason);}
+export function object(v:unknown,source:string):Record<string,unknown>{if(v===null||typeof v!=="object"||Array.isArray(v))throw new Error(`Invalid object schema from ${source}`);return v as Record<string,unknown>;}
