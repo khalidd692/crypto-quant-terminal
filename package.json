@@ -10,7 +10,8 @@
     "research": "npm run build && node dist/src/research/cli.js",
     "server": "node dist/src/server.js",
     "test": "npm run build && for file in dist/tests/*.js; do node \"$file\"; done",
-    "holdout": "npm run build && node dist/src/holdout/cli.js"
+    "holdout": "npm run build && node dist/src/holdout/cli.js",
+    "automation": "npm run build && node dist/src/automation/runner.js"
   },
   "devDependencies": {
     "typescript": "^5.9.0",

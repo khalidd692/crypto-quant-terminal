@@ -2,7 +2,7 @@ export type TelDecision = "ENTRER" | "ATTENDRE" | "SORTIR" | "NE_PAS_ENTRER";
 export type DataQuality = "OK" | "STALE" | "UNAVAILABLE";
 export type PositionSide = "LONG" | "NONE";
 export interface VenueSnapshot {
-  readonly venue: "KUCOIN" | "MEXC"; readonly symbol: "TEL-USDT"; readonly eventTime: string; readonly availableTime: string;
+  readonly venue: "KUCOIN" | "MEXC"; readonly symbol: string; readonly eventTime: string; readonly availableTime: string;
   readonly lastPrice: number; readonly bid: number; readonly ask: number; readonly volume24hQuote: number;
   readonly trendOk: boolean; readonly volatilityOk: boolean; readonly quality: DataQuality;
 }

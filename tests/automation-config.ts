@@ -1,0 +1,1 @@
+import {loadSurveillanceConfig} from "../src/automation/config.js"; const c=loadSurveillanceConfig("config/surveillance-assets.json"); if(c.assets.length<1||c.assets.some(a=>a.primaryVenue!=="KUCOIN"||a.controlVenue!=="MEXC")) throw new Error("Multi-asset surveillance config contract failed");

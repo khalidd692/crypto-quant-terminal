@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "surveillance-config.v1",
+  "assets": [
+    {
+      "id": "TEL-USDT",
+      "primaryVenue": "KUCOIN",
+      "controlVenue": "MEXC",
+      "primarySymbol": "TEL-USDT",
+      "controlSymbol": "TELUSDT",
+      "maxAgeMs": 120000,
+      "maxCrossVenueDeviationBps": 100,
+      "max24hRangePct": 50,
+      "entryZone": { "lower": 0.0049, "upper": 0.0051 },
+      "invalidationPrice": 0.004,
+      "target1": 0.007,
+      "target2": 0.008,
+      "maxLossQuote": 100
+    }
+  ]
+}
