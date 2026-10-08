@@ -1,0 +1,26 @@
+name: Lab NLP Test
+
+on:
+  push:
+    branches:
+      - "research/advanced-quant-lab"
+
+jobs:
+  nlp-engine:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Pydantic
+        run: python -m pip install --disable-pip-version-check "pydantic>=2,<3"
+
+      - name: Run local NLP engine proof of concept
+        run: python tests/test_nlp_engine.py
