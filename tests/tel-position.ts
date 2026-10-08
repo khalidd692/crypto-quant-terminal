@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import { buildExitPlan,calculateSpotPnl,evaluateExitState,summarizeRetracements,scenarioAtPrice } from "../src/risk/tel-position.js";
+const plan=buildExitPlan({entryPrice:1,initialStop:.9,target1:1.2,target2:1.4,atr:.05,pocket:"SWING"});assert.equal(plan.locked,true);assert.equal(plan.target1Fraction+plan.target2Fraction,1);
+const core=buildExitPlan({entryPrice:1,initialStop:.9,target1:1.2,target2:1.4,atr:.05,pocket:"CORE_HOLD"});assert.equal(core.locked,true);assert.equal(core.target1Fraction,0);
+const pnl=calculateSpotPnl({entryPrice:1,currentPrice:1.2,quantity:100,entryFeePct:.001,exitFeePct:.001,slippagePct:.002});assert.ok(pnl.netQuote<pnl.grossQuote);assert.ok(pnl.netPct>0);
+assert.equal(evaluateExitState({pocket:"CORE_HOLD",currentPrice:0.5,initialStop:.9,target1:1.2,target2:1.4,highestPrice:1.4,atr:.05,entryTime:"2026-10-01T00:00:00Z",now:"2026-10-20T00:00:00Z"}).state,"TENIR");
+assert.equal(evaluateExitState({pocket:"SWING",currentPrice:1.21,initialStop:.9,target1:1.2,target2:1.4,highestPrice:1.21,atr:.05,entryTime:"2026-10-08T00:00:00Z",now:"2026-10-08T01:00:00Z"}).state,"ALLÉGER");
+assert.equal(evaluateExitState({pocket:"SWING",currentPrice:.89,initialStop:.9,target1:1.2,target2:1.4,highestPrice:1,atr:.05,entryTime:"2026-10-08T00:00:00Z",now:"2026-10-08T01:00:00Z"}).state,"SORTIR");
+const stats=summarizeRetracements([{comparableRisePct:.2,retracementPct:.1},{comparableRisePct:.3,retracementPct:.2},{comparableRisePct:.25,retracementPct:.05}],.1);assert.equal(stats.observations,3);assert.equal(stats.label,"statistique historique, pas une prévision");assert.equal(stats.frequency,.6666666666666666);
+const sc=scenarioAtPrice({entryPrice:1,quantity:100,priceAfterRetracement:1.1,futurePrice:1.3});assert.equal(sc.currentGainQuote,10);assert.equal(sc.futureGainQuote,30);
+console.log("p1 position/exit: PASS");
