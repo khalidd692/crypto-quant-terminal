@@ -1,0 +1,10 @@
+import { buildTelPreTradeChecklist, canEnterTel } from "../src/surveillance/pretrade-checklist.js";
+import { renderTelMobileScreen } from "../src/surveillance/tel-mobile.js";
+import { evaluateTelSurveillance, type VenueSnapshot, type TelSurveillanceConfig } from "../src/surveillance/tel-usdt.js";
+const base=(venue:"KUCOIN"|"MEXC"):VenueSnapshot=>({venue,symbol:"TEL-USDT",eventTime:"2026-10-08T08:00:00.000Z",availableTime:"2026-10-08T08:00:00.000Z",lastPrice:.005,bid:.00499,ask:.00501,volume24hQuote:100000,trendOk:true,volatilityOk:true,quality:"OK"});
+const config:TelSurveillanceConfig={maxAgeMs:60000,maxCrossVenueDeviationBps:100,entryZone:{lower:.0049,upper:.0051},invalidationPrice:.004,target1:.007,target2:.008,maxLossQuote:100,existingPosition:"NONE",exitTriggered:false};
+const output=evaluateTelSurveillance(base("KUCOIN"),base("MEXC"),config,Date.parse("2026-10-08T08:00:30.000Z"));
+if(!canEnterTel(output)) throw new Error("Valid TEL surveillance output must pass checklist");
+if(buildTelPreTradeChecklist(output).length!==8) throw new Error("TEL checklist is incomplete");
+const html=renderTelMobileScreen(output);
+if(!html.includes('name="viewport"')||!html.includes("TEL/USDT")||!html.includes("KuCoin primaire")||!html.includes("PAS D'EDGE")) throw new Error("Mobile TEL screen contract missing");
