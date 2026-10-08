@@ -1,0 +1,7 @@
+import {createContextSnapshot,verifyContextSnapshot} from "../src/context/snapshot.js";
+const input={schemaVersion:"context-snapshot.v1" as const,instrumentId:"TEL-USDT",asOf:"2026-10-08T10:00:00.000Z",market:{totalMarketCapQuote:2e12,btcDominancePct:56.2,btcReturnPct:1.4,realizedVolPct:42,breadthPct:61},macro:{ratesBias:"NEUTRAL" as const,inflationBias:"DISINFLATION" as const,dollarBias:"STRENGTHENING" as const,sourceAsOf:"2026-10-08T09:00:00.000Z"},events:{events:[{id:"macro-1",timestamp:"2026-10-09T12:30:00.000Z",category:"MACRO" as const,label:"CPI",importance:"HIGH" as const}]},liquidity:{venue:"KUCOIN",symbol:"TEL-USDT",spreadBps:12,depthQuote:25000,volume24hQuote:500000,observedAt:"2026-10-08T10:00:00.000Z"},fundamentals:{protocolActivity:"STABLE" as const,developmentActivity:"IMPROVING" as const,valuationAssessment:"FAIR" as const,sourceAsOf:"2026-10-08T08:00:00.000Z"},macroRegime:{regime:"RISK_ON" as const,rationale:"Descriptive classification from supplied context only.",methodologyVersion:"descriptive-regime.v1" as const}};
+const a=createContextSnapshot(input); const b=createContextSnapshot({...input,market:{...input.market,btcReturnPct:1.5}});
+verifyContextSnapshot(a); verifyContextSnapshot(b);
+if(a.snapshotHash===b.snapshotHash) throw new Error("Context hash must change when context changes");
+let failed=false; try{verifyContextSnapshot({...a,macroRegime:{...a.macroRegime,regime:"RISK_OFF"}} as typeof a)}catch{failed=true}
+if(!failed) throw new Error("Tampered context must fail verification");
