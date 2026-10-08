@@ -24,9 +24,10 @@ export interface MacroRegimeContext { readonly regime:"RISK_ON"|"RISK_OFF"|"TRAN
 export interface ExternalSeriesPoint { readonly observedAt:string; readonly value:number|null; readonly source:string; readonly sourceSnapshotHash:string; }
 export interface RollingCorrelation { readonly windowDays:30|90|180; readonly coefficient:number|null; readonly interval:[number|null,number|null]; readonly signInversion:boolean; readonly rupture:boolean; readonly label:"corrélation descriptive, pas causale, instable"; }
 export interface TelFundamentalContext { readonly circulatingSupply:number|null; readonly totalSupply:number|null; readonly marketCapQuote:number|null; readonly newsCount:number|null; readonly latestNews:readonly {readonly date:string;readonly title:string}[]; readonly tokenUnlocks:"OK"|"UNAVAILABLE"; readonly networkActivity:"OK"|"UNAVAILABLE"; readonly notableFlows:"OK"|"UNAVAILABLE"; readonly sourceAsOf:string|null; }
+export interface SocialSentimentContext { readonly mentions:number|null; readonly mentionChangePct:number|null; readonly toneScore:number|null; readonly concentrationTop5Pct:number|null; readonly attentionSpike:boolean|null; readonly temperature:"LOW"|"NEUTRAL"|"HOT"|"UNAVAILABLE"; readonly label:"indice de température, bruité et manipulable, pas une prévision"; readonly sourceAsOf:string|null; }
 export interface ContextSnapshot {
   readonly schemaVersion:"context-snapshot.v1"; readonly runId:string; readonly snapshotId:string; readonly instrumentId:string; readonly asOf:string;
   readonly market:CryptoMarketContext; readonly macro:MacroContext; readonly events:EventCalendarContext; readonly liquidity:LiquidityContext;
   readonly fundamentals:FundamentalContext; readonly macroRegime:MacroRegimeContext; readonly provenance:readonly ContextProvenance[];
-  readonly macroSeries?: Readonly<Record<string,readonly ExternalSeriesPoint[]>>; readonly correlations?: Readonly<Record<string,readonly RollingCorrelation[]>>; readonly fundamentalsTel?: TelFundamentalContext; readonly snapshotHash:`sha256:${string}`;
+  readonly macroSeries?: Readonly<Record<string,readonly ExternalSeriesPoint[]>>; readonly correlations?: Readonly<Record<string,readonly RollingCorrelation[]>>; readonly fundamentalsTel?: TelFundamentalContext; readonly socialSentiment?: SocialSentimentContext; readonly snapshotHash:`sha256:${string}`;
 }
