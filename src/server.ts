@@ -40,7 +40,6 @@ function json(response: ServerResponse, status: number, payload: unknown): void 
   response.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
-    "access-control-allow-origin": "*",
   });
   response.end(JSON.stringify(payload));
 }
