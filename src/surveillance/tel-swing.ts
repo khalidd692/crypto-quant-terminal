@@ -30,7 +30,7 @@ export interface BtcFilterInput { readonly btc24hChangePct: number|null; readonl
 export interface SpotRiskInput {
   readonly swingCapitalQuote:number; readonly entryPrice:number; readonly stopPrice:number;
   readonly maxRiskPerTradePct:number; readonly feePct:number; readonly slippagePct:number;
-  readonly openSwingPositions:number; readonly maxPositions:number; readonly monthlyLossQuote:number; readonly maxMonthlyLossPct:number;
+  readonly openSwingPositions:number; readonly maxPositions:number; readonly monthlyLossQuote:number; readonly maxMonthlyLossPct:number; readonly atr:number; readonly atrStopMultiple:number;
   readonly tranches?: readonly number[];
 }
 export interface SpotRiskResult {
@@ -77,9 +77,9 @@ export function assessBtcFilter(input:BtcFilterInput,policy=P0_ENTRY_POLICY):{pa
   return {passed:true,reason:"Filtre BTC descriptif non bloquant"};
 }
 export function calculateSpotSwingRisk(input:SpotRiskInput):SpotRiskResult{
-  const positive=[input.swingCapitalQuote,input.entryPrice,input.stopPrice,input.maxRiskPerTradePct,input.feePct,input.slippagePct,input.maxPositions,input.maxMonthlyLossPct].every(Number.isFinite)&&input.swingCapitalQuote>0&&input.entryPrice>0&&input.stopPrice>0&&input.maxRiskPerTradePct>0&&input.maxPositions>0;
+  const positive=[input.swingCapitalQuote,input.entryPrice,input.stopPrice,input.maxRiskPerTradePct,input.feePct,input.slippagePct,input.maxPositions,input.maxMonthlyLossPct,input.atr,input.atrStopMultiple].every(Number.isFinite)&&input.swingCapitalQuote>0&&input.entryPrice>0&&input.stopPrice>0&&input.stopPrice<input.entryPrice&&input.maxRiskPerTradePct>0&&input.maxPositions>0&&input.atr>0&&input.atrStopMultiple>0;
   if(!positive) throw new Error("Invalid spot risk input");
-  const monthlyCap=input.swingCapitalQuote*input.maxMonthlyLossPct, pauseMonthlyLoss=input.monthlyLossQuote>=monthlyCap;
+  const monthlyCap=input.swingCapitalQuote*input.maxMonthlyLossPct, pauseMonthlyLoss=input.monthlyLossQuote>=monthlyCap;\n  if(input.entryPrice-input.stopPrice < input.atr*input.atrStopMultiple) return {allowed:false,riskBudgetQuote:0,riskPerUnitQuote:input.entryPrice-input.stopPrice,frictionPerUnitQuote:0,quantity:0,notionalQuote:0,maxLossQuote:0,pauseMonthlyLoss,tranches:[],reason:"Stop trop proche: distance minimale ATR non respectée",methodologyVersion:"p0-spot-risk.v1"};
   if(input.openSwingPositions>=input.maxPositions) return {allowed:false,riskBudgetQuote:0,riskPerUnitQuote:0,frictionPerUnitQuote:0,quantity:0,notionalQuote:0,maxLossQuote:0,pauseMonthlyLoss,tranches:[],reason:"Nombre maximal de positions SWING atteint",methodologyVersion:"p0-spot-risk.v1"};
   if(pauseMonthlyLoss) return {allowed:false,riskBudgetQuote:0,riskPerUnitQuote:0,frictionPerUnitQuote:0,quantity:0,notionalQuote:0,maxLossQuote:0,pauseMonthlyLoss,tranches:[],reason:"Perte mensuelle maximale atteinte: pause obligatoire",methodologyVersion:"p0-spot-risk.v1"};
   const distance=Math.abs(input.entryPrice-input.stopPrice); const friction=input.entryPrice*(input.feePct+input.slippagePct);
