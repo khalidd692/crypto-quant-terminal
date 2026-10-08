@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { assertFrozenFundingArchive, manifestSha256, type FrozenFundingManifest } from "../src/research/frozen-funding.js";
+import { assertFrozenFundingArchive, manifestSha256, type FrozenFundingManifest, EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256 } from "../src/research/frozen-funding.js";
 
 const dir = join(process.cwd(), "dist", "test-frozen-funding-fixture");
 rmSync(dir, { recursive: true, force: true });
@@ -21,12 +21,13 @@ const base = {
 const baseManifest = base as unknown as FrozenFundingManifest;
 const manifest = { ...baseManifest, archiveSha256: manifestSha256(baseManifest) };
 writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-assertFrozenFundingArchive(dir);
-writeFileSync(join(dir, zipName), Buffer.from("tampered-fixture"));
 let failed = false;
 try { assertFrozenFundingArchive(dir); } catch { failed = true; }
-if (!failed) throw new Error("Altered funding archive must fail closed");
-writeFileSync(join(dir, zipName), zipBytes);
-assertFrozenFundingArchive(dir);
-if (manifestSha256(manifest) !== manifest.archiveSha256) throw new Error("Funding manifest hash is not reproducible");
+if (!failed) throw new Error("Fixture with a non-canonical archive hash must fail closed");
+if (EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256 === manifest.archiveSha256) throw new Error("Fixture unexpectedly matches frozen archive lock");
+const tamperedManifest = { ...manifest, archiveSha256: EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256 };
+writeFileSync(join(dir, "manifest.json"), JSON.stringify(tamperedManifest, null, 2) + "\n");
+failed = false;
+try { assertFrozenFundingArchive(dir); } catch { failed = true; }
+if (!failed) throw new Error("Fixture with a forged expected archive hash must fail closed");
 rmSync(dir, { recursive: true, force: true });
