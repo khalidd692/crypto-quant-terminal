@@ -13,7 +13,7 @@ const now = Date.parse("2026-10-08T08:00:30.000Z");
 const enter = evaluateTelSurveillance(base("KUCOIN"), base("MEXC"), config, now);
 if (enter.decision !== "ENTRER") throw new Error("Expected ENTRER");
 if (!enter.banner.includes("PAS D'EDGE")) throw new Error("Missing surveillance banner");
-for (const value of Object.values(enter.conditions)) if (typeof value === "boolean" && value === false) throw new Error("ENTRER contains false condition");
+if (enter.conditions.dataFresh !== true || enter.conditions.crossVenueOk !== true || enter.conditions.inEntryZone !== true || enter.conditions.trendOk !== true || enter.conditions.volatilityOk !== true || enter.conditions.sizingValid !== true || enter.conditions.degraded !== false || Number(enter.conditions.rr) < 2) throw new Error("ENTRER condition set is inconsistent");
 
 const wait = evaluateTelSurveillance(base("KUCOIN"), base("MEXC"), { ...config, entryZone: { lower: 0.0052, upper: 0.0053 } }, now);
 if (wait.decision !== "ATTENDRE") throw new Error("Expected ATTENDRE");
