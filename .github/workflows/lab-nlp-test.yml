@@ -1,10 +1,8 @@
 name: Lab NLP Test
-
 on:
   push:
     branches:
       - "research/advanced-quant-lab"
-
 jobs:
   nlp-engine:
     runs-on: ubuntu-24.04
@@ -13,14 +11,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-
-      - name: Install Pydantic
-        run: python -m pip install --disable-pip-version-check "pydantic>=2,<3"
-
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install Python test dependencies
+        run: python -m pip install --disable-pip-version-check "pydantic>=2,<3" "pytest>=8,<9"
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Compile TypeScript
+        run: npm run build
+      - name: Run advanced lab isolation test
+        run: node dist/tests/advanced-lab-isolation.js
+      - name: Run advanced lab pytest suite
+        run: pytest -q tests/test_nlp_lab.py
       - name: Run local NLP engine proof of concept
         run: python tests/test_nlp_engine.py

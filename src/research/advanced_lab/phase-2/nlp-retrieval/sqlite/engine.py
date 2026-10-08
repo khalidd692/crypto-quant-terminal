@@ -9,11 +9,11 @@ from __future__ import annotations
 import hashlib
 import sqlite3
 from pathlib import Path
-from typing import Final
+from typing import Final, Sequence
 
 from schemas.models import GitHubCommitRecord, RegulatoryTextRecord
 
-SCHEMA_VERSION: Final[str] = "nlp-retrieval.sqlite.v1"
+SCHEMA_VERSION: Final[str] = "nlp-retrieval.sqlite.v2"
 
 
 class NlpEngine:
@@ -39,7 +39,7 @@ class NlpEngine:
                 body TEXT NOT NULL,
                 published_at TEXT NOT NULL,
                 url TEXT,
-                content_hash TEXT NOT NULL UNIQUE
+                content_hash TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS github_commits (
@@ -96,38 +96,44 @@ class NlpEngine:
         self.connection.commit()
 
     @staticmethod
-    def _hash_text(text: str) -> str:
-        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    def _hash_text(source_id: str, content: str) -> str:
+        return hashlib.sha256(f"{source_id}\n{content}".encode("utf-8")).hexdigest()
+
+    def insert_github_commits(self, records: Sequence[GitHubCommitRecord]) -> list[int]:
+        ids: list[int] = []
+        with self.connection:
+            for record in records:
+                source_id = f"{record.repository}:{record.sha}"
+                published_at = record.committed_at.isoformat()
+                content_hash = self._hash_text(source_id, record.message)
+                cursor = self.connection.execute(
+                    """
+                    INSERT INTO documents
+                        (source_type, source_id, title, body, published_at, url, content_hash)
+                    VALUES
+                        ('github_commit', ?, ?, ?, ?, ?, ?)
+                    """,
+                    (source_id, record.message, record.message, published_at, record.url, content_hash),
+                )
+                document_id = int(cursor.lastrowid)
+                ids.append(document_id)
+                self.connection.execute(
+                    """
+                    INSERT INTO github_commits
+                        (document_id, repository, sha, author, committed_at, message, url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (document_id, record.repository, record.sha, record.author, published_at, record.message, record.url),
+                )
+        return ids
 
     def insert_github_commit(self, record: GitHubCommitRecord) -> int:
-        source_id = f"{record.repository}:{record.sha}"
-        published_at = record.committed_at.isoformat()
-        content_hash = self._hash_text(record.message)
-        with self.connection:
-            cursor = self.connection.execute(
-                """
-                INSERT INTO documents
-                    (source_type, source_id, title, body, published_at, url, content_hash)
-                VALUES
-                    ('github_commit', ?, ?, ?, ?, ?, ?)
-                """,
-                (source_id, record.message, record.message, published_at, record.url, content_hash),
-            )
-            document_id = int(cursor.lastrowid)
-            self.connection.execute(
-                """
-                INSERT INTO github_commits
-                    (document_id, repository, sha, author, committed_at, message, url)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (document_id, record.repository, record.sha, record.author, published_at, record.message, record.url),
-            )
-        return document_id
+        return self.insert_github_commits([record])[0]
 
     def insert_regulatory_text(self, record: RegulatoryTextRecord) -> int:
         source_id = f"{record.jurisdiction}:{record.authority}:{record.reference}"
         published_at = record.published_at.isoformat()
-        content_hash = self._hash_text(record.text)
+        content_hash = self._hash_text(source_id, record.text)
         with self.connection:
             cursor = self.connection.execute(
                 """
@@ -150,7 +156,10 @@ class NlpEngine:
         return document_id
 
     def search(self, query: str) -> list[sqlite3.Row]:
-        cursor = self.connection.execute(
+        if not query.strip():
+            return []
+        phrase = '"' + query.replace('"', '""') + '"'
+        return self.connection.execute(
             """
             SELECT d.id, d.source_type, d.source_id, d.title, d.body,
                    bm25(documents_fts) AS score
@@ -159,9 +168,8 @@ class NlpEngine:
             WHERE documents_fts MATCH ?
             ORDER BY score ASC, d.id ASC
             """,
-            (query,),
-        )
-        return cursor.fetchall()
+            (phrase,),
+        ).fetchall()
 
     def close(self) -> None:
         self.connection.close()

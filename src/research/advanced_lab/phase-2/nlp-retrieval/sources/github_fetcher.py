@@ -1,124 +1,147 @@
-"""GitHub REST ingestion adapter for Experiment 001.
-
-Network access is limited to the public GitHub REST API through urllib.
-Every API record crosses the strict Pydantic boundary before it can reach
-the SQLite engine. Unexpected payloads fail closed.
-"""
-
 from __future__ import annotations
 
+import hashlib
 import json
-import sys
-from datetime import datetime
+import os
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-NLP_ROOT = Path(__file__).resolve().parents[1]
-if str(NLP_ROOT) not in sys.path:
-    sys.path.insert(0, str(NLP_ROOT))
+from schemas.models import GitHubCommitRecord
 
-from schemas.models import GitHubCommitRecord  # noqa: E402
-
-DEFAULT_REPOSITORIES = (
-    "telcoin/telcoin",
-    "ethereum/go-ethereum",
-)
 GITHUB_API = "https://api.github.com"
-USER_AGENT = "crypto-quant-terminal-advanced-lab/experiment-001"
+USER_AGENT = "crypto-quant-advanced-lab/experiment-001"
+DEFAULT_REPOSITORY = "telcoin/telcoin"
 
 
 class GitHubFetchError(RuntimeError):
-    """Raised when no configured public GitHub source can be ingested."""
+    """Raised when a configured GitHub source cannot be ingested."""
 
 
-def _require_string(value: Any, field: str) -> str:
-    if not isinstance(value, str):
-        raise TypeError(f"GitHub payload field {field!r} must be a string")
+@dataclass(frozen=True)
+class GitHubFetchResult:
+    requested_repository: str
+    repository: str
+    records: list[GitHubCommitRecord]
+    raw_json: bytes
+    raw_sha256: str
+    fetched_at: datetime
+    fallback_used: bool
+
+
+def configured_repository(repository: str | None = None) -> str:
+    value = (repository or os.getenv("GITHUB_REPOSITORY") or DEFAULT_REPOSITORY).strip()
+    parts = value.split("/")
+    if len(parts) != 2 or not all(parts):
+        raise ValueError("GitHub repository must be owner/name")
     return value
 
 
-def _require_mapping(value: Any, field: str) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise TypeError(f"GitHub payload field {field!r} must be an object")
-    return value
-
-
-def _parse_github_datetime(value: Any, field: str) -> datetime:
-    raw = _require_string(value, field)
+def _request_json(url: str) -> bytes:
+    request = Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT}, method="GET")
     try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError(f"GitHub payload field {field!r} is not ISO-8601") from exc
-    if parsed.tzinfo is None:
-        raise ValueError(f"GitHub payload field {field!r} must include a timezone")
-    return parsed
+        with urlopen(request, timeout=20) as response:
+            return response.read()
+    except HTTPError:
+        raise
+    except TimeoutError as exc:
+        raise GitHubFetchError("GitHub request timed out") from exc
+    except URLError as exc:
+        raise GitHubFetchError(f"GitHub request failed: {exc.reason}") from exc
 
 
-def _map_commit(payload: Any, repository: str) -> GitHubCommitRecord:
-    item = _require_mapping(payload, "commit item")
-    commit = _require_mapping(item.get("commit"), "commit.commit")
-    author = _require_mapping(commit.get("author"), "commit.author")
-
-    return GitHubCommitRecord(
-        repository=repository,
-        sha=_require_string(item.get("sha"), "sha"),
-        author=_require_string(author.get("name"), "commit.author.name"),
-        committed_at=_parse_github_datetime(
-            author.get("date"), "commit.author.date"
-        ),
-        message=_require_string(commit.get("message"), "commit.message"),
-        url=_require_string(item.get("html_url"), "html_url"),
-    )
+def _verify_repository(repository: str) -> None:
+    raw = _request_json(f"{GITHUB_API}/repos/{quote(repository, safe='/')}")
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise GitHubFetchError("GitHub repository verification returned invalid JSON") from exc
+    if not isinstance(payload, dict) or payload.get("full_name") != repository:
+        raise GitHubFetchError("GitHub repository verification failed")
 
 
-def _fetch_json(repository: str, limit: int) -> Any:
-    encoded_repository = quote(repository, safe="/")
-    url = f"{GITHUB_API}/repos/{encoded_repository}/commits?per_page={limit}&page=1"
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": USER_AGENT,
-        },
-        method="GET",
-    )
-    with urlopen(request, timeout=20) as response:
-        return json.load(response)
+def _parse(payload: Any, repository: str) -> list[GitHubCommitRecord]:
+    if not isinstance(payload, list):
+        raise GitHubFetchError("GitHub commits payload is not a list")
+    if not payload:
+        raise GitHubFetchError("GitHub commits payload is empty")
+    records: list[GitHubCommitRecord] = []
+    for item in payload:
+        if not isinstance(item, dict) or not isinstance(item.get("commit"), dict):
+            raise GitHubFetchError("GitHub commits payload is malformed")
+        commit = item["commit"]
+        author = commit.get("author")
+        committer = commit.get("committer")
+        if not isinstance(author, dict) or not isinstance(committer, dict):
+            raise GitHubFetchError("GitHub commit identity payload is malformed")
+        try:
+            records.append(
+                GitHubCommitRecord(
+                    repository=repository,
+                    sha=item.get("sha"),
+                    author=author.get("name"),
+                    committed_at=datetime.fromisoformat(committer.get("date").replace("Z", "+00:00")),
+                    message=commit.get("message"),
+                    url=item.get("html_url"),
+                )
+            )
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise GitHubFetchError("GitHub commits payload is malformed") from exc
+    return records
 
 
 def fetch_latest_commits(
+    repository: str | None = None,
+    *,
+    allow_404_fallback: bool = False,
+    fallback_repository: str | None = None,
     limit: int = 30,
-    repositories: tuple[str, ...] = DEFAULT_REPOSITORIES,
-) -> tuple[str, list[GitHubCommitRecord]]:
+) -> GitHubFetchResult:
     if limit != 30:
         raise ValueError("Experiment 001 ingestion is fixed to exactly 30 commits")
-    if not repositories:
-        raise ValueError("At least one GitHub repository must be configured")
+    target = configured_repository(repository)
+    fallback = configured_repository(fallback_repository) if fallback_repository else None
+    if allow_404_fallback and not fallback:
+        raise ValueError("An explicit fallback repository is required when fallback is enabled")
 
-    failures: list[str] = []
-    for repository in repositories:
+    fetched_at = datetime.now(timezone.utc)
+    candidates = [target] + ([fallback] if allow_404_fallback else [])
+    for index, current in enumerate(candidates):
         try:
-            payload = _fetch_json(repository, limit)
+            _verify_repository(current)
+            raw = _request_json(f"{GITHUB_API}/repos/{quote(current, safe='/')}/commits?per_page={limit}&page=1")
+            records = _parse(json.loads(raw), current)
+            return GitHubFetchResult(target, current, records, raw, hashlib.sha256(raw).hexdigest(), fetched_at, index == 1)
         except HTTPError as exc:
-            if exc.code in (403, 404):
-                failures.append(f"{repository}: HTTP {exc.code}")
+            if exc.code == 404 and allow_404_fallback and index == 0:
                 continue
-            raise
-        except URLError as exc:
-            failures.append(f"{repository}: {exc.reason}")
-            continue
+            raise GitHubFetchError(f"GitHub HTTP {exc.code}") from exc
+    raise GitHubFetchError("GitHub primary repository returned 404 and fallback was unavailable")
 
-        if not isinstance(payload, list):
-            raise TypeError("GitHub commits endpoint returned a non-list payload")
-        if len(payload) > limit:
-            raise ValueError("GitHub commits endpoint returned more than requested")
 
-        records = [_map_commit(item, repository) for item in payload]
-        return repository, records
-
-    raise GitHubFetchError(
-        "No configured GitHub repository was accessible: " + "; ".join(failures)
+def save_raw_result(result: GitHubFetchResult, directory: str | Path) -> tuple[Path, Path]:
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    stem = result.repository.replace("/", "__") + "__" + result.raw_sha256
+    raw_path = directory / f"{stem}.json"
+    meta_path = directory / f"{stem}.meta.json"
+    raw_path.write_bytes(result.raw_json)
+    meta_path.write_text(
+        json.dumps(
+            {
+                "repository": result.repository,
+                "requested_repository": result.requested_repository,
+                "sha256": result.raw_sha256,
+                "fetched_at": result.fetched_at.isoformat(),
+                "fallback_used": result.fallback_used,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
     )
+    return raw_path, meta_path

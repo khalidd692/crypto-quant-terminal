@@ -1,28 +1,23 @@
-"""Strict Pydantic boundary models for Experiment 001."""
+from typing import Annotated
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
-from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
-
+SHA40 = Annotated[str, Field(min_length=40, max_length=40, pattern=r"^[0-9a-fA-F]{40}$")]
 
 class GitHubCommitRecord(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
-
-    repository: str
-    sha: str
-    author: str
-    committed_at: datetime
-    message: str
+    repository: str = Field(min_length=1)
+    sha: SHA40
+    author: str = Field(min_length=1)
+    committed_at: AwareDatetime
+    message: str = Field(min_length=1)
     url: str | None = None
-
 
 class RegulatoryTextRecord(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
-
-    jurisdiction: str
-    authority: str
-    reference: str
-    published_at: datetime
-    title: str
-    text: str
+    jurisdiction: str = Field(min_length=1)
+    authority: str = Field(min_length=1)
+    reference: str = Field(min_length=1)
+    published_at: AwareDatetime
+    title: str = Field(min_length=1)
+    text: str = Field(min_length=1)
     url: str | None = None
