@@ -1,0 +1,7 @@
+import assert from "node:assert/strict";import{appendProspectiveRecord,readProspectiveJournal}from"../src/automation/journal.js";import{emitPositionAlerts}from"../src/automation/alerts.js";import{rmSync}from"node:fs";
+process.env.ALERT_DRY_RUN="true";process.env.ALERT_CHANNEL="webhook";process.env.ALERT_MIN_INTERVAL_MS="0";
+const path="/tmp/tel-alerts.jsonl";rmSync(path,{force:true});appendProspectiveRecord(path,{schemaVersion:"prospective-journal.v1",recordedAt:"2026-10-08T00:00:00Z",assetId:"TEL-USDT",decision:"ATTENDRE",reasons:["fixture"],snapshotHash:"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"});
+await emitPositionAlerts(path,{assetId:"TEL-USDT",price:1,stop:.99,invalidation:.9,target1:1.2,target2:1.4,snapshotHash:"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",recordedAt:"2026-10-08T00:00:01Z"});
+const rows=readProspectiveJournal(path);assert.equal(rows.length,2);assert.ok(rows[1]?.reasons.some(x=>x.includes("DELIVERY:DRY_RUN")));
+await emitPositionAlerts(path,{assetId:"TEL-USDT",price:1,stop:.99,invalidation:.9,target1:1.2,target2:1.4,snapshotHash:"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",recordedAt:"2026-10-08T00:00:02Z"});
+assert.equal(readProspectiveJournal(path).length,3);assert.ok(readProspectiveJournal(path)[2]?.reasons.includes("ALERT_DUPLICATE_SUPPRESSED"));rmSync(path,{force:true});console.log("alerts: PASS");
