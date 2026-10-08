@@ -1,0 +1,42 @@
+{
+  "sourceArtifact": {
+    "workflowRun": 37778160574,
+    "workflowName": "Phase 3 diagnostic export",
+    "artifactName": "phase3-diagnostic-export",
+    "artifactId": 11550464606,
+    "artifactDigest": "sha256:b4bd1c73f6bc46c50c5aa7fdea9f9e3f8bbdb05fe43e614ba93859f77d7fbed3",
+    "file": "phase3-diagnostic-20261008.json"
+  },
+  "status": "COMPLETED",
+  "scope": "diagnostic-only",
+  "methodologyUnchanged": true,
+  "holdoutConsumed": false,
+  "adr": "ADR-0002",
+  "historicalResultModified": false,
+  "historicalVerdict": "PAS D'EDGE",
+  "datasetVersion": "sha256:6684d0e7bfb27080430164729e6aa8ac556ac09a728f373eeb32ef3b4781abce",
+  "exclusionAccounting": {
+    "outsideObservationWindow": {"warmup": 50, "tail": 8},
+    "validation": {
+      "totalObservations": 8759, "cleanEligible": 3790, "ambiguous": 52, "excludedNonAmbiguous": 4917,
+      "byCategory": {"warmup": 0, "setup_non_eligible": 4917, "overlap": 0, "missing_data": 0, "funding": 0, "risk_out_of_bounds": 0, "other": 0},
+      "excludedNonAmbiguousCheck": 4917, "outsideObservationWindow": {"warmup": 0, "tail": 0}
+    },
+    "test": {
+      "totalObservations": 17536, "cleanEligible": 8964, "ambiguous": 100, "excludedNonAmbiguous": 8472,
+      "byCategory": {"warmup": 0, "setup_non_eligible": 8472, "overlap": 0, "missing_data": 0, "funding": 0, "risk_out_of_bounds": 0, "other": 0},
+      "excludedNonAmbiguousCheck": 8472, "outsideObservationWindow": {"warmup": 0, "tail": 0}
+    }
+  },
+  "historicalReference": {
+    "validationMeanR": -0.2724550009591896,
+    "testMeanR": -0.2026431479465604,
+    "historicalValidationMeanR": -0.27387454648158277,
+    "historicalTestMeanR": -0.20397163645157348,
+    "currentReplayDiffValidationR": 0.0014195455223931508,
+    "currentReplayDiffTestR": 0.0013284885050130757,
+    "historicalExactNetStateMeansRecoverable": false,
+    "historicalExactNetStateMeansBlocker": "The immutable Phase 3 result artifact did not version/persist the funding-rate archive; current replay uses the same datasetVersion but cannot reconstruct the historical funding snapshot byte-for-byte.",
+    "calibrationTimeExitGrossR": 0.26740864604811676
+  }
+}
