@@ -1,8 +1,10 @@
 import { readFileSync, mkdirSync } from "node:fs";
-import { appendProspectiveRecord } from "./journal.js";
+import { appendProspectiveRecord, readProspectiveJournal } from "./journal.js";
+import { emitAlerts } from "./alerts.js";
 import { loadSurveillanceConfig, type SurveillanceAssetConfig } from "./config.js";
 import { evaluateTelSurveillance, type VenueSnapshot } from "../surveillance/tel-usdt.js";
 import { createContextSnapshot } from "../context/snapshot.js";
+import { fetchContextSnapshot } from "../context/providers/index.js";
 const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jsonl";
 function num(value:unknown):number { const n=Number(value); if(!Number.isFinite(n)) throw new Error("Invalid numeric market value"); return n; }
 async function json(url:string):Promise<any>{ const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{accept:"application/json"}}); if(!response.ok) throw new Error(`HTTP ${response.status} for ${url}`); return response.json(); }
@@ -23,6 +25,7 @@ async function main():Promise<void>{
   const config=loadSurveillanceConfig(process.env.SURVEILLANCE_CONFIG??"config/surveillance-assets.json");
   mkdirSync(JOURNAL.split("/").slice(0,-1).join("/")||".",{recursive:true});
   const now=new Date().toISOString();
+  const journalBeforeRun = readProspectiveJournal(JOURNAL);
   for(const asset of config.assets){
     let decision="NE_PAS_ENTRER", reasons:string[]=["Données indisponibles"], snapshotHash="sha256:unavailable";
     try{
@@ -31,7 +34,14 @@ async function main():Promise<void>{
       const output=evaluateTelSurveillance(venues.primary,venues.control,{maxAgeMs:asset.maxAgeMs,maxCrossVenueDeviationBps:asset.maxCrossVenueDeviationBps,entryZone:asset.entryZone,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,maxLossQuote:asset.maxLossQuote,existingPosition:"NONE",exitTriggered:false},Date.parse(now));
       decision=output.decision; reasons=[...output.reasons]; snapshotHash=context.snapshotHash;
     }catch(error){ reasons=["API_UNAVAILABLE_OR_TIMEOUT"]; }
+    const previous = [...journalBeforeRun].reverse().find(item => item.assetId === asset.id && item.decision !== "ALERTE")?.decision ?? null;
     const record=appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:asset.id,decision,reasons,snapshotHash});
+    try {
+      const context = await fetchContextSnapshot("surveillance:"+now, asset.id, now);
+      await emitAlerts(JOURNAL, asset.id, decision as any, previous, snapshotHash, context, now);
+    } catch (error) {
+      appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:"__ALERT__",decision:"ALERTE",reasons:["ALERT_CONTEXT_UNAVAILABLE",String(error).slice(0,160)],snapshotHash});
+    }
     if(["ENTRER","SORTIR"].includes(decision)||decision==="NE_PAS_ENTRER") console.log(`::warning title=Surveillance ${asset.id}::${decision} — ${reasons.join(" | ")} — record ${record.recordHash}`);
   }
 }
