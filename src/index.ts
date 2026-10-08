@@ -4,6 +4,7 @@ export * from "./domain/data.js";
 export * from "./domain/gaps.js";
 export * from "./features/indicators.js";
 export * from "./features/feature-engine.js";
+export * from "./features/monitor-indicators.js";
 export * from "./statistics/binomial.js";
 export * from "./statistics/empirical-edge.js";
 export * from "./statistics/expectancy.js";
