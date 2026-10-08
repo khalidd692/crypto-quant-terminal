@@ -96,3 +96,54 @@ Phase 3 is closed as **PAS D'EDGE** with the above methodological reservations.
 
 No ADR-0003 is created.
 No holdout data is accessed or consumed.
+
+
+## Addendum — Phase 3 diagnostics and versioned funding archive
+
+### Diagnostic export
+
+PR #53 merged as `039892c562ea768253b2da13da9fb8e2a328ecfa`.
+
+On frozen dataset `sha256:6684d0e7bfb27080430164729e6aa8ac556ac09a728f373eeb32ef3b4781abce`:
+- Validation: 8,759 observations / 3,790 clean eligible / 52 ambiguous / 4,917 non-ambiguous exclusions.
+- Test: 17,536 observations / 8,964 clean eligible / 100 ambiguous / 8,472 non-ambiguous exclusions.
+- All measured non-ambiguous exclusions are `SETUP_NON_ELIGIBLE`; no other requested exclusion category was observed.
+- Warm-up and tail remain outside the ledger: 50 and 8 observations.
+- Strategy gross state means: validation TARGET 1.175456 / INVALIDATION −1.322057 / TIME_EXIT −0.185503; test TARGET 1.212117 / INVALIDATION −1.285224 / TIME_EXIT −0.151064.
+- RANDOM_ENTRY gross state means: validation TARGET 1.168500 / INVALIDATION −1.318539 / TIME_EXIT −0.109052; test TARGET 1.214028 / INVALIDATION −1.287649 / TIME_EXIT −0.055052.
+
+No holdout observation was accessed and no historical result was rewritten.
+
+### Versioned funding archive
+
+PR #54 merged as `e0d7b2ccc63d4d90e7d1833732a2cd550276b359`.
+
+- Source: Binance Vision USDⓈ-M Futures monthly `fundingRate`.
+- Symbol: BTCUSDT.
+- Period: 2020-01 through 2025-12, end-exclusive at 2026-01-01.
+- Files: 72 monthly ZIP archives.
+- Funding rows: 6,576.
+- Canonical archive manifest SHA-256: `137d7f4f0d41fbdae1b93d9aa3b50cf3193e91630eb46fc09262d8a53fbeaf8a`.
+- GitHub Actions artifact digest: `sha256:64b0178da2636fdb0f213faae9b7dc44ec8881c2bf711ff6a1c0eb52be4f0241`.
+- Freeze workflow: #2 green; CI: #335 green.
+
+The loader fails closed on manifest mismatch, missing files, or per-file SHA-256 mismatch. The altered-archive test is expected to fail and does fail; the correct archive and replay inputs are reproducible.
+
+The current replay remains explicitly labelled **non reconstructible bit-à-bit pour le net historique** because the exact funding snapshot used by the original immutable result was not versioned at that time. The frozen archive enables reproducible future replay without rewriting the historical result.
+
+### TEL/USDT surveillance
+
+PR #52 merged as `ae6d59b51df3a274cfc8383e69a290c1865eb0da`.
+
+The surveillance layer is read-only and uses KuCoin Spot TEL/USDT as primary source and MEXC Spot TEL/USDT as cross-check. It implements ENTRER / ATTENDRE / SORTIR / NE_PAS_ENTRER, explicit condition/level reporting, fail-closed degraded-data handling, and the mandatory non-predictive banner.
+
+Surveillance CI: #343 green.
+
+### Remaining reservations intentionally not treated
+
+1. **Criterion 1 definition remains to be clarified by a future ADR.** No ADR-0003 is created here.
+2. **Residual discrepancy of approximately 0.12–0.19 R remains unexplained.** No explanation is selected and no parameter is optimized.
+3. **The Phase 3 test partition is consumed as development/OOS evidence.** It is not a virgin holdout; the final holdout remains untouched and unconsumed.
+4. **Exact historical net state means remain non-reconstructible bit-for-bit** because the original funding snapshot was not persisted.
+
+These reservations remain deliberately unresolved; resolving them would require a separately authorized methodological change.
