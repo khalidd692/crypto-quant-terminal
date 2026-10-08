@@ -1,6 +1,8 @@
 name: Phase 3 diagnostic export
 
 on:
+  push:
+    branches: ["main"]
   pull_request:
     paths:
       - "src/research/**"
