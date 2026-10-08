@@ -18,7 +18,8 @@ const base = {
   periodEndExclusive: "2026-01",
   files: [{ filename: zipName, source: "https://data.binance.vision/frozen-fixture", period: "2025-01", rows: 3, sha256: fileHash }],
 };
-const manifest = { ...base, archiveSha256: manifestSha256(base) } as FrozenFundingManifest;
+const baseManifest = base as unknown as FrozenFundingManifest;
+const manifest = { ...baseManifest, archiveSha256: manifestSha256(baseManifest) };
 writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 assertFrozenFundingArchive(dir);
 writeFileSync(join(dir, zipName), Buffer.from("tampered-fixture"));

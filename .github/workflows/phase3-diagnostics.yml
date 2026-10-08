@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "src/research/**"
+      - "scripts/freeze-funding-archive.mjs"
       - ".github/workflows/phase3-diagnostics.yml"
 
 jobs:
@@ -17,8 +18,9 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - run: node scripts/freeze-funding-archive.mjs
       - run: npm run build
-      - run: node dist/src/research/phase3-diagnostics-cli.js
+      - run: PHASE3_FUNDING_DIR=research/funding/frozen-btcusdt-2020-2025 node dist/src/research/phase3-diagnostics-cli.js
       - uses: actions/upload-artifact@v4
         with:
           name: phase3-diagnostic-export
