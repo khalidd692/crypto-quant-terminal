@@ -1,5 +1,6 @@
 name: Lab NLP Test
 on:
+  workflow_dispatch:
   push:
     branches:
       - "research/advanced-quant-lab"
