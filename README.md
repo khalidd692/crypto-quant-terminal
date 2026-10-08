@@ -85,7 +85,7 @@ These are intentionally blocked until the research gate is satisfied.
 - `docs/DATA_PROVIDER.md`
 - `docs/RESEARCH_PROTOCOL.md`
 - `docs/DECISIONS.md`
-
+- `docs/MONITOR_INDICATORS.md`
 
 ## Phase 3 closure status
 
@@ -96,3 +96,9 @@ The replay funding input is now versioned and hash-checked: Binance Vision BTCUS
 TEL/USDT surveillance is read-only: KuCoin Spot primary, MEXC cross-check, states ENTRER / ATTENDRE / SORTIR / NE_PAS_ENTRER, and fail-closed degraded-data handling. It carries the banner: « Règles de surveillance, aucun edge statistique démontré (phase 3 : PAS D'EDGE). Ce n'est pas une prédiction. »
 
 Remaining methodological reservations are documented in `docs/phase3-closure-report.md`. No ADR-0003 is created and no holdout data is accessed.
+
+## Monitor-v1
+
+Monitor-v1 adds descriptive market-context indicators for the surveillance layer only. It is explicitly separate from frozen `core-v1`, is not wired into probability/expectancy/decision/research code, and does not change the Phase 3 verdict.
+
+The monitor set covers trend (EMA200, ADX, DI spread), momentum (MACD histogram, Stochastic RSI), volatility (Bollinger %B/bandwidth), volume (OBV trend, rolling VWAP deviation), and structure (Donchian position, confirmed swing support/resistance distances). Insufficient history produces `null`; no imputation or look-ahead is allowed. See `docs/MONITOR_INDICATORS.md`.
