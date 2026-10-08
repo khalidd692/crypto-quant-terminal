@@ -6,7 +6,7 @@ const dir=mkdtempSync(join(tmpdir(),"prospective-")); const path=join(dir,"journ
 const a=appendProspectiveRecord(path,{schemaVersion:"prospective-journal.v1",recordedAt:"2026-10-08T10:00:00.000Z",assetId:"TEL-USDT",decision:"ATTENDRE",reasons:["test"],snapshotHash:"sha256:a"});
 const b=appendProspectiveRecord(path,{schemaVersion:"prospective-journal.v1",recordedAt:"2026-10-08T10:15:00.000Z",assetId:"TEL-USDT",decision:"NE_PAS_ENTRER",reasons:["test2"],snapshotHash:"sha256:b"});
 if(readProspectiveJournal(path).length!==2||b.previousHash!==a.recordHash) throw new Error("Append-only hash chain failed");
-const lines=readFileSync(path,"utf8").trim().split("\n"); lines[0]=lines[0].replace("test","tampered");
+const lines=readFileSync(path,"utf8").trim().split("\n"); const first=lines[0]; if(first===undefined) throw new Error("Journal fixture unexpectedly empty"); lines[0]=first.replace("test","tampered");
 const tampered=join(dir,"tampered.jsonl"); writeFileSync(tampered,lines.join("\n")+"\n");
 let failed=false; try{readProspectiveJournal(tampered)}catch{failed=true} if(!failed) throw new Error("Tampered journal must fail verification");
 rmSync(dir,{recursive:true,force:true});
