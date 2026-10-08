@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { unzipSync, strFromU8 } from "fflate";
 import type { MarketDataPoint } from "../../domain/types.js";
 import type { BinanceFundingRate } from "./public-client.js";
+import { assertFrozenFundingArchive } from "../../research/frozen-funding.js";
 
 const BASE = "https://s3-ap-northeast-1.amazonaws.com/data.binance.vision/data/futures/um/monthly";
 
@@ -96,6 +97,7 @@ export class BinanceVisionHistoricalClient {
     endTimeMs: number,
   ): Promise<BinanceFundingRate[]> {
     const rates = new Map<string, BinanceFundingRate>();
+    if (this.fundingArchiveDir) assertFrozenFundingArchive(this.fundingArchiveDir);
     for (const month of monthKeys(startTimeMs, endTimeMs)) {
       const url = BASE + "/fundingRate/" + symbol + "/" + symbol + "-fundingRate-" + month + ".zip";
       const archive = this.fundingArchiveDir
