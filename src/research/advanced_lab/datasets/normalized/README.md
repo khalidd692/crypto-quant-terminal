@@ -1,0 +1,1 @@
+Données normalisées du laboratoire.

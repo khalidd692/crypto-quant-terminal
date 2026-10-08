@@ -1,0 +1,1 @@
+Équation des échanges MV = PQ.

@@ -1,0 +1,1 @@
+Configuration du laboratoire et de ses expériences.

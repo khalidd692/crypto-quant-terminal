@@ -1,0 +1,1 @@
+Données propres au laboratoire.

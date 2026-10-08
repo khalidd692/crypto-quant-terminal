@@ -1,0 +1,1 @@
+Analyse descriptive de l’activité GitHub.

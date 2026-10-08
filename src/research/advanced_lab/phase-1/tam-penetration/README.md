@@ -1,0 +1,1 @@
+Modèle de pénétration du TAM et captation adressable.

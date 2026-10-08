@@ -1,0 +1,1 @@
+Topologie du réseau : vélocité et accumulation on-chain.

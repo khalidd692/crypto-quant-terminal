@@ -1,0 +1,1 @@
+Analyse des chocs de liquidité.
