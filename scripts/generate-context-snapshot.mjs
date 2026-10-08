@@ -1,0 +1,4 @@
+import{mkdirSync,writeFileSync}from"node:fs";import{resolve}from"node:path";import{fetchContextSnapshot}from"../dist/src/context/providers/index.js";
+const runId=process.env.GITHUB_RUN_ID?("github:"+process.env.GITHUB_RUN_ID):"local:"+new Date().toISOString();
+const snapshot=await fetchContextSnapshot(runId,"BTCUSDT",new Date().toISOString());
+const path=resolve(process.cwd(),"khalyon/data/context-snapshot.json");mkdirSync(resolve(process.cwd(),"khalyon/data"),{recursive:true});writeFileSync(path,JSON.stringify(snapshot,null,2)+"\n");console.log(JSON.stringify({status:"OK",path,runId:snapshot.runId,asOf:snapshot.asOf,snapshotHash:snapshot.snapshotHash,provenanceCount:snapshot.provenance.length,unavailable:snapshot.provenance.filter(x=>x.status==="UNAVAILABLE").length},null,2));
