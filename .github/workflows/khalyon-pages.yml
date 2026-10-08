@@ -29,6 +29,9 @@ jobs:
       - name: Build context providers
         run: npm run build
       - name: Generate sealed context snapshot
+        env:
+          CONTEXT_HTTP_TIMEOUT_MS: "2500"
+          CONTEXT_HTTP_RETRIES: "0"
         run: node scripts/generate-context-snapshot.mjs
       - name: Build and verify KHALYON
         run: |
