@@ -1,0 +1,26 @@
+name: Phase 3 diagnostic export
+
+on:
+  pull_request:
+    paths:
+      - "src/research/**"
+      - ".github/workflows/phase3-diagnostics.yml"
+
+jobs:
+  diagnostic-export:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      - run: node dist/src/research/phase3-diagnostics-cli.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-diagnostic-export
+          path: research/diagnostics/phase3-diagnostic-20261008.json
+          if-no-files-found: error
