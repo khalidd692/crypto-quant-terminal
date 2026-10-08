@@ -44,3 +44,5 @@ jobs:
       - run: node dist/tests/experiment-registry.js
       - run: node dist/tests/risk-sizing.js
       - run: node dist/tests/final-holdout.js
+      - run: node dist/tests/tel-usdt-surveillance.js
+      - run: node dist/tests/tel-usdt-surveillance.js
