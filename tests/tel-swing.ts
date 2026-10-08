@@ -4,7 +4,7 @@ const risk=calculateSpotSwingRisk({swingCapitalQuote:10000,entryPrice:100,stopPr
 assert.equal(risk.allowed,true); assert.equal(risk.tranches.length,3); assert.ok(Math.abs(risk.maxLossQuote-50)<1e-9);
 const atrBlocked=calculateSpotSwingRisk({...riskInput(risk),entryPrice:100,stopPrice:98,atr:2,atrStopMultiple:1.5});
 function riskInput(_x:unknown){return {swingCapitalQuote:10000,entryPrice:100,stopPrice:90,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:0,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:0,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:5,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple};}
-assert.equal(atrBlocked.allowed,false); assert.match(atrBlocked.reason??"","ATR");
+assert.equal(atrBlocked.allowed,false); assert.match(atrBlocked.reason??"",/ATR/);
 const paused=calculateSpotSwingRisk(riskInput(risk)); assert.equal(paused.allowed,true);
 const pause=calculateSpotSwingRisk({...riskInput(risk),monthlyLossQuote:200}); assert.equal(pause.allowed,false); assert.equal(pause.pauseMonthlyLoss,true);
 assert.equal(assessBtcFilter({btc24hChangePct:null,supportBroken:null}).passed,false);
