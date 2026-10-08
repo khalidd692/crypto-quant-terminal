@@ -1,0 +1,43 @@
+name: Deploy KHALYON
+on:
+  push:
+    branches: ["khalyon-ui"]
+    paths: ["khalyon/**","scripts/generate-context-snapshot.mjs",".github/workflows/khalyon-pages.yml","tests/khalyon-ui-integrity.mjs","src/context/**","src/surveillance/**","research/prospective/journal.jsonl","research/funding/FROZEN_ARCHIVE_LOCK.json","docs/phase3-closure-report.md","package.json","package-lock.json"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: khalyon-pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: khalyon-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install
+        run: npm ci
+      - name: Build context providers
+        run: npm run build
+      - name: Generate sealed context snapshot
+        run: node scripts/generate-context-snapshot.mjs
+      - name: Build and verify KHALYON
+        run: |
+          node khalyon/build.mjs
+          node tests/khalyon-ui-integrity.mjs
+      - name: Upload KHALYON
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "./khalyon"
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
