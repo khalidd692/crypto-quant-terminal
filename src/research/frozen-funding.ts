@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+export const EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256 =
+  "137d7f4f0d41fbdae1b93d9aa3b50cf3193e91630eb46fc09262d8a53fbeaf8";
+
 export interface FrozenFundingFile {
   readonly filename: string;
   readonly source: string;
@@ -33,6 +36,9 @@ export function loadFrozenFundingManifest(dir: string): FrozenFundingManifest {
   if (manifest.symbol !== "BTCUSDT") throw new Error("Frozen funding archive symbol mismatch");
   if (manifest.periodStart !== "2020-01" || manifest.periodEndExclusive !== "2026-01") throw new Error("Frozen funding archive period mismatch");
   if (manifest.archiveSha256 !== manifestSha256(manifest)) throw new Error("Frozen funding manifest hash mismatch");
+  if (manifest.archiveSha256 !== EXPECTED_FROZEN_FUNDING_ARCHIVE_SHA256) {
+    throw new Error("Frozen funding archive version/hash mismatch");
+  }
   return manifest;
 }
 export function verifyFrozenFundingArchive(dir: string): FrozenFundingManifest {
