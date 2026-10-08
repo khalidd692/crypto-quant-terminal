@@ -35,7 +35,7 @@ jobs:
           echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
           node tests/khalyon-ui-integrity.mjs
-      - name: Install Playwright\n        run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps\n      - name: Serve KHALYON\n        run: python3 -m http.server 4173 --directory khalyon > /tmp/khalyon-http.log 2>&1 &\n      - name: Playwright render and screenshots\n        run: npx playwright test tests/khalyon-playwright.spec.mjs --project=chromium --workers=1\n      - name: Upload Playwright screenshots\n        uses: actions/upload-artifact@v4\n        with:\n          name: khalyon-playwright-screenshots\n          path: artifacts/khalyon-*.png\n      - name: Upload KHALYON
+      - name: Install Playwright\n        run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps\n      - name: Serve KHALYON\n        run: python3 -m http.server 4173 --directory khalyon > /tmp/khalyon-http.log 2>&1 &\n      - name: Playwright render and screenshots\n        run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1\n      - name: Upload Playwright screenshots\n        uses: actions/upload-artifact@v4\n        with:\n          name: khalyon-playwright-screenshots\n          path: artifacts/khalyon-*.png\n      - name: Upload KHALYON
         uses: actions/upload-pages-artifact@v4
         with:
           path: "./khalyon"
