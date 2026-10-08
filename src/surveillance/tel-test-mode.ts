@@ -1,5 +1,5 @@
 import type { EntryQuality, SpotRiskResult, SwingDecision } from "./tel-swing.js";
-export interface TelTestScreenInput { readonly decision:SwingDecision; readonly quality:EntryQuality; readonly btcStatus:"OK"|"BLOCKED"|"UNAVAILABLE"; readonly macroStatus:"OK"|"UNAVAILABLE"; readonly sentimentStatus:"OK"|"UNAVAILABLE"; readonly risk:SpotRiskResult; readonly reason:string; }
+export interface TelTestScreenInput { readonly decision:SwingDecision; readonly quality:EntryQuality; readonly btcStatus:"OK"|"BLOCKED"|"UNAVAILABLE"; readonly macroStatus:"OK"|"UNAVAILABLE"; readonly sentimentStatus:"OK"|"UNAVAILABLE"; readonly risk:SpotRiskResult; readonly riskMaxPct:number; readonly reason:string; }
 export function renderTelTestScreen(input:TelTestScreenInput):string{
   const checks=[
     ["Prix étiré ?",input.quality.decision==="ACCEPTABLE"?"OK":"BLOC"],
