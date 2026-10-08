@@ -85,3 +85,14 @@ These are intentionally blocked until the research gate is satisfied.
 - `docs/DATA_PROVIDER.md`
 - `docs/RESEARCH_PROTOCOL.md`
 - `docs/DECISIONS.md`
+
+
+## Phase 3 closure status
+
+**PAS D'EDGE.** Phase 3 diagnostics are closed without changing ADR-0002, the frozen dataset, or historical results. The final holdout remains untouched.
+
+The replay funding input is now versioned and hash-checked: Binance Vision BTCUSDT USDⓈ-M Futures funding, 2020-01 through 2025-12, 72 files / 6,576 rows, manifest SHA-256 `137d7f4f0d41fbdae1b93d9aa3b50cf3193e91630eb46fc09262d8a53fbeaf8a`. See `docs/funding-archive.md`.
+
+TEL/USDT surveillance is read-only: KuCoin Spot primary, MEXC cross-check, states ENTRER / ATTENDRE / SORTIR / NE_PAS_ENTRER, and fail-closed degraded-data handling. It carries the banner: « Règles de surveillance, aucun edge statistique démontré (phase 3 : PAS D'EDGE). Ce n'est pas une prédiction. »
+
+Remaining methodological reservations are documented in `docs/phase3-closure-report.md`. No ADR-0003 is created and no holdout data is accessed.
