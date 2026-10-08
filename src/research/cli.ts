@@ -8,7 +8,7 @@ import { buildResearchReport } from "./report.js";
 import { buildPhase3PartitionReport, finalizeCriteria, type Phase3PartitionReport } from "./phase3-report.js";
 import { estimateOutcomeDistribution } from "../statistics/multi-outcome-probability.js";
 import { BASELINE_SETUP_ID } from "../setup/basic.js";
-import { RESEARCH_END_EXCLUSIVE } from "./research-dataset-loader.js";
+import { RESEARCH_END_EXCLUSIVE, loadResearchPoints } from "./research-dataset-loader.js";
 import type { ResearchObservation } from "./observation-ledger.js";
 
 const PROTOCOL = {
@@ -102,6 +102,11 @@ try {
     featureVersionPolicy: "core-v1",
     rejectGaps: true,
   }, client);
+  const researchPoints = loadResearchPoints(dataset.points);
+  const holdoutArtifactHash = process.env.PHASE3_HOLDOUT_ARTIFACT_HASH;
+  if (!holdoutArtifactHash || !/^sha256:[0-9a-f]{64}$/.test(holdoutArtifactHash)) {
+    throw new Error("PHASE3_HOLDOUT_ARTIFACT_HASH must be a sha256:<64-hex> holdout manifest hash; holdout data is never loaded by the research runner");
+  }
   const fundingClient = new BinanceVisionHistoricalClient(fetch, process.env.PHASE3_FUNDING_DIR);
   const funding = await fundingClient.historicalFundingRates(
     PROTOCOL.symbol,
@@ -109,7 +114,7 @@ try {
     Date.parse(PROTOCOL.datasetEnd),
   );
 
-  const observations = runResearchLedger(dataset.points, {
+  const observations = runResearchLedger(researchPoints, {
     lookback: PROTOCOL.lookback,
     horizonCandles: PROTOCOL.horizonCandles,
     targetR: PROTOCOL.targetR,
@@ -169,6 +174,8 @@ try {
     experimentId,
     protocol: PROTOCOL,
     dataset: dataset.manifest,
+    datasetHash: dataset.manifest.datasetVersion,
+    holdoutArtifactHash,
     holdoutConsumed: false,
     trainModelEstimates,
     validation: {
