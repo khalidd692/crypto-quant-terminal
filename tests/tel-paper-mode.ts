@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { appendFollowUp, appendProspectiveRecord, readProspectiveJournal } from "../src/automation/journal.js";
+import { renderTelTestScreen } from "../src/surveillance/tel-test-mode.js";
+import { P0_ENTRY_POLICY, calculateSpotSwingRisk } from "../src/surveillance/tel-swing.js";
+import { writeFileSync, rmSync } from "node:fs";
+const path="/tmp/tel-paper-journal.jsonl";rmSync(path,{force:true});
+const origin=appendProspectiveRecord(path,{schemaVersion:"prospective-journal.v1",recordedAt:"2026-10-08T00:00:00.000Z",assetId:"TEL-USDT",decision:"ATTENDRE",reasons:["Prix étendu"],snapshotHash:"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",priceQuote:1,mode:"TEST_SANS_ARGENT"});
+const follow=appendFollowUp(path,origin,1,1.02,"2026-10-09T00:00:00.000Z");
+assert.equal(follow.decision,"SUIVI_1J");assert.equal(follow.returnPct,.02);
+assert.equal(readProspectiveJournal(path).length,2);
+const risk=calculateSpotSwingRisk({swingCapitalQuote:10000,entryPrice:1,stopPrice:.9,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:0,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:0,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:.05,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple});
+const html=renderTelTestScreen({decision:"ATTENDRE",quality:{decision:"EXTENDED",reasons:["Prix trop étendu"],acceptableMaxEntry:.95,metrics:{},methodologyVersion:"p0-entry-quality.v1"},btcStatus:"OK",macroStatus:"UNAVAILABLE",sentimentStatus:"UNAVAILABLE",risk,reason:"Prix trop étendu"});
+assert(html.includes("EN TEST — SANS ARGENT"));assert(html.includes("5 vérifications"));assert(html.includes("ATTENDRE"));assert(html.includes("Aucun ordre"));
+rmSync(path,{force:true});console.log("M paper mode: PASS");
