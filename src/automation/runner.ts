@@ -50,7 +50,7 @@ function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGrid
   plannedEntryPrice:Number.isFinite(plannedEntry)&&plannedEntry>0?plannedEntry:null
  };
 }
-interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; }
+interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; mexcLiquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; volumeCoherenceRatio:number|null; }
 function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
 function estimateBuyImpactBps(asks:unknown,notional:number,bestAsk:number):number{
  if(!Array.isArray(asks)||notional<=0||bestAsk<=0)return 1_000_000;
