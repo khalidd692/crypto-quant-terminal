@@ -2,6 +2,15 @@ name: Prospective surveillance
 on:
   schedule:
     - cron: "*/15 * * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/prospective-surveillance.yml"
+      - "src/automation/**"
+      - "src/surveillance/**"
+      - "src/context/providers/**"
+      - "scripts/summarize-tel-vetoes.mjs"
+      - "package.json"
   workflow_dispatch:
     inputs:
       planned_order_type:
