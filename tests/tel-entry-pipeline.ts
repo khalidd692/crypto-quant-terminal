@@ -56,6 +56,9 @@ assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
 assert.notEqual(missingMexcBook.decision,"ENTRER");
 assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
+const divergentVolume=runTelEntryPipeline(input({volumeCoherenceRatio:6}));
+assert.notEqual(divergentVolume.decision,"ENTRER");
+assert.ok(divergentVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="INCOHÉRENT"));
 const missingVolume=runTelEntryPipeline(input({volumeCoherenceRatio:null}));
 assert.notEqual(missingVolume.decision,"ENTRER");
 assert.ok(missingVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="UNAVAILABLE"));
