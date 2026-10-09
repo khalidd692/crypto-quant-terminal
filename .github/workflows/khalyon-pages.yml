@@ -48,8 +48,6 @@ jobs:
         run: npm run build
       - name: Generate sealed context snapshot
         env:
-          CONTEXT_HTTP_TIMEOUT_MS: "8000"
-          CONTEXT_HTTP_RETRIES: "2"
           KHALYON_CONTEXT_TIMEOUT_MS: "45000"
         run: node scripts/generate-context-snapshot.mjs
       - name: Build and verify KHALYON
