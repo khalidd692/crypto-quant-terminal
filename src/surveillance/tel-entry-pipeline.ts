@@ -196,7 +196,9 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({asOf:input.now,decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
+  const derivativesProvenance=context?.provenance??[];
+  const secondaryDerivatives={fundingRate:context?.market.telFundingRate??null,fundingStatus:context?.market.telFundingRate!==null&&context?.market.telFundingRate!==undefined&&derivativesProvenance.some(p=>p.field==="market.telFundingRate"&&p.status==="OK")?"OK" as const:"UNAVAILABLE" as const,openInterestQuote:context?.market.telOpenInterestQuote??null,openInterestStatus:context?.market.telOpenInterestQuote!==null&&context?.market.telOpenInterestQuote!==undefined&&derivativesProvenance.some(p=>p.field==="market.telOpenInterestQuote"&&p.status==="OK")?"OK" as const:"UNAVAILABLE" as const};
+  const html=renderTelTestScreen({asOf:input.now,decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles,secondaryDerivatives});
   return{decision:finalDecision,reason:finalReason,quality,risk,angles:finalAngles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";

@@ -6,6 +6,8 @@ export interface CryptoMarketContext {
   readonly totalMarketCapQuote:number|null; readonly btcDominancePct:number|null; readonly btcReturnPct:number|null;
   readonly realizedVolPct:number|null; readonly breadthPct:number|null; readonly fundingRatePct?:number|null;
   readonly openInterestQuote?:number|null; readonly sentimentScore?:number|null;
+  /** TEL_USDT perpetual derivatives from MEXC; secondary descriptive context only. Funding is a decimal fraction. */
+  readonly telFundingRate?:number|null; readonly telOpenInterestQuote?:number|null;
 }
 export interface MacroContext {
   readonly ratesBias:"EASING"|"NEUTRAL"|"TIGHTENING"|"UNKNOWN";
