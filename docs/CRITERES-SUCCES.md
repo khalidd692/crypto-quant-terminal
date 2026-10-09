@@ -1,14 +1,16 @@
 # TEL prospective entry-quality test — success criteria
 
 - **Document date:** 2026-10-09
-- **Status:** Proposed preregistration; owner/reviewer acceptance required before the prospective test starts.
+- **Status:** Proposed preregistration for a NEW evaluation window; not retroactively valid for any run before acceptance.
+- **Acceptance timestamp:** not yet recorded.
+- **Existing journal entries:** excluded from the success/failure sample; they are operational telemetry collected before this protocol was accepted.
 - **Minimum observation duration:** 8 complete weeks after acceptance.
 - **Minimum sample:** 30 distinct eligible `ENTRER` signals. If fewer occur, outcome is **INCONCLUSIVE**; do not relax gates to obtain more signals.
 - **Current conclusion:** **PAS D'EDGE**. This document is not evidence of an edge.
 
 ## Authorization boundary
 
-No backtest, outcome scoring, parameter tuning, sealed-data access, or new strategy research is authorized by this document. The test may start only after explicit acceptance, a timestamped code SHA, a source/data manifest hash, and a frozen run configuration have been recorded. ADR-0002, its frozen dataset, historical results, and the Phase 3 holdout remain untouched.
+No backtest, outcome scoring, parameter tuning, sealed-data access, or new strategy research is authorized by this document. The evaluation clock starts only after explicit acceptance, a timestamped code SHA, a source/data manifest hash, and a frozen run configuration have been recorded. The minimum eight weeks and 30 distinct eligible signals are counted only from that accepted start timestamp. Earlier prospective-surveillance records may be used for operational diagnostics, but must not be included in the pre-registered outcome evaluation. ADR-0002, its frozen dataset, historical results, and the Phase 3 holdout remain untouched.
 
 ## Primary metric
 
