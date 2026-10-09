@@ -39,8 +39,8 @@ function isFresh(when:string|null|undefined,now:string,maxAgeMs=120_000):boolean
 function hashOf(context:ContextSnapshot|null):string{return context?.snapshotHash??"sha256:unavailable";}
 export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutput {
   const nowMs=Date.parse(input.now), last=input.candles.at(-1), price=last?.close??null;
-  const quality=assessEntryQuality({points:input.candles,price24hAgo:input.price24hAgo??undefined,price7dAgo:input.price7dAgo??undefined,relativeVolume:input.relativeVolume??undefined,now:input.now});
-  const angles:EntryAngle[]=[];
+  const quality=assessEntryQuality({points:input.candles,...(input.price24hAgo===null?{}:{price24hAgo:input.price24hAgo}),...(input.price7dAgo===null?{}:{price7dAgo:input.price7dAgo}),...(input.relativeVolume==null?{}:{relativeVolume:input.relativeVolume}),now:input.now});
+  const angles:EntryAngle[]=[];\n  let macroStatus:AngleStatus="UNAVAILABLE";\n  let sentimentStatus:AngleStatus="UNAVAILABLE";
   angles.push(angle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null));
   const candlesFresh=last!==undefined&&isFresh(last.availableTime,input.now,90*60_000)&&last.dataQuality==="complete";
   angles.push(angle("Historique / fraîcheur",candlesFresh?"OK":last?"PÉRIMÉ":"UNAVAILABLE",candlesFresh?"Bougie horaire récente et complète":"Historique absent, incomplet ou périmé","KuCoin Spot klines",last?.availableTime??null));
@@ -59,12 +59,12 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const macroOk=context.macro.ratesBias!=="UNKNOWN"&&context.macro.inflationBias!=="UNKNOWN"&&context.macro.dollarBias!=="UNKNOWN"&&macroProv.length>0&&macroProv.every(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,7*86400_000));
     const highEvent=context.events.events.find(e=>e.importance==="HIGH"&&Date.parse(e.timestamp)>=nowMs&&Date.parse(e.timestamp)-nowMs<=48*3600_000);
     const eventOk=!!eventProv&&eventProv.status==="OK"&&isFresh(eventProv.availableAt,input.now,24*3600_000);
-    const macroStatus:AngleStatus=!macroOk||!eventOk?"UNAVAILABLE":highEvent?"BLOC":"OK";
+    macroStatus=!macroOk||!eventOk?"UNAVAILABLE":highEvent?"BLOC":"OK";
     angles.push(angle("Macro + calendrier",macroStatus,highEvent?("Événement majeur proche : "+highEvent.label):macroStatus==="OK"?"Macro renseignée, aucun événement HIGH dans les 48 h":"Macro ou calendrier indisponible/périmé","FRED + calendrier FOMC",context.asOf,context.snapshotHash));
     const sentimentProv=context.provenance.filter(p=>p.field.startsWith("market.sentiment")||p.field.startsWith("social."));
     const sentimentOk=context.market.sentimentScore!==null&&context.socialSentiment?.temperature!==undefined&&context.socialSentiment.temperature!=="UNAVAILABLE"&&sentimentProv.length>0&&sentimentProv.every(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
     const sentimentBlocked=context.socialSentiment?.temperature==="HOT"||((context.socialSentiment?.concentrationTop5Pct??0)>.8);
-    const sentimentStatus:AngleStatus=!sentimentOk?"UNAVAILABLE":sentimentBlocked?"BLOC":"OK";
+    sentimentStatus=!sentimentOk?"UNAVAILABLE":sentimentBlocked?"BLOC":"OK";
     angles.push(angle("Sentiment",sentimentStatus, sentimentBlocked?"Attention sociale chaude/concentrée":sentimentOk?"Sentiment renseigné":"Sentiment indisponible/périmé","Alternative.me + Reddit/X",context.asOf,context.snapshotHash));
     const supplyProv=context.provenance.filter(p=>p.field.startsWith("fundamentalsTel."));
     const supplyOk=!!context.fundamentalsTel&&context.fundamentalsTel.circulatingSupply!==null&&context.fundamentalsTel.totalSupply!==null&&context.fundamentalsTel.tokenUnlocks==="OK"&&context.fundamentalsTel.notableFlows==="OK"&&supplyProv.length>0&&supplyProv.every(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
@@ -72,7 +72,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     angles.push(angle("Offre / on-chain",!supplyOk?"UNAVAILABLE":supplyDeteriorating?"BLOC":"OK",supplyOk?"Offre, déblocages et flux documentés":"Déblocages/flux on-chain non disponibles : veto conservateur","CoinGecko + flux on-chain",context.asOf,context.snapshotHash));
   }
   const liquidity=input.telLiquidity;
-  const risk=price!==null&&input.stopPrice!==null&&input.stopPrice>0&&input.stopPrice<price?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:input.stopPrice,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
+  const risk=price!==null&&input.stopPrice!==null&&input.stopPrice>0&&input.stopPrice<price&&(quality.metrics.atr??0)>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:input.stopPrice,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     angles.push(angle("Liquidité réelle TEL",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
@@ -91,7 +91,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const finalReason=finalDecision==="ENTRER"?reason:reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:angles.find(a=>a.angle==="Macro + calendrier")?.status==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatusFrom(angles),risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason});
+  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason});
   return{decision:finalDecision,reason:finalReason,quality,risk,angles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";
