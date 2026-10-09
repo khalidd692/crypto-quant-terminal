@@ -51,6 +51,8 @@ jobs:
           PROSPECTIVE_JOURNAL: /tmp/tel-entry-smoke-journal.jsonl
           TEL_DECISION_HTML: /tmp/tel-entry-smoke.html
           SWING_CAPITAL_QUOTE: "1000"
+          CONTEXT_HTTP_TIMEOUT_MS: "3500"
+          CONTEXT_HTTP_RETRIES: "1"
         run: |
           rm -f "$PROSPECTIVE_JOURNAL" "$TEL_DECISION_HTML"
           node dist/src/automation/runner.js
