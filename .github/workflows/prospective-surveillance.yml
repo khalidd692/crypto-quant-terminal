@@ -42,6 +42,11 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "automation: append prospective surveillance journal"
           git push origin HEAD:main
+      - name: Weekly angle availability and veto summary
+        if: success()
+        env:
+          PROSPECTIVE_JOURNAL: research/prospective/journal.jsonl
+        run: node scripts/summarize-tel-vetoes.mjs >> "$GITHUB_STEP_SUMMARY"
       - name: Prepare public decision page
         if: always()
         shell: bash
