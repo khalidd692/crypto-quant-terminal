@@ -1,0 +1,5 @@
+# Generated local ingestion artifacts; keep source snapshots and SQLite state out of Git.
+datasets/raw/github/*.json
+datasets/raw/github/*.meta.json
+datasets/processed/*.sqlite3
+datasets/processed/*.sqlite3-*
