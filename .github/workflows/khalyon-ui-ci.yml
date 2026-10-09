@@ -58,5 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: khalyon-playwright-screenshots
-          path: artifacts/khalyon-*.png
+          path: |
+            artifacts/khalyon-*.png
+            khalyon/data/runtime.json
           if-no-files-found: warn
