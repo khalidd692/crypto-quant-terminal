@@ -11,6 +11,11 @@ on:
       - "src/context/providers/**"
       - "scripts/summarize-tel-vetoes.mjs"
       - "package.json"
+      - ".github/workflows/khalyon-pages.yml"
+      - "khalyon/**"
+      - "!khalyon/data/context-snapshot.json"
+      - "tests/khalyon-ui-integrity.mjs"
+      - "tests/khalyon-playwright.spec.mjs"
   workflow_dispatch:
     inputs:
       planned_order_type:
@@ -55,6 +60,7 @@ permissions:
 jobs:
   surveillance:
     if: github.ref == 'refs/heads/main'
+    timeout-minutes: 12
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
