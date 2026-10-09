@@ -71,8 +71,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "::warning::main advanced during this build; preserving the existing committed snapshot and retrying on the next refresh."
-            exit 0
+            echo "::error::main advanced during this build; refuse to publish a runtime built from stale main."
+            exit 1
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -81,7 +81,7 @@ jobs:
             echo "Context snapshot unchanged; no commit required."
           else
             git commit -m "chore(context): persist verified KHALYON snapshot"
-            git push origin HEAD:main || echo "::warning::snapshot push raced with another main update; next refresh will retry."
+            git push origin HEAD:main
           fi
       - name: Upload Playwright screenshots
         uses: actions/upload-artifact@v4
