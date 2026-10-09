@@ -137,7 +137,8 @@ async function main():Promise<void>{
   let decision:"ENTRER"|"ATTENDRE"|"NE_PAS_ENTRER"="ATTENDRE",reasons:string[]=["Données indisponibles: ATTENDRE"],snapshotHash="sha256:unavailable",priceQuote:number|undefined,contextSnapshot:null|Awaited<ReturnType<typeof fetchContextSnapshot>>=null,angleDiagnostics:import("./journal.js").AngleJournalDiagnostic[]=[],vetoReasons:string[]=[];
   let html="<!doctype html><html lang=\"fr\"><meta charset=\"utf-8\"><title>Puis-je acheter maintenant ?</title><body><h1>ATTENDRE</h1><p>Collecte indisponible. EN TEST — SANS ARGENT. Aucun ordre.</p></body></html>";
   try{
-   const [live,contextResult]=await settleWithTimeout(Promise.allSettled([collect(asset,now),settleWithTimeout(fetchContextSnapshot("entry-pipeline:"+now,asset.id,now),20000,"CONTEXT_PROVIDERS_TIMEOUT")]),25000,"LIVE_ENTRY_PIPELINE_TIMEOUT");
+   // Context fan-out includes sequential Reddit/X collection plus several independent providers; keep a larger bounded budget so one slow response does not erase the whole snapshot.
+   const [live,contextResult]=await settleWithTimeout(Promise.allSettled([collect(asset,now),settleWithTimeout(fetchContextSnapshot("entry-pipeline:"+now,asset.id,now),45000,"CONTEXT_PROVIDERS_TIMEOUT")]),55000,"LIVE_ENTRY_PIPELINE_TIMEOUT");
    if(contextResult.status==="fulfilled")contextSnapshot=contextResult.value;
    if(live.status!=="fulfilled")throw new Error("COLLECTE_UNAVAILABLE: "+String(live.reason));
    const market=live.value;
