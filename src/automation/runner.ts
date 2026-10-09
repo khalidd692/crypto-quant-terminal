@@ -123,7 +123,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end,
   "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20"
  ];
- const settled=await Promise.allSettled([kucoinPrimaryTicker(urls[0],asset.primarySymbol),...urls.slice(1).map(json)]);
+ const settled=await Promise.allSettled([kucoinPrimaryTicker(urls[0]!,asset.primarySymbol),...urls.slice(1).map(json)]);
  const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
  const [k,mPrice,m24,kline,book,btc,mBook]=[0,1,2,3,4,5,6].map(value);
  const failed=settled.map((item,i)=>item.status==="rejected"?`${i}:${String(item.reason).slice(0,100)}`:null).filter((x):x is string=>x!==null);
