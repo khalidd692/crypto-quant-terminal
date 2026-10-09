@@ -36,13 +36,13 @@ function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,cu
  const target1Reached=process.env.TEL_POSITION_TARGET1_REACHED?.trim().toLowerCase()==="true";
  let exitPlan:TelAtrExitPlan|null=null;
  if(Number.isFinite(entryAtr)&&entryAtr>0&&currentAtr!==null&&Number.isFinite(highest)&&highest>0&&Number.isFinite(remaining)&&entryAt&&Number.isFinite(Date.parse(entryAt))){
-  exitPlan=calculateTelAtrExitPlan({entryPrice:averageEntryPrice,entryAtr,currentPrice,currentAtr,highestSinceEntry:highest,entryAt,asOf,target1Reached,previousStopRaw:undefined,previousStop:Number.isFinite(previousStopRaw)&&previousStopRaw>0?previousStopRaw:null,remainingFraction:remaining});
+  exitPlan=calculateTelAtrExitPlan({entryPrice:averageEntryPrice,entryAtr,currentPrice,currentAtr,highestSinceEntry:highest,entryAt,asOf,target1Reached,previousStop:Number.isFinite(previousStopRaw)&&previousStopRaw>0?previousStopRaw:null,remainingFraction:remaining});
   if(exitPlan.stopChange){
    const privateJournal=process.env.TEL_PRIVATE_EXIT_JOURNAL??"/tmp/tel-private-stop-journal.jsonl";
    mkdirSync(privateJournal.split("/").slice(0,-1).join("/")||".",{recursive:true});
-   const prior=existsSync(privateJournal)?readFileSync(privateJournal,"utf8").trim().split("\\n").filter(Boolean).at(-1):undefined;
+   const prior=existsSync(privateJournal)?readFileSync(privateJournal,"utf8").trim().split("\n").filter(Boolean).at(-1):undefined;
    const already=prior?(()=>{try{const row=JSON.parse(prior);return row.assetId===asset.id&&row.previousStop===exitPlan!.stopChange!.previous&&row.nextStop===exitPlan!.stopChange!.next;}catch{return false;}})():false;
-   if(!already)appendFileSync(privateJournal,JSON.stringify({asOf,assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason,planVersion:exitPlan.version,stateHash:sha({assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason})})+"\\n",{encoding:"utf8",mode:0o600});
+   if(!already)appendFileSync(privateJournal,JSON.stringify({asOf,assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason,planVersion:exitPlan.version,stateHash:sha({assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason})})+"\n",{encoding:"utf8",mode:0o600});
   }
  }
  const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,exitPlan});
