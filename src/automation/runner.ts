@@ -35,8 +35,11 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.kucoin.com/api/v3/market/orderbook/level2_20?symbol="+encodeURIComponent(asset.primarySymbol),
   "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=30"
  ];
- const [k,mPrice,m24,kline,book,btc]=await Promise.all(urls.map(json));
- const kd=k?.data?.list?.[0];if(!kd)throw new Error("KuCoin ticker unavailable");
+ const settled=await Promise.allSettled(urls.map(json));
+ const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
+ const [k,mPrice,m24,kline,book,btc]=[0,1,2,3,4,5].map(value);
+ const failed=settled.map((item,i)=>item.status==="rejected"?`${i}:${String(item.reason).slice(0,100)}`:null).filter((x):x is string=>x!==null);
+ const kd=k?.data?.list?.[0];if(!kd||!mPrice||!m24||!kline||!book)throw new Error("Required KuCoin/MEXC market data unavailable: "+failed.join(" | "));
  const kuLast=num(kd.lastPrice),kuBid=num(kd.bestBidPrice),kuAsk=num(kd.bestAskPrice);
  const mxLast=num(m24.lastPrice),mxBid=num(mPrice.bidPrice),mxAsk=num(mPrice.askPrice);
  const candleRows=Array.isArray(kline?.data)?kline.data:[];
