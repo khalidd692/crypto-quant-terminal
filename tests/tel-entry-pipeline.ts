@@ -48,7 +48,13 @@ assert.ok(fomoLimit.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="
 const cooldownActive=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGridActive:true,lastGridLevelPrice:.99,livePriceQuote:1,antiFomoStartedAt:"2026-10-09T06:00:00.000Z",antiFomoReason:"Attendre un repli confirmé"}));
 assert.ok(cooldownActive.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"&&a.detail.includes("Délai de réflexion")));
 const cooldownElapsed=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGridActive:true,lastGridLevelPrice:.99,livePriceQuote:1,antiFomoStartedAt:"2026-10-08T22:00:00.000Z",antiFomoReason:"Attendre un repli confirmé"}));
+
 assert.ok(cooldownElapsed.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="OK"));
+const reasonPrivacy=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGridActive:true,lastGridLevelPrice:.99,livePriceQuote:1,antiFomoStartedAt:"2026-10-08T22:00:00.000Z",antiFomoReason:"Motif personnel test privé"}));
+const fomoDetail=reasonPrivacy.angles.find(a=>a.angle==="Garde-fou anti-FOMO")?.detail??"";
+assert.ok(fomoDetail.includes("SHA-256"),"journal-facing anti-FOMO detail should retain a reason fingerprint");
+assert.ok(!fomoDetail.includes("Motif personnel test privé"),"raw written rationale must not be exposed in public logs/journal");
+
 const trancheLimit=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGridActive:true,lastGridLevelPrice:.99,livePriceQuote:1,trancheCountInZone:3,maxTranchesPerZone:3}));
 assert.ok(trancheLimit.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"&&a.detail.includes("Maximum de tranches")));
 const macroNear=runTelEntryPipeline(input({context:context("2026-10-10T12:00:00.000Z")}));
