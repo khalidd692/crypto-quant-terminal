@@ -105,7 +105,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
+  const html=renderTelTestScreen({asOf:input.now,decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
   return{decision:finalDecision,reason:finalReason,quality,risk,angles:finalAngles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";

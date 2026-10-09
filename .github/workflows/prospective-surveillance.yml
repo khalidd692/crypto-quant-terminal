@@ -8,8 +8,14 @@ concurrency:
   cancel-in-progress: false
 permissions:
   contents: write
+  pages: write
+  id-token: write
 jobs:
   surveillance:
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -36,6 +42,26 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "automation: append prospective surveillance journal"
           git push origin HEAD:main
+      - name: Prepare public decision page
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-decision
+          if test -s artifacts/tel-decision.html; then
+            cp artifacts/tel-decision.html public-decision/index.html
+          else
+            echo '<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Décision TEL</title><main><h1>ATTENDRE</h1><p>Écran indisponible pour ce run. Données non évaluées.</p></main></html>' > public-decision/index.html
+          fi
+      - name: Upload decision page only
+        if: always()
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public-decision
+      - name: Deploy decision page
+        if: always()
+        id: deployment
+        uses: actions/deploy-pages@v4
       - name: Alert summary
         if: always()
         run: |
