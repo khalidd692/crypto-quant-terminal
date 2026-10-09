@@ -1,7 +1,7 @@
 name: Deploy KHALYON
 on:
   push:
-    branches: ["khalyon-ui"]
+    branches: ["main","khalyon-ui"]
     paths: ["khalyon/**","scripts/generate-context-snapshot.mjs",".github/workflows/khalyon-pages.yml","tests/khalyon-ui-integrity.mjs","tests/khalyon-playwright.spec.mjs","src/context/**","src/surveillance/**","src/risk/**","src/automation/**","research/prospective/journal.jsonl","research/funding/FROZEN_ARCHIVE_LOCK.json","docs/phase3-closure-report.md","package.json","package-lock.json"]
   schedule:
     - cron: "*/15 * * * *"
@@ -27,7 +27,7 @@ jobs:
       - name: Checkout KHALYON
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'workflow_run' && 'khalyon-ui' || github.ref_name }}
+          ref: ${{ (github.event_name == 'workflow_run' || github.event_name == 'schedule') && 'main' || github.ref_name }}
       - name: Checkout latest surveillance journal from main
         uses: actions/checkout@v5
         with:
