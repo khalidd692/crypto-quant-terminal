@@ -28,12 +28,27 @@ function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,cu
  const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct});
  writeFileSync(path,html+"\n",{encoding:"utf8",mode:0o600});
 }
-function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null}{
+function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null;antiFomoStartedAt:string|null;antiFomoReason:string|null;trancheCountInZone:number|null;maxTranchesPerZone:number|null;lastTranchePrice:number|null;plannedEntryPrice:number|null}{
  const order=process.env.TEL_PLANNED_ORDER_TYPE?.trim().toUpperCase();
  const grid=process.env.TEL_ORDER_GRID_STATE?.trim().toUpperCase();
  const rawPrice=process.env.TEL_LAST_GRID_LEVEL_PRICE?.trim()??"";
  const parsed=rawPrice===""?NaN:Number(rawPrice);
- return{plannedOrderType:order==="LIMIT"||order==="MARKET"?order:null,orderGridActive:grid==="ACTIVE"?true:grid==="INACTIVE"?false:null,lastGridLevelPrice:Number.isFinite(parsed)&&parsed>0?parsed:null};
+ const started=process.env.TEL_ANTI_FOMO_STARTED_AT?.trim()??"";
+ const trancheCount=Number(process.env.TEL_TRANCHE_COUNT_IN_ZONE??"");
+ const trancheMax=Number(process.env.TEL_MAX_TRANCHES_PER_ZONE??"3");
+ const lastTranche=Number(process.env.TEL_LAST_TRANCHE_PRICE??"");
+ const plannedEntry=Number(process.env.TEL_PLANNED_ENTRY_PRICE??"");
+ return{
+  plannedOrderType:order==="LIMIT"||order==="MARKET"?order:null,
+  orderGridActive:grid==="ACTIVE"?true:grid==="INACTIVE"?false:null,
+  lastGridLevelPrice:Number.isFinite(parsed)&&parsed>0?parsed:null,
+  antiFomoStartedAt:started&&Number.isFinite(Date.parse(started))?started:null,
+  antiFomoReason:process.env.TEL_ANTI_FOMO_REASON?.trim()||null,
+  trancheCountInZone:Number.isInteger(trancheCount)&&trancheCount>=0?trancheCount:null,
+  maxTranchesPerZone:Number.isInteger(trancheMax)&&trancheMax>0?trancheMax:3,
+  lastTranchePrice:Number.isFinite(lastTranche)&&lastTranche>0?lastTranche:null,
+  plannedEntryPrice:Number.isFinite(plannedEntry)&&plannedEntry>0?plannedEntry:null
+ };
 }
 interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; }
 function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
