@@ -1,15 +1,180 @@
-import { mkdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { appendFollowUp, appendProspectiveRecord, readProspectiveJournal } from "./journal.js";
 import { emitAlerts } from "./alerts.js";
 import { loadSurveillanceConfig, type SurveillanceAssetConfig } from "./config.js";
 import { evaluateTelSurveillance, type VenueSnapshot } from "../surveillance/tel-usdt.js";
-import { createContextSnapshot } from "../context/snapshot.js";
 import { fetchContextSnapshot } from "../context/providers/index.js";
+import { runTelEntryPipeline } from "../surveillance/tel-entry-pipeline.js";
+import { P0_ENTRY_POLICY } from "../surveillance/tel-swing.js";
+import { averageTrueRange } from "../features/indicators.js";
+import { calculateTelAtrExitPlan, type TelAtrExitPlan } from "../risk/tel-atr-exit-plan.js";
+import { renderPrivateTelPositionReport } from "../surveillance/tel-position-private.js";
+import type { MarketDataPoint } from "../domain/types.js";
+
 const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jsonl";
+const OUTPUT=process.env.TEL_DECISION_HTML??"artifacts/tel-decision.html";
+const MAX_CONTEXT_AGE_MS=24*60*60_000;
 function num(value:unknown):number{const n=Number(value);if(!Number.isFinite(n))throw new Error("Invalid numeric market value");return n;}
-async function json(url:string):Promise<any>{const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();}
-async function snapshot(asset:SurveillanceAssetConfig,now:string):Promise<{primary:VenueSnapshot;control:VenueSnapshot}>{const[k,mPrice,m24]=await Promise.all([json("https://api.kucoin.com/api/ua/v1/market/ticker?tradeType=SPOT&symbol="+encodeURIComponent(asset.primarySymbol)),json("https://api.mexc.com/api/v3/ticker/bookTicker?symbol="+encodeURIComponent(asset.controlSymbol)),json("https://api.mexc.com/api/v3/ticker/24hr?symbol="+encodeURIComponent(asset.controlSymbol))]);const kd=k?.data?.list?.[0];if(!kd)throw new Error("KuCoin ticker unavailable");const kuLast=num(kd.lastPrice),kuHigh=num(kd.high),kuLow=num(kd.low),kuChange=num(kd.priceChangePercent)*100,md24=m24,mxLast=num(md24.lastPrice),mxHigh=num(md24.highPrice),mxLow=num(md24.lowPrice);return{primary:{venue:"KUCOIN",symbol:asset.primarySymbol,eventTime:now,availableTime:now,lastPrice:kuLast,bid:num(kd.bestBidPrice),ask:num(kd.bestAskPrice),volume24hQuote:num(kd.quoteVolume),trendOk:kuChange>=0,volatilityOk:((kuHigh-kuLow)/kuLast*100)<=asset.max24hRangePct,quality:"OK"},control:{venue:"MEXC",symbol:asset.controlSymbol,eventTime:now,availableTime:now,lastPrice:mxLast,bid:num(mPrice.bidPrice),ask:num(mPrice.askPrice),volume24hQuote:num(md24.quoteVolume??md24.volume),trendOk:num(md24.priceChangePercent)>=0,volatilityOk:((mxHigh-mxLow)/mxLast*100)<=asset.max24hRangePct,quality:"OK"}};}
+function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error(label)),ms))]);}
+async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
+function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
+function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
+function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,currentPrice:number,candles:readonly MarketDataPoint[]):void{
+ const averageEntryPrice=Number(process.env.TEL_POSITION_AVG_PRICE);
+ const quantity=Number(process.env.TEL_POSITION_QUANTITY);
+ if(!Number.isFinite(averageEntryPrice)||averageEntryPrice<=0||!Number.isFinite(quantity)||quantity<=0)return;
+ const path=process.env.TEL_POSITION_REPORT_HTML??"artifacts/tel-position-private.html";
+ const directory=path.split("/").slice(0,-1).join("/")||".";
+ mkdirSync(directory,{recursive:true});
+ const entryAtr=Number(process.env.TEL_POSITION_ENTRY_ATR);
+ const currentAtr=averageTrueRange(candles,14);
+ const highest=Number(process.env.TEL_POSITION_HIGHEST_PRICE);
+ const previousStopRaw=Number(process.env.TEL_POSITION_PREVIOUS_STOP);
+ const remaining=Number(process.env.TEL_POSITION_REMAINING_FRACTION??1);
+ const entryAt=process.env.TEL_POSITION_ENTRY_AT?.trim()??"";
+ const target1Reached=process.env.TEL_POSITION_TARGET1_REACHED?.trim().toLowerCase()==="true";
+ let exitPlan:TelAtrExitPlan|null=null;
+ if(Number.isFinite(entryAtr)&&entryAtr>0&&currentAtr!==null&&Number.isFinite(highest)&&highest>0&&Number.isFinite(remaining)&&entryAt&&Number.isFinite(Date.parse(entryAt))){
+  exitPlan=calculateTelAtrExitPlan({entryPrice:averageEntryPrice,entryAtr,currentPrice,currentAtr,highestSinceEntry:highest,entryAt,asOf,target1Reached,previousStop:Number.isFinite(previousStopRaw)&&previousStopRaw>0?previousStopRaw:null,remainingFraction:remaining});
+  if(exitPlan.stopChange){
+   const privateJournal=process.env.TEL_PRIVATE_EXIT_JOURNAL??"/tmp/tel-private-stop-journal.jsonl";
+   mkdirSync(privateJournal.split("/").slice(0,-1).join("/")||".",{recursive:true});
+   const prior=existsSync(privateJournal)?readFileSync(privateJournal,"utf8").trim().split("\n").filter(Boolean).at(-1):undefined;
+   const already=prior?(()=>{try{const row=JSON.parse(prior);return row.assetId===asset.id&&row.previousStop===exitPlan!.stopChange!.previous&&row.nextStop===exitPlan!.stopChange!.next;}catch{return false;}})():false;
+   if(!already)appendFileSync(privateJournal,JSON.stringify({asOf,assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason,planVersion:exitPlan.version,stateHash:sha({assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason})})+"\n",{encoding:"utf8",mode:0o600});
+  }
+ }
+ const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,exitPlan});
+ writeFileSync(path,html+"\n",{encoding:"utf8",mode:0o600});
+}
+function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null;antiFomoStartedAt:string|null;antiFomoReason:string|null;trancheCountInZone:number|null;maxTranchesPerZone:number|null;lastTranchePrice:number|null;plannedEntryPrice:number|null}{
+ const order=process.env.TEL_PLANNED_ORDER_TYPE?.trim().toUpperCase();
+ const grid=process.env.TEL_ORDER_GRID_STATE?.trim().toUpperCase();
+ const rawPrice=process.env.TEL_LAST_GRID_LEVEL_PRICE?.trim()??"";
+ const parsed=rawPrice===""?NaN:Number(rawPrice);
+ const started=process.env.TEL_ANTI_FOMO_STARTED_AT?.trim()??"";
+ const trancheCount=Number(process.env.TEL_TRANCHE_COUNT_IN_ZONE??"");
+ const trancheMax=Number(process.env.TEL_MAX_TRANCHES_PER_ZONE??"3");
+ const lastTranche=Number(process.env.TEL_LAST_TRANCHE_PRICE??"");
+ const plannedEntry=Number(process.env.TEL_PLANNED_ENTRY_PRICE??"");
+ return{
+  plannedOrderType:order==="LIMIT"||order==="MARKET"?order:null,
+  orderGridActive:grid==="ACTIVE"?true:grid==="INACTIVE"?false:null,
+  lastGridLevelPrice:Number.isFinite(parsed)&&parsed>0?parsed:null,
+  antiFomoStartedAt:started&&Number.isFinite(Date.parse(started))?started:null,
+  antiFomoReason:process.env.TEL_ANTI_FOMO_REASON?.trim()||null,
+  trancheCountInZone:Number.isInteger(trancheCount)&&trancheCount>=0?trancheCount:null,
+  maxTranchesPerZone:Number.isInteger(trancheMax)&&trancheMax>0?trancheMax:3,
+  lastTranchePrice:Number.isFinite(lastTranche)&&lastTranche>0?lastTranche:null,
+  plannedEntryPrice:Number.isFinite(plannedEntry)&&plannedEntry>0?plannedEntry:null
+ };
+}
+interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; mexcLiquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; volumeCoherenceRatio:number|null; }
+function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
+function estimateBuyImpactBps(asks:unknown,notional:number,bestAsk:number):number{
+ if(!Array.isArray(asks)||notional<=0||bestAsk<=0)return 1_000_000;
+ let remaining=notional,base=0,quote=0;
+ for(const row of asks){if(!Array.isArray(row))continue;const p=Number(row[0]),q=Number(row[1]);if(!Number.isFinite(p)||!Number.isFinite(q)||p<=0||q<=0)continue;const take=Math.min(remaining,p*q);base+=take/p;quote+=take;remaining-=take;if(remaining<=1e-8)break;}
+ if(remaining>Math.max(1e-8,notional*1e-6)||base<=0)return 1_000_000;
+ return Math.max(0,(quote/base/bestAsk-1)*10_000);
+}
+async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInputs>{
+ const end=Math.floor(Date.now()/1000),start=end-220*3600;
+ const urls=[
+  "https://api.kucoin.com/api/ua/v1/market/ticker?tradeType=SPOT&symbol="+encodeURIComponent(asset.primarySymbol),
+  "https://api.mexc.com/api/v3/ticker/bookTicker?symbol="+encodeURIComponent(asset.controlSymbol),
+  "https://api.mexc.com/api/v3/ticker/24hr?symbol="+encodeURIComponent(asset.controlSymbol),
+  "https://api.kucoin.com/api/v1/market/candles?symbol="+encodeURIComponent(asset.primarySymbol)+"&type=1hour&startAt="+start+"&endAt="+end,
+  "https://api.kucoin.com/api/v1/market/orderbook/level2_20?symbol="+encodeURIComponent(asset.primarySymbol),
+  "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end,
+  "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20"
+ ];
+ const settled=await Promise.allSettled(urls.map(json));
+ const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
+ const [k,mPrice,m24,kline,book,btc,mBook]=[0,1,2,3,4,5,6].map(value);
+ const failed=settled.map((item,i)=>item.status==="rejected"?`${i}:${String(item.reason).slice(0,100)}`:null).filter((x):x is string=>x!==null);
+ const kd=k?.data?.list?.[0];if(!kd||!mPrice||!m24||!kline)throw new Error("Required KuCoin/MEXC market data unavailable: "+failed.join(" | "));
+ const kuLast=num(kd.lastPrice),kuBid=num(kd.bestBidPrice),kuAsk=num(kd.bestAskPrice);
+ const mxLast=num(m24.lastPrice),mxBid=num(mPrice.bidPrice),mxAsk=num(mPrice.askPrice);
+ const candleRows=Array.isArray(kline?.data)?kline.data:[];
+ const candles:MarketDataPoint[]=candleRows.map((row:any)=>({instrumentId:asset.id,eventTime:asIso(row[0],now) as MarketDataPoint["eventTime"],availableTime:now as MarketDataPoint["availableTime"],open:num(row[1]),close:num(row[2]),high:num(row[3]),low:num(row[4]),volume:num(row[5]),dataQuality:"complete",sourceId:"KUCOIN_SPOT_KLINES_1H"})).sort((a:MarketDataPoint,b:MarketDataPoint)=>Date.parse(a.eventTime)-Date.parse(b.eventTime));
+ const lastCandle=candles.at(-1),candleAge=lastCandle?Date.parse(now)-Date.parse(lastCandle.eventTime):Infinity;
+ const quality=candleAge>90*60_000?"STALE":"OK";
+ const primary:VenueSnapshot={venue:"KUCOIN",symbol:asset.primarySymbol,eventTime:lastCandle?.eventTime??now,availableTime:now,lastPrice:kuLast,bid:kuBid,ask:kuAsk,volume24hQuote:num(kd.quoteVolume),trendOk:num(kd.priceChangePercent)>=0,volatilityOk:((num(kd.high)-num(kd.low))/kuLast*100)<=asset.max24hRangePct,quality};
+ const control:VenueSnapshot={venue:"MEXC",symbol:asset.controlSymbol,eventTime:asIso(m24.closeTime,now),availableTime:now,lastPrice:mxLast,bid:mxBid,ask:mxAsk,volume24hQuote:num(m24.quoteVolume??m24.volume),trendOk:num(m24.priceChangePercent)>=0,volatilityOk:((num(m24.highPrice)-num(m24.lowPrice))/mxLast*100)<=asset.max24hRangePct,quality:Date.now()-Date.parse(asIso(m24.closeTime,now))>asset.maxAgeMs?"STALE":"OK"};
+ const venueEval=evaluateTelSurveillance(primary,control,{maxAgeMs:asset.maxAgeMs,maxCrossVenueDeviationBps:asset.maxCrossVenueDeviationBps,entryZone:asset.entryZone,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,maxLossQuote:asset.maxLossQuote,existingPosition:"NONE",exitTriggered:false},Date.parse(now));
+ let venueStatus:LiveInputs["venueStatus"]=venueEval.degraded?"INCOHÉRENT":"OK",venueDetail=venueEval.reasons.join("; ");
+ if(candleAge>90*60_000){venueStatus="PÉRIMÉ";venueDetail="Dernière bougie KuCoin trop ancienne";}
+ const bids=book?.data?.bids??book?.bids,asks=book?.data?.asks??book?.asks;
+ const bidDepth=bookSideDepth(bids),askDepth=bookSideDepth(asks),depthQuote=Math.min(bidDepth,askDepth);
+ const spreadBps=kuLast>0?((kuAsk-kuBid)/kuLast)*10_000:Infinity;
+ const swingCapital=num(process.env.SWING_CAPITAL_QUOTE??1000),maxRiskQuote=swingCapital*.005;
+ const stop=asset.invalidationPrice,estimatedNotional=kuLast>stop?maxRiskQuote/(kuLast-stop)*kuLast: swingCapital;
+ const estimatedSlippageBps=estimateBuyImpactBps(asks,estimatedNotional,kuAsk);
+ const liquidity=Number.isFinite(spreadBps)&&Number.isFinite(depthQuote)&&depthQuote>0?{spreadBps,depthQuote,estimatedSlippageBps,observedAt:now,sourceHash:sha(book)}:null;
+ const mbids=mBook?.bids,masks=mBook?.asks;
+ const mBid=Array.isArray(mbids)&&mbids[0]?num(mbids[0][0]):NaN,mAsk=Array.isArray(masks)&&masks[0]?num(masks[0][0]):NaN;
+ const mexcBidDepth=bookSideDepth(mbids),mexcAskDepth=bookSideDepth(masks),mexcDepthQuote=Math.min(mexcBidDepth,mexcAskDepth);
+ const mexcSpreadBps=mBid>0&&mAsk>=mBid?((mAsk-mBid)/((mAsk+mBid)/2))*10_000:NaN;
+ const mexcSlippageBps=estimateBuyImpactBps(masks,estimatedNotional,mAsk);
+ const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepthQuote)&&mexcDepthQuote>0?{spreadBps:mexcSpreadBps,depthQuote:mexcDepthQuote,estimatedSlippageBps:mexcSlippageBps,observedAt:now,sourceHash:sha(mBook)}:null;
+ const volumeCoherenceRatio=Number.isFinite(primary.volume24hQuote)&&primary.volume24hQuote>0&&Number.isFinite(control.volume24hQuote)&&control.volume24hQuote>0?Math.max(primary.volume24hQuote,control.volume24hQuote)/Math.min(primary.volume24hQuote,control.volume24hQuote):null;
+ const btcRows=(Array.isArray(btc?.data)?btc.data:[]).filter((row:any)=>Array.isArray(row)&&row.length>=6).sort((a:any,b:any)=>Number(a[0])-Number(b[0]));
+ let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null,btcUnavailableReason:string|null=null;
+ if(btc===null){btcUnavailableReason=failed.find(x=>x.startsWith("5:"))??"BTC_HTTP_UNAVAILABLE";}
+ else if(!Array.isArray(btc?.data)){btcUnavailableReason=`BTC_RESPONSE_SCHEMA_INVALID: code=${String(btc?.code??"missing")} message=${String(btc?.msg??btc?.message??"missing").slice(0,100)}`;}
+ else if(btcRows.length<25){btcUnavailableReason=`BTC_CANDLES_INSUFFICIENT: ${btcRows.length}/25 rows`;}
+ else {const old=Number(btcRows[btcRows.length-25]?.[2]),latest=Number(btcRows.at(-1)?.[2]),latestAt=Number(btcRows.at(-1)?.[0])*1000;const priorLows=btcRows.slice(-25,-1).map((x:any)=>Number(x[4])).filter(Number.isFinite);if(!Number.isFinite(old)||!Number.isFinite(latest)||old<=0||latest<=0){btcUnavailableReason="BTC_CLOSE_INVALID";}else if(!Number.isFinite(latestAt)||Date.parse(now)-latestAt>90*60_000||latestAt>Date.parse(now)+5*60_000){btcUnavailableReason="BTC_LAST_CANDLE_STALE_OR_FUTURE";}else if(priorLows.length!==24||priorLows.some((x:number)=>x<=0)){btcUnavailableReason=`BTC_SUPPORT_SERIES_INVALID: ${priorLows.length}/24 lows`;}else{btc24hChangePct=latest/old-1;btcSupportBroken=latest<Math.min(...priorLows);}}
+ return{primary,control,candles,btc24hChangePct,btcSupportBroken,btcUnavailableReason,liquidity,mexcLiquidity,volumeCoherenceRatio,venueStatus,venueDetail,marketSourceHash:sha({k,mPrice,m24}),candlesSourceHash:sha(kline),btcSourceHash:btc===null?null:sha(btc)};
+}
 function appendDueFollowUps(path:string,records:ReturnType<typeof readProspectiveJournal>,now:string,prices:Readonly<Record<string,number>>):void{for(const origin of records.filter(r=>r.mode==="TEST_SANS_ARGENT"&&r.referenceRecordHash===undefined&&r.priceQuote!==undefined)){for(const horizon of [1,3,7] as const){if(Date.parse(now)<Date.parse(origin.recordedAt)+horizon*86400000)continue;if(records.some(r=>r.referenceRecordHash===origin.recordHash&&r.horizonDays===horizon))continue;const price=prices[origin.assetId];if(price===undefined||!Number.isFinite(price)||price<=0)continue;appendFollowUp(path,origin,horizon,price,now);}}}
-async function main():Promise<void>{const config=loadSurveillanceConfig(process.env.SURVEILLANCE_CONFIG??"config/surveillance-assets.json");mkdirSync(JOURNAL.split("/").slice(0,-1).join("/")||".",{recursive:true});const now=new Date().toISOString(),journalBeforeRun=readProspectiveJournal(JOURNAL),prices:Record<string,number>={};for(const asset of config.assets){let decision:string="NE_PAS_ENTRER",reasons:string[]=["Données indisponibles"],snapshotHash="sha256:unavailable",priceQuote:number|undefined;try{const venues=await snapshot(asset,now);priceQuote=venues.primary.lastPrice;prices[asset.id]=priceQuote;const context=createContextSnapshot({schemaVersion:"context-snapshot.v1",instrumentId:asset.id,asOf:now,market:{totalMarketCapQuote:null,btcDominancePct:null,btcReturnPct:null,realizedVolPct:null,breadthPct:null},macro:{ratesBias:"UNKNOWN",inflationBias:"UNKNOWN",dollarBias:"UNKNOWN",sourceAsOf:null},events:{events:[]},liquidity:{venue:"KUCOIN",symbol:asset.primarySymbol,spreadBps:((venues.primary.ask-venues.primary.bid)/venues.primary.lastPrice)*10000,depthQuote:Math.min(venues.primary.bid,venues.primary.ask),volume24hQuote:venues.primary.volume24hQuote,observedAt:now},fundamentals:{protocolActivity:"UNKNOWN",developmentActivity:"UNKNOWN",valuationAssessment:"UNKNOWN",sourceAsOf:null},macroRegime:{regime:"UNKNOWN",rationale:"No macro feed configured in this surveillance run.",methodologyVersion:"descriptive-regime.v1"}});const output=evaluateTelSurveillance(venues.primary,venues.control,{maxAgeMs:asset.maxAgeMs,maxCrossVenueDeviationBps:asset.maxCrossVenueDeviationBps,entryZone:asset.entryZone,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,maxLossQuote:asset.maxLossQuote,existingPosition:"NONE",exitTriggered:false},Date.parse(now));decision=output.decision;reasons=[...output.reasons];snapshotHash=context.snapshotHash;}catch(error){reasons=["API_UNAVAILABLE_OR_TIMEOUT"];}
-const previous=[...journalBeforeRun].reverse().find(item=>item.assetId===asset.id&&item.decision!=="ALERTE")?.decision??null;const recordInput={schemaVersion:"prospective-journal.v1" as const,recordedAt:now,assetId:asset.id,decision,reasons,snapshotHash,mode:"TEST_SANS_ARGENT" as const,...(priceQuote===undefined?{}:{priceQuote})};const record=appendProspectiveRecord(JOURNAL,recordInput);try{const context=await fetchContextSnapshot("surveillance:"+now,asset.id,now);await emitAlerts(JOURNAL,asset.id,decision as any,previous,snapshotHash,context,now);}catch(error){appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:"__ALERT__",decision:"ALERTE",reasons:["ALERT_CONTEXT_UNAVAILABLE",String(error).slice(0,160)],snapshotHash});}if(["ENTRER","SORTIR"].includes(decision)||decision==="NE_PAS_ENTRER")console.log(`::warning title=Surveillance ${asset.id}::${decision} — ${reasons.join(" | ")} — record ${record.recordHash}`);}appendDueFollowUps(JOURNAL,journalBeforeRun,now,prices);}
+async function main():Promise<void>{
+ const config=loadSurveillanceConfig(process.env.SURVEILLANCE_CONFIG??"config/surveillance-assets.json");
+ mkdirSync(JOURNAL.split("/").slice(0,-1).join("/")||".",{recursive:true});mkdirSync(OUTPUT.split("/").slice(0,-1).join("/")||".",{recursive:true});
+ const now=new Date().toISOString(),journalBeforeRun=readProspectiveJournal(JOURNAL),prices:Record<string,number>={},orderPlan=readManualOrderPlan();
+ for(const asset of config.assets){
+  let decision:"ENTRER"|"ATTENDRE"|"NE_PAS_ENTRER"="ATTENDRE",reasons:string[]=["Données indisponibles: ATTENDRE"],snapshotHash="sha256:unavailable",priceQuote:number|undefined,contextSnapshot:null|Awaited<ReturnType<typeof fetchContextSnapshot>>=null,angleDiagnostics:import("./journal.js").AngleJournalDiagnostic[]=[],vetoReasons:string[]=[],decisionChecks:Record<string,unknown>={};
+  let html="<!doctype html><html lang=\"fr\"><meta charset=\"utf-8\"><title>Puis-je acheter maintenant ?</title><body><h1>ATTENDRE</h1><p>Collecte indisponible. EN TEST — SANS ARGENT. Aucun ordre.</p></body></html>";
+  try{
+   // Context fan-out includes sequential Reddit/X collection plus several independent providers; keep a larger bounded budget so one slow response does not erase the whole snapshot.
+   const [live,contextResult]=await settleWithTimeout(Promise.allSettled([collect(asset,now),settleWithTimeout(fetchContextSnapshot("entry-pipeline:"+now,asset.id,now),45000,"CONTEXT_PROVIDERS_TIMEOUT")]),55000,"LIVE_ENTRY_PIPELINE_TIMEOUT");
+   if(contextResult.status==="fulfilled")contextSnapshot=contextResult.value;
+   if(live.status!=="fulfilled")throw new Error("COLLECTE_UNAVAILABLE: "+String(live.reason));
+   const market=live.value;
+   priceQuote=market.primary.lastPrice;prices[asset.id]=priceQuote;writePrivatePositionReport(asset,now,market.primary.lastPrice,market.candles);
+   const qualityBars=market.candles;
+   const price24hAgo=qualityBars.length>=25?qualityBars[qualityBars.length-25]?.close??null:null;
+   const price48hAgo=qualityBars.length>=49?qualityBars[qualityBars.length-49]?.close??null:null;
+   const price7dAgo=qualityBars.length>=169?qualityBars[qualityBars.length-169]?.close??null:null;
+   const contextProvenance=contextSnapshot?.provenance??[];
+   const contextUnavailable=contextProvenance.filter(p=>p.status==="UNAVAILABLE");
+   const contextError=contextSnapshot?undefined:contextResult.status==="rejected"?String(contextResult.reason).slice(0,200):"Context providers unavailable";
+   const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price48hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,...(market.btcUnavailableReason?{btcUnavailableReason:market.btcUnavailableReason}:{}),context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,volumeCoherenceRatio:market.volumeCoherenceRatio,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0),livePriceQuote:market.primary.lastPrice,...orderPlan});
+   decision=output.decision;angleDiagnostics=[...output.angles];vetoReasons=output.angles.filter(a=>a.status!=="OK").map(a=>`${a.angle}: ${a.status} — ${a.detail}`);
+   const angleCheck=(name:string)=>{const a=output.angles.find(x=>x.angle===name);return a?{status:a.status,value:a.detail,reason:a.status==="OK"?undefined:a.detail,source:a.source,asOf:a.observedAt,sourceHash:a.sourceHash}:{status:"UNAVAILABLE",reason:"Pipeline angle missing: "+name};};
+   const liquidityChecks=output.angles.filter(a=>a.angle==="Liquidité KuCoin"||a.angle==="Liquidité MEXC");
+   decisionChecks={price:{status:typeof priceQuote==="number"&&Number.isFinite(priceQuote)?"OK":"UNAVAILABLE",value:priceQuote??null,source:"KuCoin Spot TEL/USDT",asOf:now},btc:angleCheck("Filtre BTC"),macro:angleCheck("Macro + calendrier"),sentiment:angleCheck("Sentiment"),risk:{status:output.risk.allowed?"OK":output.risk.reason==="Dimensionnement indisponible"?"UNAVAILABLE":"BLOC",value:{allowed:output.risk.allowed,riskBudgetQuote:output.risk.riskBudgetQuote,riskPerUnitQuote:output.risk.riskPerUnitQuote,quantity:output.risk.quantity,notionalQuote:output.risk.notionalQuote,maxLossQuote:output.risk.maxLossQuote,pauseMonthlyLoss:output.risk.pauseMonthlyLoss},reason:output.risk.reason??undefined,source:"calculateSpotSwingRisk",asOf:now},spread:{status:liquidityChecks.length===2&&liquidityChecks.every(a=>a.status==="OK")?"OK":liquidityChecks.some(a=>a.status==="BLOC")?"BLOC":"UNAVAILABLE",value:liquidityChecks.map(a=>({angle:a.angle,status:a.status,detail:a.detail,source:a.source,asOf:a.observedAt})),reason:liquidityChecks.filter(a=>a.status!=="OK").map(a=>a.angle+": "+a.detail).join("; ")||undefined,source:"KuCoin + MEXC order books",asOf:now},vwapAntiFomo:angleCheck("Garde-fou anti-FOMO"),entryQuality:angleCheck("P0 — qualité d'entrée"),marketFreshness:angleCheck("Historique / fraîcheur"),volumeCoherence:angleCheck("Cohérence volumes")};
+   reasons=[output.reason,...output.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | mode=${a.mode} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),...contextUnavailable.map(p=>`PROVENANCE_UNAVAILABLE[${p.field}]=${p.reason??"unavailable"}`)];
+   html=output.html;
+   snapshotHash=sha({pipelineHash:output.snapshotHash,market:{candles:qualityBars,primary:market.primary,control:market.control,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,btcUnavailableReason:market.btcUnavailableReason,liquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,volumeCoherenceRatio:market.volumeCoherenceRatio,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,btcSourceHash:market.btcSourceHash},contextHash:contextSnapshot?.snapshotHash??null,angles:output.angles});
+   console.log(JSON.stringify({assetId:asset.id,asOf:now,decision,reason:output.reason,priceQuote,snapshotHash,market:{kucoin:market.primary,mexc:market.control,candlesCount:qualityBars.length,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,liquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,volumeCoherenceRatio:market.volumeCoherenceRatio},contextHash:contextSnapshot?.snapshotHash??null,provenance:contextSnapshot?.provenance.map(p=>({field:p.field,source:p.source,availableAt:p.availableAt,sourceSnapshotHash:p.sourceSnapshotHash,status:p.status})),angles:output.angles.map(a=>({angle:a.angle,mode:a.mode,status:a.status,detail:a.detail,source:a.source,observedAt:a.observedAt,sourceHash:a.sourceHash})),mode:"TEST_SANS_ARGENT",ordersSent:false},null,2));
+  }catch(error){
+   decision="ATTENDRE";
+   const detail=String(error).slice(0,240);
+   const failClosed=runTelEntryPipeline({now,dataMode:"RÉEL",candles:[],price24hAgo:null,price7dAgo:null,btc24hChangePct:null,btcSupportBroken:null,context:null,contextError:detail,venueStatus:"UNAVAILABLE",venueDetail:detail,telLiquidity:null,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0)});
+   angleDiagnostics=[...failClosed.angles];vetoReasons=failClosed.angles.filter(a=>a.status!=="OK").map(a=>`${a.angle}: ${a.status} — ${a.detail}`);decisionChecks={price:{status:"UNAVAILABLE",reason:detail},btc:{status:"UNAVAILABLE",reason:detail},macro:{status:"UNAVAILABLE",reason:detail},sentiment:{status:"UNAVAILABLE",reason:detail},risk:{status:"UNAVAILABLE",reason:detail},spread:{status:"UNAVAILABLE",reason:detail},vwapAntiFomo:{status:"UNAVAILABLE",reason:detail}};reasons=["API_UNAVAILABLE_OR_TIMEOUT",detail,...failClosed.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),"Fail-closed: aucun ordre n'est exécuté."];
+   html=failClosed.html;
+   snapshotHash=sha({at:now,assetId:asset.id,error:detail,angles:failClosed.angles});
+   console.log(JSON.stringify({assetId:asset.id,asOf:now,decision,reason:detail,snapshotHash,provenance:contextSnapshot?.provenance.map(p=>({field:p.field,source:p.source,availableAt:p.availableAt,sourceSnapshotHash:p.sourceSnapshotHash,status:p.status}))??[],angles:failClosed.angles.map(a=>({angle:a.angle,mode:a.mode,status:a.status,detail:a.detail,source:a.source,observedAt:a.observedAt,sourceHash:a.sourceHash})),mode:"TEST_SANS_ARGENT",ordersSent:false},null,2));
+  }
+  writeFileSync(OUTPUT,html+"\n",{encoding:"utf8"});
+  const previous=[...journalBeforeRun].reverse().find(item=>item.assetId===asset.id&&item.decision!=="ALERTE")?.decision??null;
+  const record=appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:asset.id,decision,reasons,angles:angleDiagnostics,vetoReasons,decisionChecks,snapshotHash,mode:"TEST_SANS_ARGENT",...(priceQuote===undefined?{}:{priceQuote})});
+  try{await emitAlerts(JOURNAL,asset.id,decision,previous,snapshotHash,contextSnapshot,now);}catch(error){appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:"__ALERT__",decision:"ALERTE",reasons:["ALERT_CONTEXT_UNAVAILABLE",String(error).slice(0,160)],snapshotHash});}
+  console.log(`::warning title=TEL ${asset.id} — Puis-je acheter maintenant ?::${decision} — ${reasons[0]} — record ${record.recordHash}`);
+ }
+ appendDueFollowUps(JOURNAL,journalBeforeRun,now,prices);
+ console.log("TEL decision screen written: "+OUTPUT+"; mode TEST_SANS_ARGENT; ordersSent=false");
+}
 await main();
