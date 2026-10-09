@@ -4,9 +4,10 @@ import { assessBtcFilter, assessEntryQuality, calculateSpotSwingRisk, P0_ENTRY_P
 import { assessLiquidity } from "../risk/liquidity.js";
 
 export type AngleStatus = "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
-export interface EntryAngle { readonly angle: string; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
+export interface EntryAngle { readonly angle: string; readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ"; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
 export interface EntryPipelineInput {
   readonly now: string;
+  readonly dataMode?: "RÉEL" | "SIMULÉ";
   readonly candles: readonly MarketDataPoint[];
   readonly price24hAgo: number | null;
   readonly price7dAgo: number | null;
@@ -37,16 +38,17 @@ export interface EntryPipelineOutput {
   readonly priceQuote: number | null;
 }
 const disabledRisk: SpotRiskResult = { allowed:false,riskBudgetQuote:0,riskPerUnitQuote:0,frictionPerUnitQuote:0,quantity:0,notionalQuote:0,maxLossQuote:0,pauseMonthlyLoss:false,tranches:[],reason:"Dimensionnement indisponible",methodologyVersion:"p0-spot-risk.v1" };
-function angle(angle:string,status:AngleStatus,detail:string,source:string,observedAt:string|null=null,sourceHash:string|null=null):EntryAngle{return{angle,status,detail,source,observedAt,sourceHash};}
+function angle(angle:string,status:AngleStatus,detail:string,source:string,observedAt:string|null=null,sourceHash:string|null=null):EntryAngle{return{angle,mode:status==="UNAVAILABLE"?"UNAVAILABLE":"RÉEL",status,detail,source,observedAt,sourceHash};}
 function isFresh(when:string|null|undefined,now:string,maxAgeMs=120_000):boolean{if(!when)return false;const t=Date.parse(when),n=Date.parse(now);return Number.isFinite(t)&&Number.isFinite(n)&&t<=n+5_000&&n-t<=maxAgeMs;}
 function hashOf(context:ContextSnapshot|null):string{return context?.snapshotHash??"sha256:unavailable";}
 export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutput {
   const nowMs=Date.parse(input.now), last=input.candles.at(-1), price=last?.close??null;
   const quality=assessEntryQuality({points:input.candles,...(input.price24hAgo===null?{}:{price24hAgo:input.price24hAgo}),...(input.price7dAgo===null?{}:{price7dAgo:input.price7dAgo}),...(input.relativeVolume==null?{}:{relativeVolume:input.relativeVolume}),now:input.now});
   const angles:EntryAngle[]=[];
+  const addAngle=(...args:Parameters<typeof angle>):EntryAngle=>{const item=angle(...args);return{...item,mode:item.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL"};};
   let macroStatus:AngleStatus="UNAVAILABLE";
   let sentimentStatus:AngleStatus="UNAVAILABLE";
-  angles.push(angle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null,input.marketSourceHash??null));
+  angles.push(addAngle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null,input.marketSourceHash??null));
   const candlesFresh=last!==undefined&&isFresh(last.availableTime,input.now,90*60_000)&&last.dataQuality==="complete";
   angles.push(angle("Historique / fraîcheur",candlesFresh?"OK":last?"PÉRIMÉ":"UNAVAILABLE",candlesFresh?"Bougie horaire récente et complète":"Historique absent, incomplet ou périmé","KuCoin Spot klines",last?.availableTime??null,input.candlesSourceHash??null));
   angles.push(angle("P0 — qualité d'entrée",quality.decision==="ACCEPTABLE"?"OK":quality.decision==="EXTENDED"?"BLOC":"UNAVAILABLE",quality.reasons.join("; ")||quality.decision,"assessEntryQuality",last?.availableTime??null,input.candlesSourceHash??null));
