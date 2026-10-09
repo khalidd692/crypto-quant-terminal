@@ -26,7 +26,7 @@ function context(eventAt?:string):ContextSnapshot{
 }
 function input(overrides:Partial<Parameters<typeof runTelEntryPipeline>[0]>={}):Parameters<typeof runTelEntryPipeline>[0]{
  const candles=Array.from({length:200},(_,i)=>point(i));
- return {now,candles,price24hAgo:1,price7dAgo:1,btc24hChangePct:0.01,btcSupportBroken:false,context:context(),venueStatus:"OK",venueDetail:"KuCoin/MEXC cohérents",telLiquidity:{spreadBps:5,depthQuote:10000,estimatedSlippageBps:5,observedAt:now,sourceHash:hash},swingCapitalQuote:1000,stopPrice:.97,openSwingPositions:0,monthlyLossQuote:0,...overrides};
+ return {now,dataMode:"SIMULÉ",candles,price24hAgo:1,price7dAgo:1,btc24hChangePct:0.01,btcSupportBroken:false,context:context(),venueStatus:"OK",venueDetail:"KuCoin/MEXC cohérents",telLiquidity:{spreadBps:5,depthQuote:10000,estimatedSlippageBps:5,observedAt:now,sourceHash:hash},swingCapitalQuote:1000,stopPrice:.97,openSwingPositions:0,monthlyLossQuote:0,...overrides};
 }
 const missing=runTelEntryPipeline(input({candles:[],price24hAgo:null,price7dAgo:null}));
 assert.equal(missing.decision,"ATTENDRE");assert.ok(missing.angles.some(a=>a.status==="UNAVAILABLE"));
@@ -45,6 +45,7 @@ assert.notEqual(unavailableAngle.decision,"ENTRER");
 const healthy=runTelEntryPipeline(input());
 assert.ok(healthy.html.includes("Puis-je acheter maintenant ?"));
 assert.ok(healthy.html.includes("EN TEST — SANS ARGENT"));
+assert.ok(healthy.angles.every(a=>a.mode==="SIMULÉ"||a.mode==="UNAVAILABLE"));
 assert.ok(["ATTENDRE","ENTRER","NE_PAS_ENTRER"].includes(healthy.decision));
 const runnerSource=readFileSync("src/automation/runner.ts","utf8");
 const pipelineSource=readFileSync("src/surveillance/tel-entry-pipeline.ts","utf8");
