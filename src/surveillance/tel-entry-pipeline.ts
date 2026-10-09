@@ -109,7 +109,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","MEXC Spot order book",mx.observedAt,mx.sourceHash));
   }else angles.push(angle("Liquidité MEXC","UNAVAILABLE","Carnet TEL MEXC ou dimensionnement indisponible","MEXC Spot order book",mx?.observedAt??null,mx?.sourceHash??null));
   const volumeRatio=input.volumeCoherenceRatio??null;
-  angles.push(angle("Cohérence volumes KuCoin/MEXC",volumeRatio!==null&&Number.isFinite(volumeRatio)?"OK":"UNAVAILABLE",volumeRatio!==null&&Number.isFinite(volumeRatio)?`Ratio volume 24 h max/min = ${volumeRatio.toFixed(2)}× (diagnostic; aucun seuil nouveau ajouté)`:"Volumes 24 h non comparables","KuCoin + MEXC ticker 24 h",input.now,input.marketSourceHash??null));
+  angles.push(angle("Cohérence volumes KuCoin/MEXC",volumeRatio===null||!Number.isFinite(volumeRatio)?"UNAVAILABLE":volumeRatio>5?"INCOHÉRENT":"OK",volumeRatio===null||!Number.isFinite(volumeRatio)?"Volumes 24 h non comparables":`Ratio volume 24 h max/min = ${volumeRatio.toFixed(2)}×; seuil opérationnel daté : 5×`,"KuCoin + MEXC ticker 24 h",input.now,input.marketSourceHash??null));
   const orderType=input.plannedOrderType??null;
   const gridActive=input.orderGridActive??null;
   const gridLevel=input.lastGridLevelPrice??null;
