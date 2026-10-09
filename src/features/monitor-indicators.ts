@@ -201,6 +201,68 @@ export function rollingVwapDeviation(points: readonly MarketDataPoint[], period 
   return vwap === 0 ? null : finite(last.close / vwap - 1);
 }
 
+/**
+ * VWAP anchored to the latest confirmed swing low available at the decision time.
+ * A pivot low requires 3 lower lows on its left and 3 non-lower lows on its right.
+ * Only pivots confirmed by the last closed candle are eligible; lookback is bounded.
+ * This is descriptive monitoring, not a validated predictor.
+ */
+export interface AnchoredVwapResult {
+  readonly value: number;
+  readonly anchorEventTime: string;
+  readonly anchorIndex: number;
+}
+
+export function latestSwingLowAnchoredVwap(
+  points: readonly MarketDataPoint[],
+  left = 3,
+  right = 3,
+  lookback = 168,
+): AnchoredVwapResult | null {
+  if (left < 1 || right < 1 || lookback < left + right + 1) return null;
+  const count = points.length;
+  if (count < left + right + 1) return null;
+  const firstIndex = Math.max(left, count - lookback);
+  const lastPivotIndex = count - 1 - right;
+  let anchorIndex: number | null = null;
+
+  for (let i = firstIndex; i <= lastPivotIndex; i += 1) {
+    const pivot = points[i];
+    if (!pivot || !Number.isFinite(pivot.low)) return null;
+    let isLow = true;
+    for (let j = i - left; j <= i + right; j += 1) {
+      if (j === i) continue;
+      const other = points[j];
+      if (!other || !Number.isFinite(other.low)) return null;
+      if (j < i ? other.low <= pivot.low : other.low < pivot.low) {
+        isLow = false;
+        break;
+      }
+    }
+    if (isLow) anchorIndex = i;
+  }
+
+  if (anchorIndex === null) return null;
+  let priceVolume = 0;
+  let volume = 0;
+  for (const point of points.slice(anchorIndex)) {
+    if (
+      !Number.isFinite(point.high) || !Number.isFinite(point.low) ||
+      !Number.isFinite(point.close) || !Number.isFinite(point.volume) ||
+      point.high < point.low || point.volume < 0
+    ) return null;
+    const typicalPrice = (point.high + point.low + point.close) / 3;
+    if (typicalPrice <= 0) return null;
+    priceVolume += typicalPrice * point.volume;
+    volume += point.volume;
+  }
+  const anchor = points[anchorIndex];
+  if (!anchor || volume <= 0) return null;
+  const value = priceVolume / volume;
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return { value, anchorEventTime: anchor.eventTime, anchorIndex };
+}
+
 export interface DonchianResult {
   readonly upper: number;
   readonly lower: number;
