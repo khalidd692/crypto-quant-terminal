@@ -61,7 +61,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
  const btcRows=Array.isArray(btc)?btc:[];
  let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null;
  if(btcRows.length>=25){const old=Number(btcRows[btcRows.length-25]?.[4]),latest=Number(btcRows.at(-1)?.[4]);const priorLows=btcRows.slice(-25,-1).map((x:any)=>Number(x[3])).filter(Number.isFinite);if(old>0&&latest>0&&priorLows.length===24){btc24hChangePct=latest/old-1;btcSupportBroken=latest<Math.min(...priorLows);}}
- return{primary,control,candles,btc24hChangePct,btcSupportBroken,liquidity,venueStatus,venueDetail};
+ return{primary,control,candles,btc24hChangePct,btcSupportBroken,liquidity,venueStatus,venueDetail,marketSourceHash:sha({k,mPrice,m24}),candlesSourceHash:sha(kline),btcSourceHash:btc===null?null:sha(btc)};
 }
 function appendDueFollowUps(path:string,records:ReturnType<typeof readProspectiveJournal>,now:string,prices:Readonly<Record<string,number>>):void{for(const origin of records.filter(r=>r.mode==="TEST_SANS_ARGENT"&&r.referenceRecordHash===undefined&&r.priceQuote!==undefined)){for(const horizon of [1,3,7] as const){if(Date.parse(now)<Date.parse(origin.recordedAt)+horizon*86400000)continue;if(records.some(r=>r.referenceRecordHash===origin.recordHash&&r.horizonDays===horizon))continue;const price=prices[origin.assetId];if(price===undefined||!Number.isFinite(price)||price<=0)continue;appendFollowUp(path,origin,horizon,price,now);}}}
 async function main():Promise<void>{
