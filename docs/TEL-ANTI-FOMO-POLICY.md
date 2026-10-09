@@ -16,3 +16,7 @@ The 2.0 ATR guard is a conservative display/veto threshold, not a profitability 
 ## Invariants
 
 No order is sent or blocked on the exchange. This policy does not modify the underlying P0 indicator thresholds, ADR-0002, frozen data, historical results, Phase 3 holdout, or **PAS D'EDGE**.
+
+## Anchored VWAP methodology (monitoring-only)
+
+The anti-FOMO extension guard also checks VWAP anchored to the latest confirmed swing low in the available 1-hour KuCoin candles. A swing-low pivot uses 3 candles on the left and 3 on the right; only pivots whose right-side confirmation candles are already present are eligible. The search is bounded to the latest 168 candles. VWAP uses typical price `(high + low + close) / 3`, weighted by candle volume, from the pivot candle through the decision candle. If there is no confirmed pivot or any required candle/volume value is invalid, this component is unavailable and does not fabricate a value. A price more than 2.0 ATR(14) above this anchored VWAP adds the existing informational anti-FOMO caution; it does not place, cancel, or block an exchange order. Existing P0 rolling-VWAP and EMA200 rules are unchanged.

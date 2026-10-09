@@ -2,6 +2,7 @@ import type { MarketDataPoint } from "../domain/types.js";
 import type { ContextSnapshot } from "../context/types.js";
 import { assessBtcFilter, assessEntryQuality, calculateSpotSwingRisk, P0_ENTRY_POLICY, type EntryQuality, type SpotRiskResult, type SwingDecision } from "./tel-swing.js";
 import { assessLiquidity } from "../risk/liquidity.js";
+import { latestSwingLowAnchoredVwap } from "../features/monitor-indicators.js";
 
 export type AngleStatus = "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
 export interface EntryAngle { readonly angle: string; readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ"; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
@@ -140,7 +141,10 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const atr=quality.metrics.atr,ema=quality.metrics.ema200,vwap=quality.metrics.vwap;
   const emaDistanceAtr=typeof atr==="number"&&atr>0&&typeof ema==="number"&&price!==null?(price-ema)/atr:null;
   const vwapDistanceAtr=typeof atr==="number"&&atr>0&&typeof vwap==="number"&&price!==null?(price-vwap)/atr:null;
-  const atrExtension=(emaDistanceAtr!==null&&emaDistanceAtr>2)||(vwapDistanceAtr!==null&&vwapDistanceAtr>2);
+  const anchoredVwap=latestSwingLowAnchoredVwap(input.candles);
+  const anchoredVwapDistanceAtr=typeof atr==="number"&&atr>0&&anchoredVwap!==null&&price!==null?(price-anchoredVwap.value)/atr:null;
+  const anchoredVwapExtension=anchoredVwapDistanceAtr!==null&&anchoredVwapDistanceAtr>2;
+  const atrExtension=(emaDistanceAtr!==null&&emaDistanceAtr>2)||(vwapDistanceAtr!==null&&vwapDistanceAtr>2)||anchoredVwapExtension;
   const rapidRise=rapidRise24||rapidRise48;
   const fomoTrigger=extensionTrigger||rapidRise||atrExtension;
   const trancheCount=input.trancheCountInZone??null;
@@ -152,6 +156,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const antiFomoReasons:string[]=[];
   if(fomoTrigger||startedAt!==null) {
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
+    if(anchoredVwapExtension) antiFomoReasons.push("Prix > 2 ATR au-dessus du VWAP ancré depuis le dernier creux confirmé");
     if(elapsedHours===null||elapsedHours<cooldownHours) {
       antiFomoStatus="BLOC";
       antiFomoReasons.push(`Délai de réflexion ${cooldownHours} h non écoulé`);
