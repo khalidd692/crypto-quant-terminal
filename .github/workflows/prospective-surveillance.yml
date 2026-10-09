@@ -77,7 +77,6 @@ jobs:
         env:
           PROSPECTIVE_JOURNAL: research/prospective/journal.jsonl
           SURVEILLANCE_CONFIG: config/surveillance-assets.json
-          CONTEXT_HTTP_TIMEOUT_MS: "3500"
           CONTEXT_HTTP_RETRIES: "1"
           TEL_PLANNED_ORDER_TYPE: ${{ inputs.planned_order_type || secrets.TEL_PLANNED_ORDER_TYPE }}
           TEL_ORDER_GRID_STATE: ${{ inputs.order_grid_state || secrets.TEL_ORDER_GRID_STATE }}
