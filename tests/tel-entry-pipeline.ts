@@ -61,6 +61,7 @@ const cooldownElapsed=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderG
 assert.ok(cooldownElapsed.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="OK"));
 const trancheLimit=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGridActive:true,lastGridLevelPrice:.99,livePriceQuote:1,trancheCountInZone:3,maxTranchesPerZone:3}));
 assert.ok(trancheLimit.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"&&a.detail.includes("Maximum de tranches")));
+assert.ok(!trancheLimit.angles.find(a=>a.angle==="Garde-fou anti-FOMO")?.detail.includes("3/3"));
 const macroNear=runTelEntryPipeline(input({context:context("2026-10-10T12:00:00.000Z")}));
 assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a.angle==="Macro + calendrier"&&a.status==="BLOC"));
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));

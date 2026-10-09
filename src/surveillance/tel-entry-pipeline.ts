@@ -165,7 +165,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   }
   if(trancheCount!==null&&trancheMax!==null&&trancheCount>=trancheMax) {
     antiFomoStatus="BLOC";
-    antiFomoReasons.push(`Maximum de tranches atteint dans cette zone (${trancheCount}/${trancheMax})`);
+    antiFomoReasons.push("Maximum de tranches atteint dans cette zone");
   }
   if(lastTranche!==null&&plannedEntry!==null&&Number.isFinite(lastTranche)&&Number.isFinite(plannedEntry)&&plannedEntry<lastTranche) {
     antiFomoReasons.push("Avertissement : ajout prévu sous la dernière tranche");
