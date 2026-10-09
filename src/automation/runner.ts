@@ -68,7 +68,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.kucoin.com/api/v1/market/candles?symbol="+encodeURIComponent(asset.primarySymbol)+"&type=1hour&startAt="+start+"&endAt="+end,
   "https://api.kucoin.com/api/v1/market/orderbook/level2_20?symbol="+encodeURIComponent(asset.primarySymbol),
   "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end,
-  "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20
+  "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20"
  ];
  const settled=await Promise.allSettled(urls.map(json));
  const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
