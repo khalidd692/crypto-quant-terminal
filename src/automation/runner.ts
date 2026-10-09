@@ -33,7 +33,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.mexc.com/api/v3/ticker/24hr?symbol="+encodeURIComponent(asset.controlSymbol),
   "https://api.kucoin.com/api/v1/market/candles?symbol="+encodeURIComponent(asset.primarySymbol)+"&type=1hour&startAt="+start+"&endAt="+end,
   "https://api.kucoin.com/api/v1/market/orderbook/level2_20?symbol="+encodeURIComponent(asset.primarySymbol),
-  "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=30"
+  "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end
  ];
  const settled=await Promise.allSettled(urls.map(json));
  const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
@@ -58,9 +58,9 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
  const stop=asset.invalidationPrice,estimatedNotional=kuLast>stop?maxRiskQuote/(kuLast-stop)*kuLast: swingCapital;
  const estimatedSlippageBps=estimateBuyImpactBps(asks,estimatedNotional,kuAsk);
  const liquidity=Number.isFinite(spreadBps)&&Number.isFinite(depthQuote)&&depthQuote>0?{spreadBps,depthQuote,estimatedSlippageBps,observedAt:now,sourceHash:sha(book)}:null;
- const btcRows=Array.isArray(btc)?btc:[];
+ const btcRows=(Array.isArray(btc?.data)?btc.data:[]).filter((row:any)=>Array.isArray(row)&&row.length>=6).sort((a:any,b:any)=>Number(a[0])-Number(b[0]));
  let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null;
- if(btcRows.length>=25){const old=Number(btcRows[btcRows.length-25]?.[4]),latest=Number(btcRows.at(-1)?.[4]);const priorLows=btcRows.slice(-25,-1).map((x:any)=>Number(x[3])).filter(Number.isFinite);if(old>0&&latest>0&&priorLows.length===24){btc24hChangePct=latest/old-1;btcSupportBroken=latest<Math.min(...priorLows);}}
+ if(btcRows.length>=25){const old=Number(btcRows[btcRows.length-25]?.[2]),latest=Number(btcRows.at(-1)?.[2]),latestAt=Number(btcRows.at(-1)?.[0])*1000;const priorLows=btcRows.slice(-25,-1).map((x:any)=>Number(x[4])).filter(Number.isFinite);if(old>0&&latest>0&&Number.isFinite(latestAt)&&Date.parse(now)-latestAt<=90*60_000&&priorLows.length===24){btc24hChangePct=latest/old-1;btcSupportBroken=latest<Math.min(...priorLows);}}
  return{primary,control,candles,btc24hChangePct,btcSupportBroken,liquidity,venueStatus,venueDetail,marketSourceHash:sha({k,mPrice,m24}),candlesSourceHash:sha(kline),btcSourceHash:btc===null?null:sha(btc)};
 }
 function appendDueFollowUps(path:string,records:ReturnType<typeof readProspectiveJournal>,now:string,prices:Readonly<Record<string,number>>):void{for(const origin of records.filter(r=>r.mode==="TEST_SANS_ARGENT"&&r.referenceRecordHash===undefined&&r.priceQuote!==undefined)){for(const horizon of [1,3,7] as const){if(Date.parse(now)<Date.parse(origin.recordedAt)+horizon*86400000)continue;if(records.some(r=>r.referenceRecordHash===origin.recordHash&&r.horizonDays===horizon))continue;const price=prices[origin.assetId];if(price===undefined||!Number.isFinite(price)||price<=0)continue;appendFollowUp(path,origin,horizon,price,now);}}}
