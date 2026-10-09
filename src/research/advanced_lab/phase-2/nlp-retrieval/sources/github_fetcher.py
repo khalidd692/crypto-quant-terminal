@@ -41,7 +41,7 @@ class GitHubFetchResult:
 
 
 def configured_repository(repository: str | None = None) -> str:
-    value = (repository or os.getenv("GITHUB_REPOSITORY") or DEFAULT_REPOSITORY).strip()
+    value = (repository or os.getenv("NLP_GITHUB_REPOSITORY") or DEFAULT_REPOSITORY).strip()
     parts = value.split("/")
     if len(parts) != 2 or not all(parts):
         raise ValueError("GitHub repository must be owner/name")
