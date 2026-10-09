@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { appendFollowUp, appendProspectiveRecord, readProspectiveJournal } from "./journal.js";
 import { emitAlerts } from "./alerts.js";
 import { loadSurveillanceConfig, type SurveillanceAssetConfig } from "./config.js";
@@ -7,6 +7,8 @@ import { evaluateTelSurveillance, type VenueSnapshot } from "../surveillance/tel
 import { fetchContextSnapshot } from "../context/providers/index.js";
 import { runTelEntryPipeline } from "../surveillance/tel-entry-pipeline.js";
 import { P0_ENTRY_POLICY } from "../surveillance/tel-swing.js";
+import { averageTrueRange } from "../features/indicators.js";
+import { calculateTelAtrExitPlan, type TelAtrExitPlan } from "../risk/tel-atr-exit-plan.js";
 import { renderPrivateTelPositionReport } from "../surveillance/tel-position-private.js";
 import type { MarketDataPoint } from "../domain/types.js";
 
@@ -18,14 +20,32 @@ function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise
 async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
-function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,currentPrice:number):void{
+function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,currentPrice:number,candles:readonly MarketDataPoint[]):void{
  const averageEntryPrice=Number(process.env.TEL_POSITION_AVG_PRICE);
  const quantity=Number(process.env.TEL_POSITION_QUANTITY);
  if(!Number.isFinite(averageEntryPrice)||averageEntryPrice<=0||!Number.isFinite(quantity)||quantity<=0)return;
  const path=process.env.TEL_POSITION_REPORT_HTML??"artifacts/tel-position-private.html";
  const directory=path.split("/").slice(0,-1).join("/")||".";
  mkdirSync(directory,{recursive:true});
- const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct});
+ const entryAtr=Number(process.env.TEL_POSITION_ENTRY_ATR);
+ const currentAtr=averageTrueRange(candles,14);
+ const highest=Number(process.env.TEL_POSITION_HIGHEST_PRICE);
+ const previousStopRaw=Number(process.env.TEL_POSITION_PREVIOUS_STOP);
+ const remaining=Number(process.env.TEL_POSITION_REMAINING_FRACTION??1);
+ const entryAt=process.env.TEL_POSITION_ENTRY_AT?.trim()??"";
+ const target1Reached=process.env.TEL_POSITION_TARGET1_REACHED?.trim().toLowerCase()==="true";
+ let exitPlan:TelAtrExitPlan|null=null;
+ if(Number.isFinite(entryAtr)&&entryAtr>0&&currentAtr!==null&&Number.isFinite(highest)&&highest>0&&Number.isFinite(remaining)&&entryAt&&Number.isFinite(Date.parse(entryAt))){
+  exitPlan=calculateTelAtrExitPlan({entryPrice:averageEntryPrice,entryAtr,currentPrice,currentAtr,highestSinceEntry:highest,entryAt,asOf,target1Reached,previousStopRaw:undefined,previousStop:Number.isFinite(previousStopRaw)&&previousStopRaw>0?previousStopRaw:null,remainingFraction:remaining});
+  if(exitPlan.stopChange){
+   const privateJournal=process.env.TEL_PRIVATE_EXIT_JOURNAL??"/tmp/tel-private-stop-journal.jsonl";
+   mkdirSync(privateJournal.split("/").slice(0,-1).join("/")||".",{recursive:true});
+   const prior=existsSync(privateJournal)?readFileSync(privateJournal,"utf8").trim().split("\\n").filter(Boolean).at(-1):undefined;
+   const already=prior?(()=>{try{const row=JSON.parse(prior);return row.assetId===asset.id&&row.previousStop===exitPlan!.stopChange!.previous&&row.nextStop===exitPlan!.stopChange!.next;}catch{return false;}})():false;
+   if(!already)appendFileSync(privateJournal,JSON.stringify({asOf,assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason,planVersion:exitPlan.version,stateHash:sha({assetId:asset.id,previousStop:exitPlan.stopChange.previous,nextStop:exitPlan.stopChange.next,reason:exitPlan.stopChange.reason})})+"\\n",{encoding:"utf8",mode:0o600});
+  }
+ }
+ const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,exitPlan});
  writeFileSync(path,html+"\n",{encoding:"utf8",mode:0o600});
 }
 function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null;antiFomoStartedAt:string|null;antiFomoReason:string|null;trancheCountInZone:number|null;maxTranchesPerZone:number|null;lastTranchePrice:number|null;plannedEntryPrice:number|null}{
@@ -113,7 +133,7 @@ async function main():Promise<void>{
    if(contextResult.status==="fulfilled")contextSnapshot=contextResult.value;
    if(live.status!=="fulfilled")throw new Error("COLLECTE_UNAVAILABLE: "+String(live.reason));
    const market=live.value;
-   priceQuote=market.primary.lastPrice;prices[asset.id]=priceQuote;writePrivatePositionReport(asset,now,market.primary.lastPrice);
+   priceQuote=market.primary.lastPrice;prices[asset.id]=priceQuote;writePrivatePositionReport(asset,now,market.primary.lastPrice,market.candles);
    const qualityBars=market.candles;
    const price24hAgo=qualityBars.length>=25?qualityBars[qualityBars.length-25]?.close??null:null;
    const price7dAgo=qualityBars.length>=169?qualityBars[qualityBars.length-169]?.close??null:null;
