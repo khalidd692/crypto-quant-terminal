@@ -66,14 +66,17 @@ function riskFraction(observation: ResearchObservation): number | null {
   return risk > 0 ? risk : null;
 }
 
+export function reconstructGrossReturnFraction(returnFraction: number, feesReturn: number, slippageReturn: number): number {
+  // returnFraction is already net of fees. slippageReturn is signed as
+  // slipped minus slippage-free return, so subtract it to remove slippage.
+  return returnFraction + feesReturn - slippageReturn;
+}
+
 function grossR(observation: ResearchObservation): number | null {
   const outcome = observation.outcome;
   const risk = riskFraction(observation);
   if (!outcome || risk === null) return null;
-  // returnFraction is already net of fees and slippage. Reconstruct the
-  // no-cost, no-slippage return; slippageReturn is signed as slipped minus
-  // slippage-free return, so subtract it to remove its effect.
-  return (outcome.returnFraction + outcome.feesReturn - outcome.slippageReturn) / risk;
+  return reconstructGrossReturnFraction(outcome.returnFraction, outcome.feesReturn, outcome.slippageReturn) / risk;
 }
 
 function costAndFundingR(observation: ResearchObservation): { feesR: number; slippageR: number; fundingR: number } | null {
@@ -223,7 +226,7 @@ function counterfactual(
   const funding = assessFunding(side, entry.eventTime, simulated.exitEventTime, fundingRates);
   const riskFractionValue = risk / entry.close;
   const netR = (simulated.returnFraction + funding.paymentReturnFraction) / riskFractionValue;
-  const grossReturnFraction = simulated.returnFraction + simulated.feeReturnFraction - simulated.slippageReturnFraction;
+  const grossReturnFraction = reconstructGrossReturnFraction(simulated.returnFraction, simulated.feeReturnFraction, simulated.slippageReturnFraction);
   const grossR = grossReturnFraction / riskFractionValue;
   return {
     state: label,
