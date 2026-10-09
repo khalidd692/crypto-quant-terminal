@@ -40,7 +40,9 @@ function hashOf(context:ContextSnapshot|null):string{return context?.snapshotHas
 export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutput {
   const nowMs=Date.parse(input.now), last=input.candles.at(-1), price=last?.close??null;
   const quality=assessEntryQuality({points:input.candles,...(input.price24hAgo===null?{}:{price24hAgo:input.price24hAgo}),...(input.price7dAgo===null?{}:{price7dAgo:input.price7dAgo}),...(input.relativeVolume==null?{}:{relativeVolume:input.relativeVolume}),now:input.now});
-  const angles:EntryAngle[]=[];\n  let macroStatus:AngleStatus="UNAVAILABLE";\n  let sentimentStatus:AngleStatus="UNAVAILABLE";
+  const angles:EntryAngle[]=[];
+  let macroStatus:AngleStatus="UNAVAILABLE";
+  let sentimentStatus:AngleStatus="UNAVAILABLE";
   angles.push(angle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null));
   const candlesFresh=last!==undefined&&isFresh(last.availableTime,input.now,90*60_000)&&last.dataQuality==="complete";
   angles.push(angle("Historique / fraîcheur",candlesFresh?"OK":last?"PÉRIMÉ":"UNAVAILABLE",candlesFresh?"Bougie horaire récente et complète":"Historique absent, incomplet ou périmé","KuCoin Spot klines",last?.availableTime??null));
