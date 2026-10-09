@@ -6,6 +6,8 @@ import { loadSurveillanceConfig, type SurveillanceAssetConfig } from "./config.j
 import { evaluateTelSurveillance, type VenueSnapshot } from "../surveillance/tel-usdt.js";
 import { fetchContextSnapshot } from "../context/providers/index.js";
 import { runTelEntryPipeline } from "../surveillance/tel-entry-pipeline.js";
+import { P0_ENTRY_POLICY } from "../surveillance/tel-swing.js";
+import { renderPrivateTelPositionReport } from "../surveillance/tel-position-private.js";
 import type { MarketDataPoint } from "../domain/types.js";
 
 const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jsonl";
@@ -16,6 +18,16 @@ function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise
 async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
+function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,currentPrice:number):void{
+ const averageEntryPrice=Number(process.env.TEL_POSITION_AVG_PRICE);
+ const quantity=Number(process.env.TEL_POSITION_QUANTITY);
+ if(!Number.isFinite(averageEntryPrice)||averageEntryPrice<=0||!Number.isFinite(quantity)||quantity<=0)return;
+ const path=process.env.TEL_POSITION_REPORT_HTML??"artifacts/tel-position-private.html";
+ const directory=path.split("/").slice(0,-1).join("/")||".";
+ mkdirSync(directory,{recursive:true});
+ const html=renderPrivateTelPositionReport({asOf,averageEntryPrice,quantity,currentPrice,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,roundTripFeePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct});
+ writeFileSync(path,html+"\n",{encoding:"utf8",mode:0o600});
+}
 function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null}{
  const order=process.env.TEL_PLANNED_ORDER_TYPE?.trim().toUpperCase();
  const grid=process.env.TEL_ORDER_GRID_STATE?.trim().toUpperCase();
@@ -86,7 +98,7 @@ async function main():Promise<void>{
    if(contextResult.status==="fulfilled")contextSnapshot=contextResult.value;
    if(live.status!=="fulfilled")throw new Error("COLLECTE_UNAVAILABLE: "+String(live.reason));
    const market=live.value;
-   priceQuote=market.primary.lastPrice;prices[asset.id]=priceQuote;
+   priceQuote=market.primary.lastPrice;prices[asset.id]=priceQuote;writePrivatePositionReport(asset,now,market.primary.lastPrice);
    const qualityBars=market.candles;
    const price24hAgo=qualityBars.length>=25?qualityBars[qualityBars.length-25]?.close??null:null;
    const price7dAgo=qualityBars.length>=169?qualityBars[qualityBars.length-169]?.close??null:null;
