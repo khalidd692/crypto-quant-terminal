@@ -30,7 +30,7 @@ def _already_indexed(engine: NlpEngine, repository: str, sha: str) -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Fetch and index the latest public GitHub commits.")
-    parser.add_argument("--repository", help="GitHub owner/name (default: telcoin/telcoin or GITHUB_REPOSITORY)")
+    parser.add_argument("--repository", help="GitHub owner/name (default: telcoin/telcoin or NLP_GITHUB_REPOSITORY)")
     parser.add_argument(
         "--no-fallback",
         action="store_true",
@@ -64,7 +64,11 @@ def main() -> int:
         LOGGER.error("Ingestion aborted fail-closed: %s", exc)
         return 2
 
-    raw_path, meta_path = save_raw_result(result, args.raw_dir)
+    try:
+        raw_path, meta_path = save_raw_result(result, args.raw_dir)
+    except OSError as exc:
+        LOGGER.error("Could not persist raw response; ingestion aborted fail-closed: %s", exc)
+        return 5
     for rejection in result.rejections:
         LOGGER.warning("Commit rejected: %s", rejection)
 
@@ -85,9 +89,14 @@ def main() -> int:
 
     database_path = args.database
     if database_path != ":memory:":
-        Path(database_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
+        database_path = str(Path(database_path).expanduser())
+        Path(database_path).parent.mkdir(parents=True, exist_ok=True)
 
-    engine = NlpEngine(database_path)
+    try:
+        engine = NlpEngine(database_path)
+    except (sqlite3.Error, OSError) as exc:
+        LOGGER.error("Could not initialize local SQLite database; ingestion aborted: %s", exc)
+        return 6
     inserted = 0
     duplicates = 0
     database_rejections = 0
