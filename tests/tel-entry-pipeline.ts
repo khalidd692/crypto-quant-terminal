@@ -38,6 +38,8 @@ const stretched=runTelEntryPipeline(input({candles:stretchedCandles}));
 assert.equal(stretched.quality.decision,"EXTENDED");assert.equal(stretched.decision,"ATTENDRE");
 const btcDrop=runTelEntryPipeline(input({btc24hChangePct:-.06}));
 assert.equal(btcDrop.decision,"ATTENDRE");assert.ok(btcDrop.angles.some(a=>a.angle==="Filtre BTC"&&a.status==="BLOC"));
+const btcUnavailable=runTelEntryPipeline(input({btc24hChangePct:null,btcSupportBroken:null,btcUnavailableReason:"BTC_CANDLES_INSUFFICIENT: 12/25 rows"}));
+assert.ok(btcUnavailable.angles.some(a=>a.angle==="Filtre BTC"&&a.status==="UNAVAILABLE"&&a.detail==="BTC_CANDLES_INSUFFICIENT: 12/25 rows"));
 const macroNear=runTelEntryPipeline(input({context:context("2026-10-10T12:00:00.000Z")}));
 assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a.angle==="Macro + calendrier"&&a.status==="BLOC"));
 const unavailableAngle=runTelEntryPipeline(input({venueStatus:"UNAVAILABLE",venueDetail:"MEXC indisponible"}));
