@@ -152,7 +152,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
       antiFomoStatus="BLOC";
       antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
     } else {
-      antiFomoReasons.push("Motif : "+writtenReason.slice(0,240));
+      antiFomoReasons.push("Motif écrit fourni (contenu privé masqué; non journalisé)");
     }
   }
   if(trancheCount!==null&&trancheMax!==null&&trancheCount>=trancheMax) {
