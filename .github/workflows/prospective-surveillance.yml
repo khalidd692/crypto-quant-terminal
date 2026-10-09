@@ -3,6 +3,21 @@ on:
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
+    inputs:
+      planned_order_type:
+        description: "Type ordre prévu"
+        required: true
+        type: choice
+        options: ["LIMIT", "MARKET"]
+      order_grid_state:
+        description: "État de la grille"
+        required: true
+        type: choice
+        options: ["ACTIVE", "INACTIVE"]
+      last_grid_level_price:
+        description: "Dernier niveau de grille TEL/USDT (laisser vide si inconnu)"
+        required: false
+        type: string
 concurrency:
   group: prospective-surveillance-main
   cancel-in-progress: false
@@ -33,6 +48,9 @@ jobs:
           SURVEILLANCE_CONFIG: config/surveillance-assets.json
           CONTEXT_HTTP_TIMEOUT_MS: "3500"
           CONTEXT_HTTP_RETRIES: "1"
+          TEL_PLANNED_ORDER_TYPE: ${{ inputs.planned_order_type || secrets.TEL_PLANNED_ORDER_TYPE }}
+          TEL_ORDER_GRID_STATE: ${{ inputs.order_grid_state || secrets.TEL_ORDER_GRID_STATE }}
+          TEL_LAST_GRID_LEVEL_PRICE: ${{ inputs.last_grid_level_price || secrets.TEL_LAST_GRID_LEVEL_PRICE }}
         run: node dist/src/automation/runner.js
       - name: Append journal commit
         shell: bash

@@ -27,6 +27,10 @@ export interface EntryPipelineInput {
   readonly stopPrice: number | null;
   readonly openSwingPositions: number;
   readonly monthlyLossQuote: number;
+  readonly livePriceQuote?: number | null;
+  readonly plannedOrderType?: "LIMIT" | "MARKET" | null;
+  readonly orderGridActive?: boolean | null;
+  readonly lastGridLevelPrice?: number | null;
 }
 export interface EntryPipelineOutput {
   readonly decision: SwingDecision;
@@ -91,6 +95,22 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     angles.push(angle("Liquidité réelle TEL",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité réelle TEL", "UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
+  const orderType=input.plannedOrderType??null;
+  const gridActive=input.orderGridActive??null;
+  const gridLevel=input.lastGridLevelPrice??null;
+  const livePrice=input.livePriceQuote??price;
+  let fomoStatus:AngleStatus="UNAVAILABLE";
+  let fomoDetail="Saisie manuelle incomplète : ordre, grille, niveau ou prix actuel non évalué";
+  if(orderType!==null&&gridActive!==null&&gridLevel!==null&&Number.isFinite(gridLevel)&&gridLevel>0&&livePrice!==null&&Number.isFinite(livePrice)&&livePrice>0){
+    if(orderType==="MARKET"&&livePrice>gridLevel){
+      fomoStatus="BLOC";
+      fomoDetail="FOMO ? ordres limités uniquement";
+    }else{
+      fomoStatus="OK";
+      fomoDetail=orderType==="LIMIT"?"Ordre limité prévu":"Pas de hausse au-dessus du dernier niveau de grille détectée";
+    }
+  }
+  angles.push(angle("Garde-fou anti-FOMO",fomoStatus,fomoDetail,"Saisie manuelle hors dépôt",input.now,null));
   const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
   const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
