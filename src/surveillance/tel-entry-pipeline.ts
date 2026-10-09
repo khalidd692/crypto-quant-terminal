@@ -23,6 +23,7 @@ export interface EntryPipelineInput {
   readonly btcSourceHash?: string;
   readonly venueDetail: string;
   readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string } | null;
+  readonly mexcLiquidity?: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string } | null;
   readonly swingCapitalQuote: number;
   readonly stopPrice: number | null;
   readonly openSwingPositions: number;
@@ -101,6 +102,11 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     angles.push(angle("Liquidité réelle TEL",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité réelle TEL", "UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
+  const mexcLiquidity=input.mexcLiquidity??null;
+  if(mexcLiquidity&&price!==null&&risk.notionalQuote>0){
+    const mexcGate=assessLiquidity({spreadBps:mexcLiquidity.spreadBps,estimatedSlippageBps:mexcLiquidity.estimatedSlippageBps,depthQuote:mexcLiquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
+    angles.push(angle("Liquidité de contrôle MEXC",mexcGate.passed?"OK":"BLOC",mexcGate.reason??"Spread, impact estimé et profondeur MEXC conformes","MEXC Spot order book",mexcLiquidity.observedAt,mexcLiquidity.sourceHash));
+  }else angles.push(angle("Liquidité de contrôle MEXC","UNAVAILABLE","Carnet MEXC indisponible, invalide ou dimensionnement indisponible","MEXC Spot order book",mexcLiquidity?.observedAt??null,mexcLiquidity?.sourceHash??null));
   const orderType=input.plannedOrderType??null;
   const gridActive=input.orderGridActive??null;
   const gridLevel=input.lastGridLevelPrice??null;
