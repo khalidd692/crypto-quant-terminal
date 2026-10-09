@@ -1,17 +1,31 @@
 # TEL prospective entry-quality test — success criteria
 
 - **Document date:** 2026-10-09
-- **Status:** Proposed preregistration for a NEW evaluation window; not retroactively valid for any run before acceptance.
-- **Acceptance timestamp:** not yet recorded.
+- **Candidate main SHA at configuration freeze:** `93d0abac2db3d8c5a4ea6421c55aac6c40301f09`
+- **Operational configuration/source freeze timestamp (UTC):** `2026-10-09T15:24:08.623Z`
+- **Acceptance timestamp:** `2026-10-09T15:24:08.623Z` — owner authorization to freeze the existing operational configuration and source allowlist only; this is not an approval of the still-proposed ADR-0003 or authorization to score outcomes.
+- **Frozen run configuration:** [`lab-config/tel-prospective-config.json`](../lab-config/tel-prospective-config.json)
+- **Frozen run configuration SHA-256:** `40ba6a7c659f53bb0e1ebd3440f5d32f657afc7231886562d8136ba37dce8640`
+- **Source/data manifest:** [`datasets/manifests/tel-prospective-sources.json`](../datasets/manifests/tel-prospective-sources.json)
+- **Source/data manifest SHA-256:** `ae9b70d7bd797b298d9cc7f21609164b775dc84f094dd1466f13bca528e34610`
+- **Study protocol acceptance:** NOT RECORDED — `docs/adr/0003-tel-entry-quality-study-proposal.md` remains a proposal with outstanding approval/review requirements.
+- **Prospective outcome clock:** **NOT STARTED** — operational artifacts are frozen as a candidate; do not count outcomes until the protocol acceptance gate below is satisfied and the start timestamp is explicitly recorded.
 - **Existing journal entries:** excluded from the success/failure sample; they are operational telemetry collected before this protocol was accepted.
-- **Minimum observation duration:** 8 complete weeks after acceptance.
+- **Minimum observation duration:** 8 complete weeks after the valid study start timestamp.
 - **Minimum sample:** 30 distinct eligible `ENTRER` signals. If fewer occur, outcome is **INCONCLUSIVE**; do not relax gates to obtain more signals.
 - **Current conclusion:** **PAS D'EDGE**. This document is not evidence of an edge.
 
+> **DÉMARRAGE DE L'HORLOGE PROSPECTIVE : AUCUN BACKTEST RÉTROACTIF N'EST AUTORISÉ.**
+>
+> The timestamp above records the freeze of the operational configuration and source allowlist. It does not start the outcome-evaluation clock. The clock starts only after the study protocol is explicitly approved, the required review items below are resolved, the accepted code SHA and both manifest/configuration hashes are recorded together, and a distinct prospective dataset begins collecting strictly forward-only observations. No pre-acceptance journal entries may be counted.
+
 ## Authorization boundary
 
-No backtest, outcome scoring, parameter tuning, sealed-data access, or new strategy research is authorized by this document. The evaluation clock starts only after explicit acceptance, a timestamped code SHA, a source/data manifest hash, and a frozen run configuration have been recorded. The minimum eight weeks and 30 distinct eligible signals are counted only from that accepted start timestamp. Earlier prospective-surveillance records may be used for operational diagnostics, but must not be included in the pre-registered outcome evaluation. ADR-0002, its frozen dataset, historical results, and the Phase 3 holdout remain untouched.
+No backtest, outcome scoring, parameter tuning, sealed-data access, or new strategy research is authorized by this document. The proposed TEL study must use a dataset distinct from the frozen BTCUSDT Phase 3 dataset and its holdout. ADR-0002, its frozen dataset, historical results, and the Phase 3 holdout remain untouched. The source manifest is an allowlist, not evidence that every listed provider is currently available or that an unimplemented collector has passed validation. Any required unavailable, stale, malformed, or incoherent source must fail closed. MEXC TEL perpetual open interest remains `UNAVAILABLE` until the manual diagnostic is run and reviewed.
 
+## Protocol acceptance gate still open
+
+Before the outcome clock can start, the owner and independent reviewer must explicitly accept a complete protocol version and resolve the outstanding items in `docs/adr/0003-tel-entry-quality-study-proposal.md`, including the comparable-asset universe and failure/delisting treatment, deterministic bull/bear/range regime rule, cost/fill assumptions, block-bootstrap block length and replication count, minimum effect size, confidence/power requirements, and the one-time sealed-evaluation access policy. Freeze and hash that accepted protocol and the separate prospective dataset manifest. Do not infer acceptance from creation of these operational files or from opening/merging a documentation PR alone.
 ## Primary metric
 
 For each signal timestamp, calculate adverse excursion over the following 7 calendar days in ATR(14) units measured only from data available at signal time:
