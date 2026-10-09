@@ -21,9 +21,9 @@ export async function fetchLiquidityContext(at:string):Promise<{value:LiquidityC
  const stablecoinMarketCapQuote=stablecoinPrimary??stablecoinFallback;
  const binanceVolume=numberOrNull(tr?.quoteVolume),kucoinVolume=numberOrNull(kstats?.volValue);
  const volume24hQuote=binanceVolume??kucoinVolume;
- const bid=numberOrNull(tr?.bidPrice)??numberOrNull(kl1?.bestBid);
- const ask=numberOrNull(tr?.askPrice)??numberOrNull(kl1?.bestAsk);
- const last=numberOrNull(tr?.lastPrice)??numberOrNull(kl1?.price);
+ const bid=numberOrNull(tr?.bidPrice)??numberOrNull(kl1?.bestBid)??numberOrNull(kl1?.bestBidPrice);
+ const ask=numberOrNull(tr?.askPrice)??numberOrNull(kl1?.bestAsk)??numberOrNull(kl1?.bestAskPrice);
+ const last=numberOrNull(tr?.lastPrice)??numberOrNull(kl1?.price)??numberOrNull(kl1?.lastPrice);
  const spreadBps=bid!==null&&ask!==null&&last!==null&&last>0?((ask-bid)/last)*10000:null;
  const stableProv=stablecoinMarketCapQuote!==null?provenance("liquidity.stablecoinMarketCapQuote",stablecoinPrimary!==null?S:COINGECKO_CATEGORIES,at,stablecoinPrimary!==null?s.status==="fulfilled"?s.value:null:cg.status==="fulfilled"?cg.value:null):unavailableProvenance("liquidity.stablecoinMarketCapQuote",S+" + "+COINGECKO_CATEGORIES,at,"DefiLlama: "+(s.status==="rejected"?String(s.reason):"totalCirculatingUSD unavailable")+"; CoinGecko: "+(cg.status==="rejected"?String(cg.reason):"stablecoin category market_cap unavailable"));
  const volumeSource=binanceVolume!==null?B:KUCOIN_STATS;
