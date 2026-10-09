@@ -27,6 +27,9 @@ export async function fetchCryptoMarketContext(at: string): Promise<{ value: Cry
   const kcd=kc.status==="fulfilled"?object(kc.value,KUCOIN_CONTRACT).data as any:null;
   const g=gd?.quotes?.USD;
   const btc=bd?.["1"]?.quotes?.USD;
+  const totalMarketCapQuote=numberOrNull(g?.total_market_cap);
+  const btcDominancePct=numberOrNull(gd?.bitcoin_percentage_of_market_cap);
+  const btcReturnPct=numberOrNull(btc?.percentage_change_24h);
   const binanceFunding=numberOrNull(fd?.lastFundingRate);
   const kucoinFunding=numberOrNull(kfd?.value);
   const fundingValue=binanceFunding??kucoinFunding;
@@ -43,14 +46,14 @@ export async function fetchCryptoMarketContext(at: string): Promise<{ value: Cry
     fundingError:mf.status==="rejected"?String(mf.reason):null,tickerError:mt.status==="rejected"?String(mt.reason):null,contractError:md.status==="rejected"?String(md.reason):null,
   });
   const value:CryptoMarketContext={
-    totalMarketCapQuote:numberOrNull(g?.total_market_cap),btcDominancePct:numberOrNull(gd?.bitcoin_percentage_of_market_cap),
-    btcReturnPct:numberOrNull(btc?.percentage_change_24h),realizedVolPct:null,breadthPct:null,
+    totalMarketCapQuote,btcDominancePct,
+    btcReturnPct,realizedVolPct:null,breadthPct:null,
     fundingRatePct:fundingValue,openInterestQuote:openInterestValue,sentimentScore:null,
     telFundingRate:mexc.fundingRate,telOpenInterestQuote:mexc.openInterestQuote,
   };
-  p.push(a.status==="fulfilled"?provenance("market.totalMarketCapQuote",G,at,a.value):unavailableProvenance("market.totalMarketCapQuote",G,at,String(a.reason)));
-  p.push(a.status==="fulfilled"?provenance("market.btcDominancePct",G,at,a.value):unavailableProvenance("market.btcDominancePct",G,at,String(a.reason)));
-  p.push(b.status==="fulfilled"?provenance("market.btcReturnPct",B,at,b.value):unavailableProvenance("market.btcReturnPct",B,at,String(b.reason)));
+  p.push(a.status==="fulfilled"&&totalMarketCapQuote!==null?provenance("market.totalMarketCapQuote",G,at,a.value):unavailableProvenance("market.totalMarketCapQuote",G,at,a.status==="rejected"?String(a.reason):"total_market_cap missing from live response"));
+  p.push(a.status==="fulfilled"&&btcDominancePct!==null?provenance("market.btcDominancePct",G,at,a.value):unavailableProvenance("market.btcDominancePct",G,at,a.status==="rejected"?String(a.reason):"bitcoin_percentage_of_market_cap missing from live response"));
+  p.push(b.status==="fulfilled"&&btcReturnPct!==null?provenance("market.btcReturnPct",B,at,b.value):unavailableProvenance("market.btcReturnPct",B,at,b.status==="rejected"?String(b.reason):"percentage_change_24h missing from live response"));
   p.push(fundingValue!==null?provenance("market.fundingRatePct",fundingSource,at,fundingSource===F?f.status==="fulfilled"?f.value:null:kf.status==="fulfilled"?kf.value:null):unavailableProvenance("market.fundingRatePct",F+" + "+KUCOIN_FUNDING,at,"Binance: "+(f.status==="rejected"?String(f.reason):"funding field unavailable")+"; KuCoin: "+(kf.status==="rejected"?String(kf.reason):"funding field unavailable")));
   p.push(openInterestValue!==null?provenance("market.openInterestQuote",openInterestSource,at,openInterestSource===O?o.status==="fulfilled"?o.value:null:kc.status==="fulfilled"?kc.value:null):unavailableProvenance("market.openInterestQuote",O+" + "+KUCOIN_CONTRACT,at,"Binance: "+(o.status==="rejected"?String(o.reason):"open interest unavailable")+"; KuCoin: "+(kc.status==="rejected"?String(kc.reason):"openInterest, multiplier, or markPrice unavailable")));
   p.push(mexc.fundingRate===null?unavailableProvenance("market.telFundingRate",MEXC_FUNDING,at,mexc.fundingReason??"MEXC TEL funding unavailable"):provenance("market.telFundingRate",MEXC_FUNDING,at,mf.status==="fulfilled"?mf.value:null));
