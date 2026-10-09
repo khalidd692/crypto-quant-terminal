@@ -1,0 +1,64 @@
+name: Daily NLP Surveillance
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-nlp-surveillance
+  cancel-in-progress: false
+
+jobs:
+  ingest-and-publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout advanced lab branch
+        uses: actions/checkout@v5
+        with:
+          ref: research/advanced-quant-lab
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install ingestion dependency
+        run: python -m pip install --disable-pip-version-check "pydantic>=2,<3"
+
+      - name: Run GitHub ingestion and FTS5 searches
+        id: ingest
+        continue-on-error: true
+        run: python src/research/advanced_lab/run_github_ingestion.py
+
+      - name: Commit and push the latest mobile report
+        if: ${{ always() && (steps.ingest.outcome == 'success' || steps.ingest.outcome == 'failure') }}
+        env:
+          REPORT_PATH: reports/latest_nlp_signals.md
+        run: |
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "::error::The ingestion script did not produce $REPORT_PATH"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$REPORT_PATH"
+
+          if git diff --cached --quiet; then
+            echo "The report has no changes; nothing to commit."
+          else
+            git commit -m "chore(lab): refresh daily NLP surveillance report"
+            git push origin HEAD:refs/heads/research/advanced-quant-lab
+          fi
+
+      - name: Fail the workflow if ingestion was fail-closed
+        if: ${{ steps.ingest.outcome == 'failure' }}
+        run: |
+          echo "::error::Ingestion returned a failure. The fail-closed report was committed when available; inspect reports/latest_nlp_signals.md."
+          exit 1
