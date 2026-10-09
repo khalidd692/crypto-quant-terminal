@@ -31,6 +31,12 @@ export interface EntryPipelineInput {
   readonly plannedOrderType?: "LIMIT" | "MARKET" | null;
   readonly orderGridActive?: boolean | null;
   readonly lastGridLevelPrice?: number | null;
+  readonly antiFomoStartedAt?: string | null;
+  readonly antiFomoReason?: string | null;
+  readonly trancheCountInZone?: number | null;
+  readonly maxTranchesPerZone?: number | null;
+  readonly lastTranchePrice?: number | null;
+  readonly plannedEntryPrice?: number | null;
 }
 export interface EntryPipelineOutput {
   readonly decision: SwingDecision;
@@ -110,7 +116,47 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
       fomoDetail=orderType==="LIMIT"?"Ordre limité prévu":"Pas de hausse au-dessus du dernier niveau de grille détectée";
     }
   }
-  angles.push(angle("Garde-fou anti-FOMO",fomoStatus,fomoDetail,"Saisie manuelle hors dépôt",input.now,null));
+  const cooldownHoursRaw=Number(process.env.TEL_ANTI_FOMO_COOLDOWN_HOURS??12);
+  const cooldownHours=Number.isFinite(cooldownHoursRaw)?Math.min(24,Math.max(12,cooldownHoursRaw)):12;
+  const startedAt=input.antiFomoStartedAt??null;
+  const startedMs=startedAt?Date.parse(startedAt):NaN;
+  const elapsedHours=Number.isFinite(startedMs)?(nowMs-startedMs)/3_600_000:null;
+  const writtenReason=(input.antiFomoReason??"").trim();
+  const extensionTrigger=quality.decision==="EXTENDED";
+  const rise24=quality.metrics.rise24h;
+  const rapidRise=typeof rise24==="number"&&rise24>P0_ENTRY_POLICY.maxRise24hPct;
+  const fomoTrigger=extensionTrigger||rapidRise;
+  const trancheCount=input.trancheCountInZone??null;
+  const trancheMax=input.maxTranchesPerZone??3;
+  const lastTranche=input.lastTranchePrice??null;
+  const plannedEntry=input.plannedEntryPrice??livePrice;
+  let antiFomoStatus:AngleStatus=fomoStatus;
+  let antiFomoDetail=fomoDetail;
+  const antiFomoReasons:string[]=[];
+  if(fomoTrigger) {
+    antiFomoReasons.push("FOMO ? ordres limités uniquement");
+    if(elapsedHours===null||elapsedHours<cooldownHours) {
+      antiFomoStatus="BLOC";
+      antiFomoReasons.push(`Délai de réflexion ${cooldownHours} h non écoulé`);
+    }
+    if(writtenReason.length<12) {
+      antiFomoStatus="BLOC";
+      antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
+    }
+  }
+  if(trancheCount!==null&&trancheMax!==null&&trancheCount>=trancheMax) {
+    antiFomoStatus="BLOC";
+    antiFomoReasons.push(`Maximum de tranches atteint dans cette zone (${trancheCount}/${trancheMax})`);
+  }
+  if(lastTranche!==null&&plannedEntry!==null&&Number.isFinite(lastTranche)&&Number.isFinite(plannedEntry)&&plannedEntry<lastTranche) {
+    antiFomoReasons.push("Avertissement : ajout prévu sous la dernière tranche");
+  }
+  if(orderType==="MARKET"&&livePrice!==null&&gridLevel!==null&&livePrice>gridLevel) {
+    antiFomoStatus="BLOC";
+    antiFomoReasons.push("FOMO ? ordres limités uniquement");
+  }
+  if(antiFomoReasons.length) antiFomoDetail=[...new Set(antiFomoReasons)].join(" — ");
+  angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Saisie manuelle hors dépôt",input.now,null));
   const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
   const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
