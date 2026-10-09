@@ -85,7 +85,15 @@ async function main():Promise<void>{
    html=output.html;
    snapshotHash=sha({pipelineHash:output.snapshotHash,market:{candles:qualityBars,primary:market.primary,control:market.control,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,liquidity:market.liquidity},contextHash:contextSnapshot?.snapshotHash??null,angles:output.angles});
    console.log(JSON.stringify({assetId:asset.id,asOf:now,decision,reason:output.reason,priceQuote,snapshotHash,contextHash:contextSnapshot?.snapshotHash??null,provenance:contextSnapshot?.provenance.map(p=>({field:p.field,source:p.source,availableAt:p.availableAt,sourceSnapshotHash:p.sourceSnapshotHash,status:p.status})),angles:output.angles.map(a=>({angle:a.angle,status:a.status,detail:a.detail,source:a.source,observedAt:a.observedAt,sourceHash:a.sourceHash})),mode:"TEST_SANS_ARGENT",ordersSent:false},null,2));
-  }catch(error){decision="ATTENDRE";reasons=["API_UNAVAILABLE_OR_TIMEOUT",String(error).slice(0,240),"Fail-closed: aucun ordre n'est exécuté."];snapshotHash=sha({at:now,assetId:asset.id,error:String(error)});console.log(JSON.stringify({assetId:asset.id,asOf:now,decision,reason:reasons[1],snapshotHash,provenance:contextSnapshot?.provenance.map(p=>({field:p.field,source:p.source,availableAt:p.availableAt,sourceSnapshotHash:p.sourceSnapshotHash,status:p.status}))??[],angles:[{angle:"Collecte KuCoin/MEXC/BTC",status:"UNAVAILABLE",detail:reasons[1],source:"KuCoin Spot / MEXC / Binance",observedAt:now,sourceHash:"UNAVAILABLE"}],mode:"TEST_SANS_ARGENT",ordersSent:false},null,2));}
+  }catch(error){
+   decision="ATTENDRE";
+   const detail=String(error).slice(0,240);
+   const failClosed=runTelEntryPipeline({now,candles:[],price24hAgo:null,price7dAgo:null,btc24hChangePct:null,btcSupportBroken:null,context:null,contextError:detail,venueStatus:"UNAVAILABLE",venueDetail:detail,telLiquidity:null,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0)});
+   reasons=["API_UNAVAILABLE_OR_TIMEOUT",detail,...failClosed.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),"Fail-closed: aucun ordre n'est exécuté."];
+   html=failClosed.html;
+   snapshotHash=sha({at:now,assetId:asset.id,error:detail,angles:failClosed.angles});
+   console.log(JSON.stringify({assetId:asset.id,asOf:now,decision,reason:detail,snapshotHash,provenance:contextSnapshot?.provenance.map(p=>({field:p.field,source:p.source,availableAt:p.availableAt,sourceSnapshotHash:p.sourceSnapshotHash,status:p.status}))??[],angles:failClosed.angles.map(a=>({angle:a.angle,status:a.status,detail:a.detail,source:a.source,observedAt:a.observedAt,sourceHash:a.sourceHash})),mode:"TEST_SANS_ARGENT",ordersSent:false},null,2));
+  }
   writeFileSync(OUTPUT,html+"\n",{encoding:"utf8"});
   const previous=[...journalBeforeRun].reverse().find(item=>item.assetId===asset.id&&item.decision!=="ALERTE")?.decision??null;
   const record=appendProspectiveRecord(JOURNAL,{schemaVersion:"prospective-journal.v1",recordedAt:now,assetId:asset.id,decision,reasons,snapshotHash,mode:"TEST_SANS_ARGENT",...(priceQuote===undefined?{}:{priceQuote})});
