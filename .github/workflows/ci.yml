@@ -46,3 +46,25 @@ jobs:
       - run: node dist/tests/risk-sizing.js
       - run: node dist/tests/final-holdout.js
       - run: node dist/tests/tel-usdt-surveillance.js
+      - name: Read-only live TEL entry smoke
+        env:
+          PROSPECTIVE_JOURNAL: /tmp/tel-entry-smoke-journal.jsonl
+          TEL_DECISION_HTML: /tmp/tel-entry-smoke.html
+          SWING_CAPITAL_QUOTE: "1000"
+        run: |
+          rm -f "$PROSPECTIVE_JOURNAL" "$TEL_DECISION_HTML"
+          node dist/src/automation/runner.js
+          test -s "$PROSPECTIVE_JOURNAL"
+          test -s "$TEL_DECISION_HTML"
+          grep -q "EN TEST — SANS ARGENT" "$TEL_DECISION_HTML"
+          echo "LIVE_SMOKE_ARTIFACT=$TEL_DECISION_HTML"
+          echo "LIVE_SMOKE_JOURNAL=$PROSPECTIVE_JOURNAL"
+      - name: Upload read-only live smoke output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tel-entry-live-smoke
+          path: |
+            /tmp/tel-entry-smoke.html
+            /tmp/tel-entry-smoke-journal.jsonl
+          if-no-files-found: warn
