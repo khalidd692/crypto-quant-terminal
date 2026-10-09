@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { MarketDataPoint } from "../domain/types.js";
 import type { ContextSnapshot } from "../context/types.js";
 import { assessBtcFilter, assessEntryQuality, calculateSpotSwingRisk, P0_ENTRY_POLICY, type EntryQuality, type SpotRiskResult, type SwingDecision } from "./tel-swing.js";
@@ -143,7 +144,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
       antiFomoStatus="BLOC";
       antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
     } else {
-      antiFomoReasons.push("Motif : "+writtenReason.slice(0,240));
+      antiFomoReasons.push("Motif écrit fourni (empreinte SHA-256 : "+createHash("sha256").update(writtenReason).digest("hex")+")");
     }
   }
   if(trancheCount!==null&&trancheMax!==null&&trancheCount>=trancheMax) {
