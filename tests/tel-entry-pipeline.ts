@@ -5,7 +5,7 @@ import type { MarketDataPoint } from "../src/domain/types.js";
 import { runTelEntryPipeline } from "../src/surveillance/tel-entry-pipeline.js";
 
 const now="2026-10-09T12:00:00.000Z";
-const hash: `sha256:${string}`="sha256:"+"a".repeat(64);
+const hash=("sha256:"+"a".repeat(64)) as `sha256:${string}`;
 function point(i:number,close=1,availableAt?:string):MarketDataPoint{
   const t=Date.parse(now)-(199-i)*3600_000;
   return {instrumentId:"TEL-USDT",eventTime:new Date(t).toISOString() as MarketDataPoint["eventTime"],availableTime:(availableAt??new Date(t+5_000).toISOString()) as MarketDataPoint["availableTime"],open:close,high:close+.005,low:close-.005,close,volume:100,dataQuality:"complete",sourceId:"KUCOIN_SPOT"};
