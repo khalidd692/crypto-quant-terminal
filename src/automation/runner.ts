@@ -12,7 +12,7 @@ const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jso
 const OUTPUT=process.env.TEL_DECISION_HTML??"artifacts/tel-decision.html";
 const MAX_CONTEXT_AGE_MS=24*60*60_000;
 function num(value:unknown):number{const n=Number(value);if(!Number.isFinite(n))throw new Error("Invalid numeric market value");return n;}
-function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error(label)),ms)]);}
+function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error(label)),ms))]);}
 async function json(url:string):Promise<any>{const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
