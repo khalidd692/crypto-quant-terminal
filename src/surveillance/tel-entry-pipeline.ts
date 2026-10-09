@@ -73,6 +73,10 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const supplyDeteriorating=context.fundamentalsTel?.tokenUnlocks==="UNAVAILABLE"||context.fundamentalsTel?.notableFlows==="UNAVAILABLE";
     angles.push(angle("Offre / on-chain",!supplyOk?"UNAVAILABLE":supplyDeteriorating?"BLOC":"OK",supplyOk?"Offre, déblocages et flux documentés":"Déblocages/flux on-chain non disponibles : veto conservateur","CoinGecko + flux on-chain",context.asOf,context.snapshotHash));
   }
+  if(context){
+    const unavailable=context.provenance.filter(p=>p.status==="UNAVAILABLE");
+    if(unavailable.length)angles.push(angle("Provenance globale","UNAVAILABLE",unavailable.map(p=>p.field).join(", "),"Context providers",context.asOf,context.snapshotHash));
+  }
   const liquidity=input.telLiquidity;
   const risk=price!==null&&input.stopPrice!==null&&input.stopPrice>0&&input.stopPrice<price&&(quality.metrics.atr??0)>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:input.stopPrice,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
@@ -93,7 +97,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const finalReason=finalDecision==="ENTRER"?reason:reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason});
+  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles});
   return{decision:finalDecision,reason:finalReason,quality,risk,angles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";
