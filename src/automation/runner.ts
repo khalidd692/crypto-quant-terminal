@@ -13,7 +13,7 @@ const OUTPUT=process.env.TEL_DECISION_HTML??"artifacts/tel-decision.html";
 const MAX_CONTEXT_AGE_MS=24*60*60_000;
 function num(value:unknown):number{const n=Number(value);if(!Number.isFinite(n))throw new Error("Invalid numeric market value");return n;}
 function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error(label)),ms))]);}
-async function json(url:string):Promise<any>{const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();}
+async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
 interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; }
@@ -69,7 +69,7 @@ async function main():Promise<void>{
   let decision:"ENTRER"|"ATTENDRE"|"NE_PAS_ENTRER"="ATTENDRE",reasons:string[]=["Données indisponibles: ATTENDRE"],snapshotHash="sha256:unavailable",priceQuote:number|undefined,contextSnapshot:null|Awaited<ReturnType<typeof fetchContextSnapshot>>=null;
   let html="<!doctype html><html lang=\"fr\"><meta charset=\"utf-8\"><title>Puis-je acheter maintenant ?</title><body><h1>ATTENDRE</h1><p>Collecte indisponible. EN TEST — SANS ARGENT. Aucun ordre.</p></body></html>";
   try{
-   const [live,contextResult]=await settleWithTimeout(Promise.allSettled([collect(asset,now),fetchContextSnapshot("entry-pipeline:"+now,asset.id,now)]),25000,"LIVE_ENTRY_PIPELINE_TIMEOUT");
+   const [live,contextResult]=await settleWithTimeout(Promise.allSettled([collect(asset,now),settleWithTimeout(fetchContextSnapshot("entry-pipeline:"+now,asset.id,now),15000,"CONTEXT_PROVIDERS_TIMEOUT")]),20000,"LIVE_ENTRY_PIPELINE_TIMEOUT");
    if(contextResult.status==="fulfilled")contextSnapshot=contextResult.value;
    if(live.status!=="fulfilled")throw new Error("COLLECTE_UNAVAILABLE: "+String(live.reason));
    const market=live.value;
