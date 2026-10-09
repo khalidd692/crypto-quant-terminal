@@ -86,6 +86,8 @@ These are intentionally blocked until the research gate is satisfied.
 - `docs/RESEARCH_PROTOCOL.md`
 - `docs/DECISIONS.md`
 - `docs/MONITOR_INDICATORS.md`
+- `docs/ALERTS.md` — configuration manuelle des canaux d'alerte
+- `docs/ALERTS-PROSPECTIVE.md` — mode dry-run et journalisation prospective
 
 ## Phase 3 closure status
 
