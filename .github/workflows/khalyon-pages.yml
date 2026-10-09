@@ -1,10 +1,8 @@
 name: Deploy KHALYON
 on:
-  push:
-    branches: ["main","khalyon-ui"]
-    paths: ["khalyon/**","scripts/generate-context-snapshot.mjs",".github/workflows/khalyon-pages.yml","tests/khalyon-ui-integrity.mjs","tests/khalyon-playwright.spec.mjs","src/context/**","src/surveillance/**","src/risk/**","src/automation/**","research/prospective/journal.jsonl","research/funding/FROZEN_ARCHIVE_LOCK.json","docs/phase3-closure-report.md","package.json","package-lock.json"]
+  # Offset from the surveillance schedule to avoid simultaneous duplicate deployments.
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
   workflow_run:
     workflows: ["Prospective surveillance"]
@@ -15,10 +13,11 @@ permissions:
   id-token: write
 concurrency:
   group: khalyon-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   deploy:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
     environment:
       name: khalyon-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -27,7 +26,7 @@ jobs:
       - name: Checkout KHALYON
         uses: actions/checkout@v5
         with:
-          ref: ${{ (github.event_name == 'workflow_run' || github.event_name == 'schedule') && 'main' || github.ref_name }}
+          ref: main
       - name: Checkout latest surveillance journal from main
         uses: actions/checkout@v5
         with:
@@ -65,7 +64,6 @@ jobs:
       - name: Playwright render and screenshots
         run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1
       - name: Persist hash-verified context snapshot to main
-        if: github.ref_name == 'main'
         shell: bash
         run: |
           set -euo pipefail
