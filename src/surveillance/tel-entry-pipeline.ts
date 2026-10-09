@@ -14,6 +14,7 @@ export interface EntryPipelineInput {
   readonly relativeVolume?: number | null;
   readonly btc24hChangePct: number | null;
   readonly btcSupportBroken: boolean | null;
+  readonly btcUnavailableReason?: string;
   readonly context: ContextSnapshot | null;
   readonly contextError?: string;
   readonly venueStatus: "OK" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
@@ -54,7 +55,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   angles.push(angle("P0 — qualité d'entrée",quality.decision==="ACCEPTABLE"?"OK":quality.decision==="EXTENDED"?"BLOC":"UNAVAILABLE",quality.reasons.join("; ")||quality.decision,"assessEntryQuality",last?.availableTime??null,input.candlesSourceHash??null));
   const btc=assessBtcFilter({btc24hChangePct:input.btc24hChangePct,supportBroken:input.btcSupportBroken});
   const btcStatus=input.btc24hChangePct===null||input.btcSupportBroken===null?"UNAVAILABLE":btc.passed?"OK":"BLOC";
-  angles.push(angle("Filtre BTC",btcStatus,btc.reason,"Binance BTC 1h klines",input.context?.asOf??null,input.btcSourceHash??null));
+  angles.push(angle("Filtre BTC",btcStatus,btcStatus==="UNAVAILABLE"?(input.btcUnavailableReason??btc.reason):btc.reason,"KuCoin Spot BTC-USDT 1h klines",input.context?.asOf??null,input.btcSourceHash??null));
   const context=input.context;
   if(!context){
     angles.push(angle("Macro + calendrier","UNAVAILABLE",input.contextError??"Contexte absent","context providers"));
