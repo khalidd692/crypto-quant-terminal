@@ -31,6 +31,8 @@ jobs:
         env:
           PROSPECTIVE_JOURNAL: research/prospective/journal.jsonl
           SURVEILLANCE_CONFIG: config/surveillance-assets.json
+          CONTEXT_HTTP_TIMEOUT_MS: "3500"
+          CONTEXT_HTTP_RETRIES: "1"
         run: node dist/src/automation/runner.js
       - name: Append journal commit
         shell: bash
