@@ -10,6 +10,8 @@ on:
       - "src/automation/**"
       - "tests/khalyon-ui-integrity.mjs"
       - "tests/khalyon-playwright.spec.mjs"
+      - "tests/context-provider-guard.ts"
+      - "tests/kucoin-ticker.ts"
       - ".github/workflows/khalyon-ui-ci.yml"
       - ".github/workflows/khalyon-pages.yml"
       - ".github/workflows/prospective-surveillance.yml"

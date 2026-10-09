@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { normalizeKucoinStatsResponse } from "./kucoin-ticker.js";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { appendFollowUp, appendProspectiveRecord, readProspectiveJournal } from "./journal.js";
 import { emitAlerts } from "./alerts.js";
@@ -16,8 +17,40 @@ const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jso
 const OUTPUT=process.env.TEL_DECISION_HTML??"artifacts/tel-decision.html";
 const MAX_CONTEXT_AGE_MS=24*60*60_000;
 function num(value:unknown):number{const n=Number(value);if(!Number.isFinite(n))throw new Error("Invalid numeric market value");return n;}
-function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{return Promise.race([promise,new Promise<T>((_,reject)=>setTimeout(()=>reject(new Error(label)),ms))]);}
-async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
+function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise<T>{
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ const timeout=new Promise<T>((_,reject)=>{timer=setTimeout(()=>reject(new Error(label)),ms);});
+ return Promise.race([promise,timeout]).finally(()=>{if(timer!==undefined)clearTimeout(timer);});
+}
+async function json(url:string):Promise<any>{
+ const request=async():Promise<any>=>{
+  for(let attempt=0;attempt<2;attempt++){
+   let response:Response;
+   try{response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});}
+   catch(error){if(attempt===1)throw error;await new Promise(resolve=>setTimeout(resolve,250));continue;}
+   if(response.ok)return response.json();
+   const error=new Error(`HTTP ${response.status} for ${url}`);
+   if(![408,425,429,500,502,503,504].includes(response.status)||attempt===1)throw error;
+   const retryAfter=response.headers.get("retry-after");
+   const retryAfterSeconds=retryAfter===null?NaN:Number(retryAfter);
+   const delayMs=Number.isFinite(retryAfterSeconds)&&retryAfterSeconds>0?retryAfterSeconds*1000:400;
+   // If the provider asks for a long wait, return the error so a fallback endpoint can be tried.
+   if(delayMs>1500)throw error;
+   await new Promise(resolve=>setTimeout(resolve,Math.max(200,delayMs)));
+  }
+  throw new Error(`HTTP_RETRIES_EXHAUSTED ${url}`);
+ };
+ return settleWithTimeout(request(),16000,`HTTP_TIMEOUT ${url}`);
+}
+async function kucoinPrimaryTicker(url:string,symbol:string):Promise<any>{
+ try{return await json(url);}
+ catch(error){
+  if(!/HTTP 429/.test(String(error)))throw error;
+  const fallbackUrl=`https://api.kucoin.com/api/v1/market/stats?symbol=${encodeURIComponent(symbol)}`;
+  try{return normalizeKucoinStatsResponse(await json(fallbackUrl));}
+  catch(fallbackError){throw new Error(`KUCOIN_TICKER_RATE_LIMITED; stats fallback failed: ${String(fallbackError).slice(0,160)}`);}
+ }
+}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
 function writePrivatePositionReport(asset:SurveillanceAssetConfig,asOf:string,currentPrice:number,candles:readonly MarketDataPoint[]):void{
@@ -90,7 +123,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end,
   "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20"
  ];
- const settled=await Promise.allSettled(urls.map(json));
+ const settled=await Promise.allSettled([kucoinPrimaryTicker(urls[0]!,asset.primarySymbol),...urls.slice(1).map(json)]);
  const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
  const [k,mPrice,m24,kline,book,btc,mBook]=[0,1,2,3,4,5,6].map(value);
  const failed=settled.map((item,i)=>item.status==="rejected"?`${i}:${String(item.reason).slice(0,100)}`:null).filter((x):x is string=>x!==null);
