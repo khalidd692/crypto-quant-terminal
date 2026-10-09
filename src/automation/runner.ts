@@ -16,6 +16,13 @@ function settleWithTimeout<T>(promise:Promise<T>,ms:number,label:string):Promise
 async function json(url:string):Promise<any>{return settleWithTimeout((async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(7000),headers:{accept:"application/json"}});if(!response.ok)throw new Error(`HTTP ${response.status} for ${url}`);return response.json();})(),7000,`HTTP_TIMEOUT ${url}`);}
 function sha(value:unknown):string{return "sha256:"+createHash("sha256").update(JSON.stringify(value)).digest("hex");}
 function asIso(secondsOrMs:unknown,fallback:string):string{const n=Number(secondsOrMs);if(!Number.isFinite(n)||n<=0)return fallback;const ms=n<1e12?n*1000:n;return new Date(ms).toISOString();}
+function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGridActive:boolean|null;lastGridLevelPrice:number|null}{
+ const order=process.env.TEL_PLANNED_ORDER_TYPE?.trim().toUpperCase();
+ const grid=process.env.TEL_ORDER_GRID_STATE?.trim().toUpperCase();
+ const rawPrice=process.env.TEL_LAST_GRID_LEVEL_PRICE?.trim()??"";
+ const parsed=rawPrice===""?NaN:Number(rawPrice);
+ return{plannedOrderType:order==="LIMIT"||order==="MARKET"?order:null,orderGridActive:grid==="ACTIVE"?true:grid==="INACTIVE"?false:null,lastGridLevelPrice:Number.isFinite(parsed)&&parsed>0?parsed:null};
+}
 interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; }
 function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
 function estimateBuyImpactBps(asks:unknown,notional:number,bestAsk:number):number{
