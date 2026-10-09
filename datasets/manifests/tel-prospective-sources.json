@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "tel-prospective-source-manifest.v1",
+  "studyId": "TEL-SPOT-ENTRY-PROSPECTIVE-2026-10",
+  "createdAtUtc": "2026-10-09T15:24:08.623Z",
+  "status": "FROZEN_CANDIDATE_PENDING_PR_MERGE_AND_PROTOCOL_REVIEW",
+  "collectionPolicy": {
+    "startBoundary": "No pre-acceptance observation may enter the prospective outcome sample",
+    "historicalBackfillAllowed": false,
+    "phase3DatasetReuseAllowed": false,
+    "phase3HoldoutAccessAllowed": false,
+    "pointInTimeRequired": true,
+    "recordRequiredForEachObservation": ["sourceId", "sourceUrlOrEndpoint", "requestOrCollectionTimestampUtc", "eventTimestampUtc", "availabilityTimestampUtc", "rawSnapshotSha256", "parserVersion", "missingnessOrFailureReason"],
+    "sourceFailurePolicy": "Fail closed; required source missing, stale, malformed, or incoherent means no ENTRER; never impute",
+    "privateCredentials": "Never store API tokens, cookies, or credentials in this repository"
+  },
+  "allowedSources": [
+    {
+      "id": "kucoin-spot-tel-usdt-market",
+      "provider": "KuCoin",
+      "market": "Spot",
+      "symbol": "TEL-USDT",
+      "purpose": ["primary TEL price and candles", "rolling indicators and entry-time ATR", "primary spot market provenance"],
+      "documentedEndpointInRepository": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
+      "hourlyEndpointPatternForProspectiveCollector": "https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=TEL-USDT",
+      "limitations": "Use only closed, complete candles; collector must persist exact request parameters and raw response hash"
+    },
+    {
+      "id": "kucoin-spot-btc-usdt-context",
+      "provider": "KuCoin",
+      "market": "Spot",
+      "symbol": "BTC-USDT",
+      "purpose": ["BTC 24h context", "support-break context when independently defined and timestamped"],
+      "endpointPatterns": ["https://api.kucoin.com/api/v1/market/candles?type=1hour&symbol=BTC-USDT"],
+      "limitations": "If BTC return or confirmed support status is unavailable, veto entry"
+    },
+    {
+      "id": "mexc-spot-tel-usdt-cross-check",
+      "provider": "MEXC",
+      "market": "Spot",
+      "symbol": "TELUSDT",
+      "purpose": ["secondary price and spot liquidity/cross-venue coherence check"],
+      "endpointPatterns": ["https://api.mexc.com/api/v3/ticker/price?symbol=TELUSDT", "https://api.mexc.com/api/v3/ticker/bookTicker?symbol=TELUSDT", "https://api.mexc.com/api/v3/klines?symbol=TELUSDT&interval=1h&limit=500"],
+      "limitations": "Secondary descriptive check only; missing, stale, or incoherent data veto ENTRER"
+    },
+    {
+      "id": "coingecko-telcoin-fundamentals",
+      "provider": "CoinGecko",
+      "purpose": ["circulating supply", "total supply", "market capitalization context"],
+      "endpoint": "https://api.coingecko.com/api/v3/coins/telcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false",
+      "limitations": "Fundamentals are context only; token unlocks and notable flows remain UNAVAILABLE unless independently verified"
+    },
+    {
+      "id": "telcoin-official-newsroom",
+      "provider": "Telcoin",
+      "purpose": ["official public announcements context"],
+      "endpoint": "https://www.telco.in/en/newsroom",
+      "limitations": "News headlines are not a standalone entry trigger"
+    },
+    {
+      "id": "fred-macro-series",
+      "provider": "Federal Reserve Bank of St. Louis FRED",
+      "purpose": ["macro context: DFF, DGS10, DTWEXBGS, CPIAUCSL, and declared extended series"],
+      "endpointPatterns": ["https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDAMGBD228NLBM", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL"],
+      "limitations": "Use observation dates as event times and fetch times as availability times; macro source age limit is seven days"
+    },
+    {
+      "id": "federal-reserve-fomc-calendar",
+      "provider": "Federal Reserve Board",
+      "purpose": ["high-importance FOMC event calendar"],
+      "endpoint": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "limitations": "Calendar parser schema marker failure means UNAVAILABLE; no guessed event dates"
+    },
+    {
+      "id": "alternative-me-sentiment",
+      "provider": "Alternative.me",
+      "purpose": ["Fear & Greed descriptive sentiment context"],
+      "endpoint": "https://api.alternative.me/fng/?limit=1",
+      "limitations": "Sentiment is noisy context, not a predictive claim"
+    },
+    {
+      "id": "reddit-telcoin-social",
+      "provider": "Reddit",
+      "purpose": ["descriptive social mention/tone context"],
+      "endpoint": "https://www.reddit.com/r/Telcoin/search.json?q=TEL&restrict_sr=1&sort=new&limit=100",
+      "limitations": "Manipulable descriptive context only; parser/provider failure means UNAVAILABLE"
+    },
+    {
+      "id": "x-recent-search-optional",
+      "provider": "X API v2",
+      "purpose": ["optional social context when credentials are configured outside the repository"],
+      "endpoint": "https://api.x.com/2/tweets/search/recent?query=(TEL%20OR%20Telcoin)%20-is:retweet&max_results=100&tweet.fields=author_id,created_at,text",
+      "limitations": "Optional; never commit X_BEARER_TOKEN; absent credentials or request failure means UNAVAILABLE"
+    },
+    {
+      "id": "mexc-tel-perpetual-funding",
+      "provider": "MEXC",
+      "market": "Perpetual derivatives, secondary context only",
+      "symbol": "TEL_USDT",
+      "purpose": ["funding rate provenance only, if endpoint response passes existing schema and freshness checks"],
+      "endpoint": "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT",
+      "limitations": "Not an entry trigger; no inference about spot liquidity or edge"
+    }
+  ],
+  "blockedOrUnavailableSources": [
+    {
+      "id": "mexc-tel-perpetual-open-interest",
+      "provider": "MEXC",
+      "market": "Perpetual derivatives",
+      "symbol": "TEL_USDT",
+      "endpointsUnderManualDiagnostic": ["https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT", "https://contract.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT"],
+      "status": "UNAVAILABLE",
+      "reason": "Smoke test has not yet confirmed root cause; diagnostic may reveal transport timeout, schema/envelope mismatch, symbol mismatch, or stale/invalid fields",
+      "policy": "Do not use, substitute, estimate, or impute open interest; keep terminal status UNAVAILABLE until manual diagnostic evidence and independent review"
+    },
+    {
+      "id": "github-telcoin-api",
+      "provider": "GitHub / Telcoin",
+      "status": "BLOCKED_NOT_VERIFIED",
+      "reason": "No public API endpoint for authoritative TEL supply/unlocks was identified in the current repository; do not invent or infer one",
+      "policy": "Official public repositories/releases may be reviewed manually, but are not machine-authorized inputs until a concrete endpoint, schema, timestamp semantics, and provenance policy are separately reviewed and added"
+    },
+    {
+      "id": "onchain-token-unlocks-and-notable-flows",
+      "status": "UNAVAILABLE",
+      "reason": "Current provider contract does not supply independently verified token unlock schedule or notable flow data",
+      "policy": "Required supply angle remains fail-closed; no ENTRER while this mandatory angle is UNAVAILABLE"
+    }
+  ],
+  "prohibitedSourcesAndPractices": [
+    "Phase 3 frozen BTCUSDT dataset or any Phase 3 holdout observation",
+    "Pre-acceptance journal entries as prospective outcome samples",
+    "Backfilled or revised values represented as available at the original decision time",
+    "Unversioned third-party whale signals or generic on-chain metrics as entry triggers",
+    "Undocumented endpoint substitutions, silent imputations, or source failures hidden as valid values",
+    "API credentials, personal position data, average entry price, or private user notes in public repository files"
+  ],
+  "invariants": {
+    "phase3Adr0002": "UNCHANGED",
+    "frozenPhase3Dataset": "UNCHANGED",
+    "phase3Holdout": "UNTOUCHED",
+    "historicalResults": "UNCHANGED",
+    "scientificVerdict": "PAS D'EDGE",
+    "exchangeOrders": false
+  }
+}
