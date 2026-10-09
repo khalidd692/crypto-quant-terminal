@@ -18,6 +18,7 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test
+      - run: npm run test:runner-self-test
       - run: node dist/tests/domain-validation.js
       - run: node dist/tests/core-invariants.js
       - run: node dist/tests/protocol-invariants.js
