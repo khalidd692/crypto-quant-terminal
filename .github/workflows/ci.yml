@@ -59,3 +59,12 @@ jobs:
           grep -q "EN TEST — SANS ARGENT" "$TEL_DECISION_HTML"
           echo "LIVE_SMOKE_ARTIFACT=$TEL_DECISION_HTML"
           echo "LIVE_SMOKE_JOURNAL=$PROSPECTIVE_JOURNAL"
+      - name: Upload read-only live smoke output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tel-entry-live-smoke
+          path: |
+            /tmp/tel-entry-smoke.html
+            /tmp/tel-entry-smoke-journal.jsonl
+          if-no-files-found: warn
