@@ -75,8 +75,8 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   }
   if(context){
     const unavailable=context.provenance.filter(p=>p.status==="UNAVAILABLE");
-    if(unavailable.length)angles.push(angle("Provenance globale","UNAVAILABLE",unavailable.map(p=>p.field).join(", "),"Context providers",context.asOf,context.snapshotHash));
-  }
+    angles.push(angle("Provenance globale",unavailable.length?"UNAVAILABLE":"OK",unavailable.length?unavailable.map(p=>p.field).join(", "):"Toutes les sources de contexte déclarées sont disponibles","Context providers",context.asOf,context.snapshotHash));
+  } else angles.push(angle("Provenance globale","UNAVAILABLE","Aucun snapshot de contexte vérifiable","Context providers"));
   const liquidity=input.telLiquidity;
   const risk=price!==null&&input.stopPrice!==null&&input.stopPrice>0&&input.stopPrice<price&&(quality.metrics.atr??0)>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:input.stopPrice,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
