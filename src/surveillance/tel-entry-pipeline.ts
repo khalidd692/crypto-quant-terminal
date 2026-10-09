@@ -90,7 +90,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     angles.push(angle("Liquidité réelle TEL",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité réelle TEL", "UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
-  const finalAngles=angles.map(a=>({...a,mode:a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL"}));
+  const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
   const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
   let decision:SwingDecision="ATTENDRE",reason="Tous les contrôles obligatoires sont satisfaits; décision descriptive uniquement.";
