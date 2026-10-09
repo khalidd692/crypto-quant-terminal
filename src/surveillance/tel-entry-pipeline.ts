@@ -82,7 +82,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   } else angles.push(angle("Provenance globale","UNAVAILABLE","Aucun snapshot de contexte vérifiable","Context providers"));
   const liquidity=input.telLiquidity;
   const atrValue=quality.metrics.atr??0;
-  const effectiveStop=price!==null&&input.stopPrice===null&&atrValue>0?price-atrValue*P0_ENTRY_POLICY.atrStopMultiple:input.stopPrice;
+  const effectiveStop=price!==null&&input.stopPrice===null&&atrValue>0?price-atrValue*P0_ENTRY_POLICY.atrStopMultiple-Number.EPSILON*Math.max(1,price)*8:input.stopPrice;
   const risk=price!==null&&effectiveStop!==null&&effectiveStop>0&&effectiveStop<price&&atrValue>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:effectiveStop,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
