@@ -1,15 +1,15 @@
 {
   "schemaVersion": "context-snapshot.v1",
   "instrumentId": "TEL-USDT",
-  "asOf": "2026-10-09T16:35:00.736Z",
+  "asOf": "2026-10-09T17:11:30.804Z",
   "market": {
-    "totalMarketCapQuote": 2565268343228,
-    "btcDominancePct": 0.64756535237544,
-    "btcReturnPct": 1.74014,
+    "totalMarketCapQuote": 2564733402432,
+    "btcDominancePct": 0.647455280074876,
+    "btcReturnPct": 2.31785,
     "realizedVolPct": null,
     "breadthPct": null,
-    "fundingRatePct": 0.000043,
-    "openInterestQuote": 841407132.76368,
+    "fundingRatePct": 0.000045,
+    "openInterestQuote": 840916073.004,
     "sentimentScore": 59,
     "telFundingRate": 0.000133,
     "telOpenInterestQuote": null
@@ -19,10 +19,10 @@
     "inflationBias": "INFLATIONARY",
     "dollarBias": "WEAKENING",
     "policyRatePct": 0,
-    "tenYearYieldPct": 0,
+    "tenYearYieldPct": 5.28,
     "dollarIndex": 121.3848,
     "cpiYoYPct": 3.353016322755642,
-    "sourceAsOf": "2026-10-09T16:35:00.736Z"
+    "sourceAsOf": "2026-10-09T17:11:30.804Z"
   },
   "events": {
     "events": [
@@ -47,10 +47,10 @@
     "symbol": "BTC-USDT",
     "spreadBps": null,
     "depthQuote": null,
-    "volume24hQuote": 579321143.5468296,
-    "stablecoinMarketCapQuote": 292241950450.7674,
-    "stablecoinSourceAsOf": "2026-10-09T16:35:00.736Z",
-    "observedAt": "2026-10-09T16:35:00.736Z"
+    "volume24hQuote": 539476140.1281377,
+    "stablecoinMarketCapQuote": 292137497085.3117,
+    "stablecoinSourceAsOf": "2026-10-09T17:11:30.804Z",
+    "observedAt": "2026-10-09T17:11:30.804Z"
   },
   "fundamentals": {
     "protocolActivity": "UNKNOWN",
@@ -154476,601 +154476,601 @@
         "observedAt": "2026-07-02T00:00:00.000Z",
         "value": 0.002411,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-03T00:00:00.000Z",
         "value": 0.002392,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-04T00:00:00.000Z",
         "value": 0.002329,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-05T00:00:00.000Z",
         "value": 0.002279,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-06T00:00:00.000Z",
         "value": 0.002326,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-07T00:00:00.000Z",
         "value": 0.002321,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-08T00:00:00.000Z",
         "value": 0.00232,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-09T00:00:00.000Z",
         "value": 0.002281,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-10T00:00:00.000Z",
         "value": 0.002263,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-11T00:00:00.000Z",
         "value": 0.00225,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-12T00:00:00.000Z",
         "value": 0.002212,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-13T00:00:00.000Z",
         "value": 0.002095,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-14T00:00:00.000Z",
         "value": 0.002133,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-15T00:00:00.000Z",
         "value": 0.002063,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-16T00:00:00.000Z",
         "value": 0.001986,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-17T00:00:00.000Z",
         "value": 0.00191,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-18T00:00:00.000Z",
         "value": 0.001813,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-19T00:00:00.000Z",
         "value": 0.001915,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-20T00:00:00.000Z",
         "value": 0.001919,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-21T00:00:00.000Z",
         "value": 0.001897,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-22T00:00:00.000Z",
         "value": 0.001832,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-23T00:00:00.000Z",
         "value": 0.001781,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-24T00:00:00.000Z",
         "value": 0.001672,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-25T00:00:00.000Z",
         "value": 0.001725,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-26T00:00:00.000Z",
         "value": 0.001749,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-27T00:00:00.000Z",
         "value": 0.00171,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-28T00:00:00.000Z",
         "value": 0.001767,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-29T00:00:00.000Z",
         "value": 0.001705,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-30T00:00:00.000Z",
         "value": 0.001742,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-07-31T00:00:00.000Z",
         "value": 0.001726,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-01T00:00:00.000Z",
         "value": 0.001672,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-02T00:00:00.000Z",
         "value": 0.001658,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-03T00:00:00.000Z",
         "value": 0.001642,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-04T00:00:00.000Z",
         "value": 0.00161,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-05T00:00:00.000Z",
         "value": 0.001576,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-06T00:00:00.000Z",
         "value": 0.001502,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-07T00:00:00.000Z",
         "value": 0.001497,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-08T00:00:00.000Z",
         "value": 0.001724,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-09T00:00:00.000Z",
         "value": 0.001608,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-10T00:00:00.000Z",
         "value": 0.0015,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-11T00:00:00.000Z",
         "value": 0.001594,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-12T00:00:00.000Z",
         "value": 0.001587,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-13T00:00:00.000Z",
         "value": 0.001492,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-14T00:00:00.000Z",
         "value": 0.001473,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-15T00:00:00.000Z",
         "value": 0.001472,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-16T00:00:00.000Z",
         "value": 0.001471,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-17T00:00:00.000Z",
         "value": 0.001401,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-18T00:00:00.000Z",
         "value": 0.001458,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-19T00:00:00.000Z",
         "value": 0.001609,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-20T00:00:00.000Z",
         "value": 0.00183,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-21T00:00:00.000Z",
         "value": 0.001947,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-22T00:00:00.000Z",
         "value": 0.001809,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-23T00:00:00.000Z",
         "value": 0.001774,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-24T00:00:00.000Z",
         "value": 0.001892,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-25T00:00:00.000Z",
         "value": 0.001803,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-26T00:00:00.000Z",
         "value": 0.001829,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-27T00:00:00.000Z",
         "value": 0.001895,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-28T00:00:00.000Z",
         "value": 0.001741,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-29T00:00:00.000Z",
         "value": 0.00167,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-30T00:00:00.000Z",
         "value": 0.001675,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-08-31T00:00:00.000Z",
         "value": 0.001717,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-01T00:00:00.000Z",
         "value": 0.001666,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-02T00:00:00.000Z",
         "value": 0.001706,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-03T00:00:00.000Z",
         "value": 0.001769,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-04T00:00:00.000Z",
         "value": 0.001713,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-05T00:00:00.000Z",
         "value": 0.0017,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-06T00:00:00.000Z",
         "value": 0.00175,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-07T00:00:00.000Z",
         "value": 0.001703,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-08T00:00:00.000Z",
         "value": 0.001785,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-09T00:00:00.000Z",
         "value": 0.001792,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-10T00:00:00.000Z",
         "value": 0.001767,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-11T00:00:00.000Z",
         "value": 0.001725,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-12T00:00:00.000Z",
         "value": 0.001656,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-13T00:00:00.000Z",
         "value": 0.001563,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-14T00:00:00.000Z",
         "value": 0.001643,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-15T00:00:00.000Z",
         "value": 0.0015,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-16T00:00:00.000Z",
         "value": 0.001455,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-17T00:00:00.000Z",
         "value": 0.001415,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-18T00:00:00.000Z",
         "value": 0.001621,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-19T00:00:00.000Z",
         "value": 0.001472,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-20T00:00:00.000Z",
         "value": 0.001518,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-21T00:00:00.000Z",
         "value": 0.00165,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-22T00:00:00.000Z",
         "value": 0.001828,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-23T00:00:00.000Z",
         "value": 0.001731,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-24T00:00:00.000Z",
         "value": 0.00165,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-25T00:00:00.000Z",
         "value": 0.001643,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-26T00:00:00.000Z",
         "value": 0.001664,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-27T00:00:00.000Z",
         "value": 0.001855,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-28T00:00:00.000Z",
         "value": 0.002342,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-29T00:00:00.000Z",
         "value": 0.002264,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-09-30T00:00:00.000Z",
         "value": 0.002368,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-01T00:00:00.000Z",
         "value": 0.002135,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-02T00:00:00.000Z",
         "value": 0.001975,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-03T00:00:00.000Z",
         "value": 0.001977,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-04T00:00:00.000Z",
         "value": 0.001951,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-05T00:00:00.000Z",
         "value": 0.001919,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-06T00:00:00.000Z",
         "value": 0.001954,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-07T00:00:00.000Z",
         "value": 0.002015,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-08T00:00:00.000Z",
         "value": 0.001842,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       },
       {
         "observedAt": "2026-10-09T00:00:00.000Z",
-        "value": 0.001862,
+        "value": 0.001858,
         "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-        "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d"
+        "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e"
       }
     ]
   },
@@ -155301,7 +155301,7 @@
     "tokenUnlocks": "UNAVAILABLE",
     "networkActivity": "UNAVAILABLE",
     "notableFlows": "UNAVAILABLE",
-    "sourceAsOf": "2026-10-09T16:35:00.736Z"
+    "sourceAsOf": "2026-10-09T17:11:30.804Z"
   },
   "socialSentiment": {
     "mentions": null,
@@ -155313,233 +155313,213 @@
     "label": "indice de température, bruité et manipulable, pas une prévision",
     "sourceAsOf": null
   },
-  "runId": "khalyon-stale:2026-10-09T16:51:21.163Z",
+  "runId": "khalyon:2026-10-09T17:11:30.804Z",
   "provenance": [
     {
       "field": "market.totalMarketCapQuote",
       "source": "https://api.alternative.me/v2/global/?convert=USD",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:b614c5a4045e8ca89e45ec91d46f65f4507764736dc99e653a5b0a7c9a70fe08",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:5059373da43f0d72363980683350b4805dae899ab8a641e0bd4e564d9072e53a",
+      "status": "OK"
     },
     {
       "field": "market.btcDominancePct",
       "source": "https://api.alternative.me/v2/global/?convert=USD",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:b614c5a4045e8ca89e45ec91d46f65f4507764736dc99e653a5b0a7c9a70fe08",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:5059373da43f0d72363980683350b4805dae899ab8a641e0bd4e564d9072e53a",
+      "status": "OK"
     },
     {
       "field": "market.btcReturnPct",
       "source": "https://api.alternative.me/v2/ticker/bitcoin/?convert=USD",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:6caccae40853b6ab08403c4fb49fba66abcea5294fe9295b865a6526a72c8cf4",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:ebf7d46bbdff0b81dda636ce81c379d8e0d51f8021cda3b4cb237b240caf47d0",
+      "status": "OK"
     },
     {
       "field": "market.fundingRatePct",
       "source": "https://api-futures.kucoin.com/api/v1/funding-rate/XBTUSDTM/current",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:f092cf16973700e65ea9115ddca05bc2b485264cefd29b7b0683ba8bb908ab8d",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:6c8b1f6d378f5a16eb4f051b37dfcc6763058740076a7ede57a38324ea80d8fd",
+      "status": "OK"
     },
     {
       "field": "market.openInterestQuote",
       "source": "https://api-futures.kucoin.com/api/v1/contracts/XBTUSDTM",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:50ab0e5c28d4a4a0740668160b4ff4e5e4f3b3097e8eee18ccf498cfbddf5678",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:de1f386ee203d176603cf831f2731724b1da89556310c0f7808ab621b58fef93",
+      "status": "OK"
     },
     {
       "field": "market.telFundingRate",
       "source": "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:7c460f1b1434756c87475c0b354f1dcfcb89ba9229ffb3eb798ca958b5a0b47c",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:c10d4fca687f3174e5411b8879e945596df4d945597eb53b71193b4d33cc23e9",
+      "status": "OK"
     },
     {
       "field": "market.telOpenInterestQuote",
       "source": "https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT + https://contract.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:fbb9931f3212dfc3d8793a3e1a2738221bde6907cef3c078544d32d6bfa24065",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "MEXC_TEL_TICKER_SCHEMA_OR_SYMBOL_INVALID"
     },
     {
       "field": "liquidity.stablecoinMarketCapQuote",
       "source": "https://api.coingecko.com/api/v3/coins/categories",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:787b8c04edf3cfcf0e08a9fa3df4628aa841ec678fdf531fd00e6d42e795e03a",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:94ee8c28aa8a16a40495c968b36d7a780d54aedc3fcc4831c0dddbf7c6d01648",
+      "status": "OK"
     },
     {
       "field": "liquidity.volume24hQuote",
       "source": "https://api.kucoin.com/api/v1/market/stats?symbol=BTC-USDT",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:50542015611f6d8b8fbc4f772ee4bbd9053e460bc52553619fb3f54c47c8a8b7",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:e4ae38340affb4f8893f557b0a5725ff6f763b1c54c9c00f34daf16deb6d1d08",
+      "status": "OK"
     },
     {
       "field": "liquidity.spreadBps",
       "source": "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT + https://api.kucoin.com/api/v3/market/orderbook/level1?symbol=BTC-USDT",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:a84142c5c3adbe7abc99ab8c942c65099ef9f336e186e74eb13fae1ef8372c4e",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "Bid/ask/last unavailable from Binance and KuCoin"
     },
     {
       "field": "market.sentimentScore",
       "source": "https://api.alternative.me/fng/?limit=1",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:977af43ef872822997da0a246b7b5111d2b13951b57eb92c4b06d0807ef57438",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:68d4fcffa7e5030bb268475485f3b4f8ff4f5fd58570a7f30a4e8001678e9d9b",
+      "status": "OK"
     },
     {
       "field": "macro.DFF",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:c0ac139150f674149c2dc9964f683eb3bedf2077eff936815bf4dade09fbb79b",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "TimeoutError: The operation was aborted due to timeout"
     },
     {
       "field": "macro.DGS10",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:c0ac139150f674149c2dc9964f683eb3bedf2077eff936815bf4dade09fbb79b",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:2a7305b660453ac1a65ee6ec7cfae527b47ee4718f6cee7ccd624a499591884d",
+      "status": "OK"
     },
     {
       "field": "macro.DTWEXBGS",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:27a8b9cc66501bd494695875fc2badc669bad2397e8bce88b4f50df58b237431",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "macro.CPIAUCSL",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:5877c1dbb8e414914932895f5d959a65cfc011549e8661205d2cf1f40d127b0e",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "events.fomc",
       "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:d702a36b1117c1a882ea242ef647f5faa8fd59f4ca19d69ec786d3c6f78fe521",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:9574994fcaf72208cd6cc4bbf3e34cd4b5acb3a81d5e902583d172ecf6adc89c",
+      "status": "OK"
     },
     {
       "field": "macroSeries.DTWEXBGS",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:27a8b9cc66501bd494695875fc2badc669bad2397e8bce88b4f50df58b237431",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "macroSeries.SP500",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:0d00897ecacc0997e8fb54a92c71dcf440347d58f577290a08c211938e2e8369",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "macroSeries.DGS10",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:2a7305b660453ac1a65ee6ec7cfae527b47ee4718f6cee7ccd624a499591884d",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "macroSeries.GOLDAMGBD228NLBM",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDAMGBD228NLBM",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:f81acf259ff5bc0d78120ba410c807eacc477376b54c3ddfac1cd6fc5637d90f",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "Error: HTTP 404"
     },
     {
       "field": "macroSeries.M2SL",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:ec799aa848a7548bef159e304b9c42d90872e2201ef628b9c671b61a2ff3fdfb",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "fundamentalsTel.coingecko",
       "source": "https://api.coingecko.com/api/v3/coins/telcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:531e3f40900132e29e33afe131ebab19ec3218e589a7d86233e5868a4d809eb8",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:68c76e6070a9a18faa467294894c62190999652ef9daadbf2633c38fb03beb34",
+      "status": "OK"
     },
     {
       "field": "fundamentalsTel.newsroom",
       "source": "https://www.telco.in/en/newsroom",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:62117844022a48cb627a1277e52a1ca16834239fae92656a144e9b31900e1b2b",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "status": "OK"
     },
     {
       "field": "fundamentalsTel.unlockCalendar",
       "source": "https://www.telco.in/en/newsroom",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:353647af2653c3b62777ba5bc39d5d22bb61c97adb16f82fc1bf5d013ef28f70",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "No independently verifiable public TEL vesting/unlock schedule was confirmed; keep UNAVAILABLE"
     },
     {
       "field": "telDaily.close",
       "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-      "availableAt": "2026-10-09T16:35:00.736Z",
-      "sourceSnapshotHash": "sha256:5f132a998916002efe5b8e480e59c1603ba404f5736992df86f48ef055593b8d",
-      "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "availableAt": "2026-10-09T17:11:30.804Z",
+      "sourceSnapshotHash": "sha256:f630bd8d1d5ebde164eee1434884ea289b59de20b3aaa64caa14cd8f7d2e1b9e",
+      "status": "OK"
     },
     {
       "field": "social.reddit",
       "source": "https://www.reddit.com/r/Telcoin/search.json?q=TEL&restrict_sr=1&sort=new&limit=100",
-      "availableAt": "2026-10-09T16:35:00.736Z",
+      "availableAt": "2026-10-09T17:11:30.804Z",
       "sourceSnapshotHash": "sha256:179a0c900a7ea21a3b81c068754cef551d5bc43ac981f65f9d56fe36649ae1dc",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "Error: HTTP 403"
     },
     {
       "field": "context.macro.ratesBias",
       "source": "last-valid-snapshot",
-      "availableAt": "2026-10-09T16:20:00.992Z",
-      "sourceSnapshotHash": "sha256:c98cc655d31b0d108b36b567c00a6eef9bbe704491e9fa1ebd66be2f6f6ab6b5",
+      "availableAt": "2026-10-09T16:35:00.736Z",
+      "sourceSnapshotHash": "sha256:7c38352afd89bc25888aeb7448eca6fd132e793be44a74a30837b97c3c4214c4",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
     },
     {
       "field": "context.macroRegime.regime",
       "source": "last-valid-snapshot",
-      "availableAt": "2026-10-09T16:20:00.992Z",
-      "sourceSnapshotHash": "sha256:c98cc655d31b0d108b36b567c00a6eef9bbe704491e9fa1ebd66be2f6f6ab6b5",
+      "availableAt": "2026-10-09T16:35:00.736Z",
+      "sourceSnapshotHash": "sha256:7c38352afd89bc25888aeb7448eca6fd132e793be44a74a30837b97c3c4214c4",
       "status": "UNAVAILABLE",
-      "reason": "STALE: live context refresh failed (overall provider deadline exceeded after 45000 ms); retained last hash-verified snapshot"
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
     }
   ],
-  "snapshotId": "run:khalyon-stale:2026-10-09T16:51:21.163Z:TEL-USDT:2026-10-09T16:35:00.736Z",
-  "snapshotHash": "sha256:7c38352afd89bc25888aeb7448eca6fd132e793be44a74a30837b97c3c4214c4"
+  "snapshotId": "run:khalyon:2026-10-09T17:11:30.804Z:TEL-USDT:2026-10-09T17:11:30.804Z",
+  "snapshotHash": "sha256:a732bea267c9e15359060dadd43b7701040ee60ee2eec4ed335d89043db01969"
 }
