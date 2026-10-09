@@ -10,6 +10,7 @@ export interface EntryPipelineInput {
   readonly dataMode?: "RÉEL" | "SIMULÉ";
   readonly candles: readonly MarketDataPoint[];
   readonly price24hAgo: number | null;
+  readonly price48hAgo?: number | null;
   readonly price7dAgo: number | null;
   readonly relativeVolume?: number | null;
   readonly btc24hChangePct: number | null;
@@ -133,8 +134,15 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const writtenReason=(input.antiFomoReason??"").trim();
   const extensionTrigger=quality.decision==="EXTENDED";
   const rise24=quality.metrics.rise24h;
-  const rapidRise=typeof rise24==="number"&&rise24>P0_ENTRY_POLICY.maxRise24hPct;
-  const fomoTrigger=extensionTrigger||rapidRise;
+  const rapidRise24=typeof rise24==="number"&&rise24>P0_ENTRY_POLICY.maxRise24hPct;
+  const rise48=input.price48hAgo&&input.price48hAgo>0&&price!==null?price/input.price48hAgo-1:null;
+  const rapidRise48=typeof rise48==="number"&&rise48>P0_ENTRY_POLICY.maxRise24hPct;
+  const atr=quality.metrics.atr,ema=quality.metrics.ema200,vwap=quality.metrics.vwap;
+  const emaDistanceAtr=typeof atr==="number"&&atr>0&&typeof ema==="number"&&price!==null?(price-ema)/atr:null;
+  const vwapDistanceAtr=typeof atr==="number"&&atr>0&&typeof vwap==="number"&&price!==null?(price-vwap)/atr:null;
+  const atrExtension=(emaDistanceAtr!==null&&emaDistanceAtr>2)||(vwapDistanceAtr!==null&&vwapDistanceAtr>2);
+  const rapidRise=rapidRise24||rapidRise48;
+  const fomoTrigger=extensionTrigger||rapidRise||atrExtension;
   const trancheCount=input.trancheCountInZone??null;
   const trancheMax=input.maxTranchesPerZone??3;
   const lastTranche=input.lastTranchePrice??null;
