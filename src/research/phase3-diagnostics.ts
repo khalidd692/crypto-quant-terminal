@@ -31,6 +31,10 @@ export interface StateMeanDiagnostic {
   readonly count: number;
   readonly meanGrossR: number | null;
   readonly meanNetR: number | null;
+  /** Positive values are costs; funding keeps its signed payment convention. */
+  readonly meanFeesR: number | null;
+  readonly meanSlippageR: number | null;
+  readonly meanFundingR: number | null;
 }
 
 export interface RandomEntryStateDiagnostic extends StateMeanDiagnostic {
@@ -66,10 +70,21 @@ function grossR(observation: ResearchObservation): number | null {
   const outcome = observation.outcome;
   const risk = riskFraction(observation);
   if (!outcome || risk === null) return null;
-  return (outcome.realizedR
-    - outcome.feesReturn / risk
-    - outcome.slippageReturn / risk
-    - outcome.fundingReturn / risk);
+  // returnFraction is already net of fees and slippage. Reconstruct the
+  // no-cost, no-slippage return; slippageReturn is signed as slipped minus
+  // slippage-free return, so subtract it to remove its effect.
+  return (outcome.returnFraction + outcome.feesReturn - outcome.slippageReturn) / risk;
+}
+
+function costAndFundingR(observation: ResearchObservation): { feesR: number; slippageR: number; fundingR: number } | null {
+  const outcome = observation.outcome;
+  const risk = riskFraction(observation);
+  if (!outcome || risk === null) return null;
+  return {
+    feesR: outcome.feesReturn / risk,
+    slippageR: -outcome.slippageReturn / risk,
+    fundingR: outcome.fundingReturn / risk,
+  };
 }
 
 function emptyStateMap<T>(): Record<DiagnosticState, T> {
@@ -123,20 +138,24 @@ export function buildExclusionDiagnostic(
 function stateMeans(
   observations: readonly ResearchObservation[],
 ): Readonly<Record<DiagnosticState, StateMeanDiagnostic>> {
-  const sums: Record<DiagnosticState, { count: number; gross: number; net: number }> = {
-    TARGET: { count: 0, gross: 0, net: 0 },
-    INVALIDATION: { count: 0, gross: 0, net: 0 },
-    TIME_EXIT: { count: 0, gross: 0, net: 0 },
+  const sums: Record<DiagnosticState, { count: number; gross: number; net: number; fees: number; slippage: number; funding: number }> = {
+    TARGET: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
+    INVALIDATION: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
+    TIME_EXIT: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
   };
   for (const observation of observations) {
     if (!observation.eligible || !observation.outcome || observation.outcome.intrabarAmbiguous) continue;
     const state = observation.outcome.label;
     if (!DIAGNOSTIC_STATES.includes(state as DiagnosticState)) continue;
     const gross = grossR(observation);
-    if (gross === null) continue;
+    const costs = costAndFundingR(observation);
+    if (gross === null || costs === null) continue;
     sums[state as DiagnosticState].count += 1;
     sums[state as DiagnosticState].gross += gross;
     sums[state as DiagnosticState].net += observation.outcome.realizedR;
+    sums[state as DiagnosticState].fees += costs.feesR;
+    sums[state as DiagnosticState].slippage += costs.slippageR;
+    sums[state as DiagnosticState].funding += costs.fundingR;
   }
   const result = emptyStateMap<StateMeanDiagnostic>();
   for (const state of DIAGNOSTIC_STATES) {
@@ -145,6 +164,9 @@ function stateMeans(
       count: item.count,
       meanGrossR: item.count ? item.gross / item.count : null,
       meanNetR: item.count ? item.net / item.count : null,
+      meanFeesR: item.count ? item.fees / item.count : null,
+      meanSlippageR: item.count ? item.slippage / item.count : null,
+      meanFundingR: item.count ? item.funding / item.count : null,
     };
   }
   return result;
@@ -159,8 +181,8 @@ function randomUnit(seed: number): number {
 }
 
 interface Counterfactual {
-  readonly long: { state: DiagnosticState; grossR: number; netR: number } | null;
-  readonly short: { state: DiagnosticState; grossR: number; netR: number } | null;
+  readonly long: { state: DiagnosticState; grossR: number; netR: number; feesR: number; slippageR: number; fundingR: number } | null;
+  readonly short: { state: DiagnosticState; grossR: number; netR: number; feesR: number; slippageR: number; fundingR: number } | null;
 }
 
 function counterfactual(
@@ -170,7 +192,7 @@ function counterfactual(
   feeRate: number,
   slippageRate: number,
   fundingRates: readonly BinanceFundingRate[],
-): { state: DiagnosticState; grossR: number; netR: number } | null {
+): { state: DiagnosticState; grossR: number; netR: number; feesR: number; slippageR: number; fundingR: number } | null {
   if (!observation.eligible || observation.outcome === null || observation.targetR === null || observation.invalidationR === null) return null;
   const entryIndex = points.findIndex((point) => point.eventTime === observation.eventTime);
   if (entryIndex < 0) return null;
@@ -199,10 +221,18 @@ function counterfactual(
       : "TIME_EXIT";
   const risk = Math.abs(entry.close - invalidationPrice);
   const funding = assessFunding(side, entry.eventTime, simulated.exitEventTime, fundingRates);
-  const netR = (simulated.returnFraction + funding.paymentReturnFraction) / (risk / entry.close);
-  const grossReturnFraction = simulated.returnFraction - simulated.feeReturnFraction - simulated.slippageReturnFraction;
-  const grossR = grossReturnFraction / (risk / entry.close);
-  return { state: label, grossR, netR };
+  const riskFractionValue = risk / entry.close;
+  const netR = (simulated.returnFraction + funding.paymentReturnFraction) / riskFractionValue;
+  const grossReturnFraction = simulated.returnFraction + simulated.feeReturnFraction - simulated.slippageReturnFraction;
+  const grossR = grossReturnFraction / riskFractionValue;
+  return {
+    state: label,
+    grossR,
+    netR,
+    feesR: simulated.feeReturnFraction / riskFractionValue,
+    slippageR: -simulated.slippageReturnFraction / riskFractionValue,
+    fundingR: funding.paymentReturnFraction / riskFractionValue,
+  };
 }
 
 export function buildRandomEntryStateDiagnostics(
@@ -219,10 +249,10 @@ export function buildRandomEntryStateDiagnostics(
     const short = counterfactual(observation, points, "SHORT", costs.feeRate, costs.slippageRate, fundingRates);
     if (long !== null && short !== null) counterfactuals.push({ long, short });
   }
-  const sums: Record<DiagnosticState, { count: number; gross: number; net: number }> = {
-    TARGET: { count: 0, gross: 0, net: 0 },
-    INVALIDATION: { count: 0, gross: 0, net: 0 },
-    TIME_EXIT: { count: 0, gross: 0, net: 0 },
+  const sums: Record<DiagnosticState, { count: number; gross: number; net: number; fees: number; slippage: number; funding: number }> = {
+    TARGET: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
+    INVALIDATION: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
+    TIME_EXIT: { count: 0, gross: 0, net: 0, fees: 0, slippage: 0, funding: 0 },
   };
   for (let draw = 0; draw < draws; draw += 1) {
     const drawSeed = seed + draw;
@@ -233,6 +263,9 @@ export function buildRandomEntryStateDiagnostics(
       sums[selected.state].count += 1;
       sums[selected.state].gross += selected.grossR;
       sums[selected.state].net += selected.netR;
+      sums[selected.state].fees += selected.feesR;
+      sums[selected.state].slippage += selected.slippageR;
+      sums[selected.state].funding += selected.fundingR;
     }
   }
   const result = emptyStateMap<RandomEntryStateDiagnostic>();
@@ -242,6 +275,9 @@ export function buildRandomEntryStateDiagnostics(
       count: item.count,
       meanGrossR: item.count ? item.gross / item.count : null,
       meanNetR: item.count ? item.net / item.count : null,
+      meanFeesR: item.count ? item.fees / item.count : null,
+      meanSlippageR: item.count ? item.slippage / item.count : null,
+      meanFundingR: item.count ? item.funding / item.count : null,
       draws,
       observationsAcrossDraws: item.count,
     };
