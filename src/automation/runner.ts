@@ -82,7 +82,7 @@ async function main():Promise<void>{
    const price7dAgo=qualityBars.length>=169?qualityBars[qualityBars.length-169]?.close??null:null;
    const contextProvenance=contextSnapshot?.provenance??[];
    const contextUnavailable=contextProvenance.filter(p=>p.status==="UNAVAILABLE");
-   const contextError=contextSnapshot?undefined:"Context providers unavailable";
+   const contextError=contextSnapshot?undefined:contextResult.status==="rejected"?String(contextResult.reason).slice(0,200):"Context providers unavailable";
    const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0)});
    decision=output.decision;reasons=[output.reason,...output.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | mode=${a.mode} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),...contextUnavailable.map(p=>`PROVENANCE_UNAVAILABLE[${p.field}]=${p.reason??"unavailable"}`)];
    html=output.html;
