@@ -34,10 +34,10 @@ jobs:
           ref: main
           path: main-data
           sparse-checkout: |
-            research/prospective/journal.jsonl
-            reports
-            research/experiments
-          sparse-checkout-cone-mode: true
+            /research/prospective/journal.jsonl
+            /reports/**
+            /research/experiments/**
+          sparse-checkout-cone-mode: false
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
@@ -66,8 +66,6 @@ jobs:
         run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1
       - name: Persist hash-verified context snapshot to main
         if: github.ref_name == 'main'
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
