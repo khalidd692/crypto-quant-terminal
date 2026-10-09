@@ -1,9 +1,18 @@
 import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 export type JournalDecision = "ENTRER"|"ATTENDRE"|"SORTIR"|"NE_PAS_ENTRER"|"ALERTE"|"SUIVI_1J"|"SUIVI_3J"|"SUIVI_7J";
+export interface AngleJournalDiagnostic {
+  readonly angle: string;
+  readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ";
+  readonly status: "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
+  readonly detail: string;
+  readonly source: string;
+  readonly observedAt: string | null;
+  readonly sourceHash: string | null;
+}
 export interface ProspectiveJournalRecord {
   readonly schemaVersion:"prospective-journal.v1"; readonly recordedAt:string; readonly assetId:string; readonly decision:JournalDecision|string;
-  readonly reasons:readonly string[]; readonly snapshotHash:string; readonly previousHash:string|null; readonly recordHash:string;
+  readonly reasons:readonly string[]; readonly decisionChecks?:Readonly<Record<string,unknown>>; readonly angles?:readonly AngleJournalDiagnostic[]; readonly vetoReasons?:readonly string[]; readonly snapshotHash:string; readonly previousHash:string|null; readonly recordHash:string;
   readonly priceQuote?:number; readonly mode?: "TEST_SANS_ARGENT"|"MANUAL_TRADE"|"SYSTEM"; readonly referenceRecordHash?:string;
   readonly horizonDays?:1|3|7; readonly returnPct?:number|null; readonly observationCount?:number;
 }
