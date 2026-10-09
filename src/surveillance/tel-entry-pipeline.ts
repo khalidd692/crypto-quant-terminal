@@ -133,7 +133,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   let antiFomoStatus:AngleStatus=fomoStatus;
   let antiFomoDetail=fomoDetail;
   const antiFomoReasons:string[]=[];
-  if(fomoTrigger) {
+  if(fomoTrigger||startedAt!==null) {
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
     if(elapsedHours===null||elapsedHours<cooldownHours) {
       antiFomoStatus="BLOC";
@@ -142,6 +142,8 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     if(writtenReason.length<12) {
       antiFomoStatus="BLOC";
       antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
+    } else {
+      antiFomoReasons.push("Motif : "+writtenReason.slice(0,240));
     }
   }
   if(trancheCount!==null&&trancheMax!==null&&trancheCount>=trancheMax) {
