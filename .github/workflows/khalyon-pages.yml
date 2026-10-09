@@ -1,11 +1,16 @@
 name: Deploy KHALYON
 on:
   push:
-    branches: ["khalyon-ui"]
+    branches: ["main","khalyon-ui"]
     paths: ["khalyon/**","scripts/generate-context-snapshot.mjs",".github/workflows/khalyon-pages.yml","tests/khalyon-ui-integrity.mjs","tests/khalyon-playwright.spec.mjs","src/context/**","src/surveillance/**","src/risk/**","src/automation/**","research/prospective/journal.jsonl","research/funding/FROZEN_ARCHIVE_LOCK.json","docs/phase3-closure-report.md","package.json","package-lock.json"]
+  schedule:
+    - cron: "*/15 * * * *"
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Prospective surveillance"]
+    types: [completed]
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -13,13 +18,26 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: khalyon-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout KHALYON
         uses: actions/checkout@v5
+        with:
+          ref: ${{ (github.event_name == 'workflow_run' || github.event_name == 'schedule') && 'main' || github.ref_name }}
+      - name: Checkout latest surveillance journal from main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: main-data
+          sparse-checkout: |
+            /research/prospective/journal.jsonl
+            /reports/**
+            /research/experiments/**
+          sparse-checkout-cone-mode: false
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
@@ -30,10 +48,12 @@ jobs:
         run: npm run build
       - name: Generate sealed context snapshot
         env:
-          CONTEXT_HTTP_TIMEOUT_MS: "2500"
-          CONTEXT_HTTP_RETRIES: "0"
+          KHALYON_CONTEXT_TIMEOUT_MS: "45000"
         run: node scripts/generate-context-snapshot.mjs
       - name: Build and verify KHALYON
+        env:
+          PROSPECTIVE_JOURNAL: main-data/research/prospective/journal.jsonl
+          KHALYON_NLP_REPORT: main-data/reports/latest_nlp_signals.md
         run: |
           echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
@@ -44,6 +64,25 @@ jobs:
         run: python3 -m http.server 4173 --directory khalyon > /tmp/khalyon-http.log 2>&1 &
       - name: Playwright render and screenshots
         run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1
+      - name: Persist hash-verified context snapshot to main
+        if: github.ref_name == 'main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::main advanced during this build; refuse to publish a runtime built from stale main."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add khalyon/data/context-snapshot.json
+          if git diff --cached --quiet; then
+            echo "Context snapshot unchanged; no commit required."
+          else
+            git commit -m "chore(context): persist verified KHALYON snapshot"
+            git push origin HEAD:main
+          fi
       - name: Upload Playwright screenshots
         uses: actions/upload-artifact@v4
         with:

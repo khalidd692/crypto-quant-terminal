@@ -1,0 +1,66 @@
+name: KHALYON UI CI
+on:
+  pull_request:
+    paths:
+      - "khalyon/**"
+      - "scripts/generate-context-snapshot.mjs"
+      - "src/context/**"
+      - "src/surveillance/**"
+      - "src/risk/**"
+      - "src/automation/**"
+      - "tests/khalyon-ui-integrity.mjs"
+      - "tests/khalyon-playwright.spec.mjs"
+      - ".github/workflows/khalyon-ui-ci.yml"
+      - ".github/workflows/khalyon-pages.yml"
+      - ".github/workflows/prospective-surveillance.yml"
+permissions:
+  contents: read
+concurrency:
+  group: khalyon-ui-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Checkout current journal and public reports from main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          path: main-data
+          sparse-checkout: |
+            /research/prospective/journal.jsonl
+            /reports/**
+            /research/experiments/**
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      - name: Generate hash-verified live context
+        env:
+          KHALYON_CONTEXT_TIMEOUT_MS: "45000"
+        run: node scripts/generate-context-snapshot.mjs
+      - name: Build runtime and integrity checks
+        env:
+          PROSPECTIVE_JOURNAL: main-data/research/prospective/journal.jsonl
+          KHALYON_NLP_REPORT: main-data/reports/latest_nlp_signals.md
+        run: |
+          node khalyon/build.mjs
+          node tests/khalyon-ui-integrity.mjs
+      - name: Install Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps
+      - name: Serve KHALYON
+        run: python3 -m http.server 4173 --directory khalyon > /tmp/khalyon-http.log 2>&1 &
+      - name: Playwright render and screenshot every tab
+        run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1
+      - name: Upload KHALYON screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khalyon-playwright-screenshots
+          path: |
+            artifacts/khalyon-*.png
+            khalyon/data/runtime.json
+          if-no-files-found: warn

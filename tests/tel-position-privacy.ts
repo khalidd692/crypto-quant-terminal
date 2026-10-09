@@ -25,7 +25,7 @@ const ci = readFileSync(".github/workflows/ci.yml", "utf8");
 assert.ok(runner.includes("TEL_POSITION_AVG_PRICE"));
 assert.ok(runner.includes("TEL_POSITION_QUANTITY"));
 assert.ok(runner.includes('mode:0o600'));
-assert.ok(pages.includes("path: public-decision"));
+assert.ok(!pages.includes("path: public-decision"));assert.ok(!pages.includes("actions/upload-pages-artifact@v4"));assert.ok(!pages.includes("actions/deploy-pages@v4"));
 assert.ok(!pages.includes("tel-position-private.html"));
 assert.ok(!ci.includes("tel-position-private.html"));
 assert.ok(!runner.includes("git add artifacts"));
