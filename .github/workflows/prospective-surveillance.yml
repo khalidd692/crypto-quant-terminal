@@ -95,7 +95,6 @@ jobs:
           TEL_PLANNED_ENTRY_PRICE: ${{ inputs.planned_entry_price || secrets.TEL_PLANNED_ENTRY_PRICE }}
         run: node dist/src/automation/runner.js
       - name: Reconcile and append journal safely
-        if: always()
         shell: bash
         run: |
           set -euo pipefail
