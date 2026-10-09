@@ -2,6 +2,7 @@ import type { MarketDataPoint } from "../domain/types.js";
 import type { ContextSnapshot } from "../context/types.js";
 import { assessBtcFilter, assessEntryQuality, calculateSpotSwingRisk, P0_ENTRY_POLICY, type EntryQuality, type SpotRiskResult, type SwingDecision } from "./tel-swing.js";
 import { assessLiquidity } from "../risk/liquidity.js";
+import type { AnchoredVwapResult } from "./anchored-vwap.js";
 
 export type AngleStatus = "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
 export interface EntryAngle { readonly angle: string; readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ"; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
@@ -38,6 +39,7 @@ export interface EntryPipelineInput {
   readonly maxTranchesPerZone?: number | null;
   readonly lastTranchePrice?: number | null;
   readonly plannedEntryPrice?: number | null;
+  readonly anchoredVwap?: AnchoredVwapResult;
 }
 export interface EntryPipelineOutput {
   readonly decision: SwingDecision;
@@ -180,7 +182,7 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({asOf:input.now,decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
+  const html=renderTelTestScreen({asOf:input.now,decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles,anchoredVwap:input.anchoredVwap});
   return{decision:finalDecision,reason:finalReason,quality,risk,angles:finalAngles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";
