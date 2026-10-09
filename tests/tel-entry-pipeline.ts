@@ -36,6 +36,11 @@ assert.equal(stale.decision,"ATTENDRE");assert.ok(stale.angles.some(a=>a.angle==
 const stretchedCandles=Array.from({length:200},(_,i)=>point(i,i===199?1.2:1));
 const stretched=runTelEntryPipeline(input({candles:stretchedCandles}));
 assert.equal(stretched.quality.decision,"EXTENDED");assert.equal(stretched.decision,"ATTENDRE");
+const rapid48h=runTelEntryPipeline(input({price24hAgo:1,price48hAgo:.9,price7dAgo:1}));
+assert.ok(rapid48h.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"&&a.detail.includes("FOMO ? ordres limités uniquement")));
+const atrExtendedCandles=Array.from({length:200},(_,i)=>point(i,i===199?1.03:1));
+const atrExtended=runTelEntryPipeline(input({candles:atrExtendedCandles,price24hAgo:1,price48hAgo:1,price7dAgo:1}));
+assert.ok(atrExtended.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"));
 const btcDrop=runTelEntryPipeline(input({btc24hChangePct:-.06}));
 assert.equal(btcDrop.decision,"ATTENDRE");assert.ok(btcDrop.angles.some(a=>a.angle==="Filtre BTC"&&a.status==="BLOC"));
 const btcUnavailable=runTelEntryPipeline(input({btc24hChangePct:null,btcSupportBroken:null,btcUnavailableReason:"BTC_CANDLES_INSUFFICIENT: 12/25 rows"}));
