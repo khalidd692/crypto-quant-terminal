@@ -1,7 +1,7 @@
 name: Deploy KHALYON
 on:
   push:
-    branches: ["khalyon-ui"]
+    branches: ["khalyon-ui", "main"]
     paths: ["khalyon/**","scripts/generate-context-snapshot.mjs",".github/workflows/khalyon-pages.yml","tests/khalyon-ui-integrity.mjs","tests/khalyon-playwright.spec.mjs","src/context/**","src/surveillance/**","src/risk/**","src/automation/**","research/prospective/journal.jsonl","research/funding/FROZEN_ARCHIVE_LOCK.json","docs/phase3-closure-report.md","package.json","package-lock.json"]
   workflow_dispatch:
 permissions:
