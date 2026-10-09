@@ -77,7 +77,7 @@ function appendDueFollowUps(path:string,records:ReturnType<typeof readProspectiv
 async function main():Promise<void>{
  const config=loadSurveillanceConfig(process.env.SURVEILLANCE_CONFIG??"config/surveillance-assets.json");
  mkdirSync(JOURNAL.split("/").slice(0,-1).join("/")||".",{recursive:true});mkdirSync(OUTPUT.split("/").slice(0,-1).join("/")||".",{recursive:true});
- const now=new Date().toISOString(),journalBeforeRun=readProspectiveJournal(JOURNAL),prices:Record<string,number>={};
+ const now=new Date().toISOString(),journalBeforeRun=readProspectiveJournal(JOURNAL),prices:Record<string,number>={},orderPlan=readManualOrderPlan();
  for(const asset of config.assets){
   let decision:"ENTRER"|"ATTENDRE"|"NE_PAS_ENTRER"="ATTENDRE",reasons:string[]=["Données indisponibles: ATTENDRE"],snapshotHash="sha256:unavailable",priceQuote:number|undefined,contextSnapshot:null|Awaited<ReturnType<typeof fetchContextSnapshot>>=null,angleDiagnostics:import("./journal.js").AngleJournalDiagnostic[]=[],vetoReasons:string[]=[];
   let html="<!doctype html><html lang=\"fr\"><meta charset=\"utf-8\"><title>Puis-je acheter maintenant ?</title><body><h1>ATTENDRE</h1><p>Collecte indisponible. EN TEST — SANS ARGENT. Aucun ordre.</p></body></html>";
