@@ -12,6 +12,7 @@ on:
       - "tests/khalyon-playwright.spec.mjs"
       - ".github/workflows/khalyon-ui-ci.yml"
       - ".github/workflows/khalyon-pages.yml"
+      - ".github/workflows/prospective-surveillance.yml"
 permissions:
   contents: read
 concurrency:
