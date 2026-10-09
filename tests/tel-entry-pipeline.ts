@@ -26,7 +26,7 @@ function context(eventAt?:string):ContextSnapshot{
 }
 function input(overrides:Partial<Parameters<typeof runTelEntryPipeline>[0]>={}):Parameters<typeof runTelEntryPipeline>[0]{
  const candles=Array.from({length:200},(_,i)=>point(i));
- return {now,dataMode:"SIMULÉ",candles,price24hAgo:1,price7dAgo:1,btc24hChangePct:0.01,btcSupportBroken:false,context:context(),venueStatus:"OK",venueDetail:"KuCoin/MEXC cohérents",telLiquidity:{spreadBps:5,depthQuote:10000,estimatedSlippageBps:5,observedAt:now,sourceHash:hash},swingCapitalQuote:1000,stopPrice:.97,openSwingPositions:0,monthlyLossQuote:0,...overrides};
+ return {now,dataMode:"SIMULÉ",candles,price24hAgo:1,price7dAgo:1,btc24hChangePct:0.01,btcSupportBroken:false,context:context(),venueStatus:"OK",venueDetail:"KuCoin/MEXC cohérents",telLiquidity:{spreadBps:5,depthQuote:10000,estimatedSlippageBps:5,observedAt:now,sourceHash:hash},mexcLiquidity:{spreadBps:6,depthQuote:9000,estimatedSlippageBps:7,observedAt:now,sourceHash:hash},volumeCoherenceRatio:1.4,swingCapitalQuote:1000,stopPrice:.97,openSwingPositions:0,monthlyLossQuote:0,...overrides};
 }
 const missing=runTelEntryPipeline(input({candles:[],price24hAgo:null,price7dAgo:null}));
 assert.equal(missing.decision,"ATTENDRE");assert.ok(missing.angles.some(a=>a.status==="UNAVAILABLE"));
@@ -53,6 +53,15 @@ const trancheLimit=runTelEntryPipeline(input({plannedOrderType:"LIMIT",orderGrid
 assert.ok(trancheLimit.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="BLOC"&&a.detail.includes("Maximum de tranches")));
 const macroNear=runTelEntryPipeline(input({context:context("2026-10-10T12:00:00.000Z")}));
 assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a.angle==="Macro + calendrier"&&a.status==="BLOC"));
+const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
+assert.notEqual(missingMexcBook.decision,"ENTRER");
+assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
+const divergentVolume=runTelEntryPipeline(input({volumeCoherenceRatio:6}));
+assert.notEqual(divergentVolume.decision,"ENTRER");
+assert.ok(divergentVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="INCOHÉRENT"));
+const missingVolume=runTelEntryPipeline(input({volumeCoherenceRatio:null}));
+assert.notEqual(missingVolume.decision,"ENTRER");
+assert.ok(missingVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="UNAVAILABLE"));
 const unavailableAngle=runTelEntryPipeline(input({venueStatus:"UNAVAILABLE",venueDetail:"MEXC indisponible"}));
 assert.notEqual(unavailableAngle.decision,"ENTRER");
 const healthy=runTelEntryPipeline(input());
