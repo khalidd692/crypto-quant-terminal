@@ -5,7 +5,7 @@ import type { MarketDataPoint } from "../src/domain/types.js";
 import { runTelEntryPipeline } from "../src/surveillance/tel-entry-pipeline.js";
 
 const now="2026-10-09T12:00:00.000Z";
-const hash="sha256:"+"a".repeat(64);
+const hash: `sha256:${string}`="sha256:"+"a".repeat(64);
 function point(i:number,close=1,availableAt?:string):MarketDataPoint{
   const t=Date.parse(now)-(199-i)*3600_000;
   return {instrumentId:"TEL-USDT",eventTime:new Date(t).toISOString() as MarketDataPoint["eventTime"],availableTime:(availableAt??new Date(t+5_000).toISOString()) as MarketDataPoint["availableTime"],open:close,high:close+.005,low:close-.005,close,volume:100,dataQuality:"complete",sourceId:"KUCOIN_SPOT"};
@@ -21,7 +21,7 @@ function context(eventAt?:string):ContextSnapshot{
  fundamentals:{protocolActivity:"STABLE",developmentActivity:"STABLE",valuationAssessment:"FAIR",sourceAsOf:now},
  macroRegime:{regime:"NEUTRAL",rationale:"Fixture descriptive",methodologyVersion:"descriptive-regime.v1"},
  provenance,fundamentalsTel:{circulatingSupply:100,totalSupply:1000,marketCapQuote:1e8,newsCount:1,latestNews:[],tokenUnlocks:"OK",networkActivity:"OK",notableFlows:"OK",sourceAsOf:now},
- socialSentiment:{mentions:10,mentionChangePct:0,toneScore:0,concentrationTop5Pct:.2,attentionSpike:false,temperature:"NEUTRAL",label:"fixture descriptive",sourceAsOf:now}});
+ socialSentiment:{mentions:10,mentionChangePct:0,toneScore:0,concentrationTop5Pct:.2,attentionSpike:false,temperature:"NEUTRAL",label:"indice de température, bruité et manipulable, pas une prévision",sourceAsOf:now}});
 }
 function input(overrides:Partial<Parameters<typeof runTelEntryPipeline>[0]>={}):Parameters<typeof runTelEntryPipeline>[0]{
  const candles=Array.from({length:200},(_,i)=>point(i));
