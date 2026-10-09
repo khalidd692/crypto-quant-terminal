@@ -36,6 +36,7 @@ jobs:
           sparse-checkout: |
             research/prospective/journal.jsonl
             reports
+            research/experiments
           sparse-checkout-cone-mode: true
       - name: Setup Node
         uses: actions/setup-node@v5
