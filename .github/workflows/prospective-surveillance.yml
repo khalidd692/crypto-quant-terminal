@@ -2,6 +2,15 @@ name: Prospective surveillance
 on:
   schedule:
     - cron: "*/15 * * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/prospective-surveillance.yml"
+      - "src/automation/**"
+      - "src/surveillance/**"
+      - "src/context/providers/**"
+      - "scripts/summarize-tel-vetoes.mjs"
+      - "package.json"
   workflow_dispatch:
     inputs:
       planned_order_type:
@@ -16,6 +25,26 @@ on:
         options: ["ACTIVE", "INACTIVE"]
       last_grid_level_price:
         description: "Dernier niveau de grille TEL/USDT (laisser vide si inconnu)"
+        required: false
+        type: string
+      anti_fomo_started_at:
+        description: "Début du délai de réflexion UTC (ex. 2026-10-09T12:00:00Z)"
+        required: false
+        type: string
+      tranche_count_in_zone:
+        description: "Tranches déjà utilisées dans cette zone"
+        required: false
+        type: string
+      max_tranches_per_zone:
+        description: "Plafond de tranches dans cette zone (défaut 3)"
+        required: false
+        type: string
+      last_tranche_price:
+        description: "Prix de la dernière tranche (si connu)"
+        required: false
+        type: string
+      planned_entry_price:
+        description: "Prix prévu pour l'entrée"
         required: false
         type: string
 concurrency:
@@ -51,6 +80,12 @@ jobs:
           TEL_PLANNED_ORDER_TYPE: ${{ inputs.planned_order_type || secrets.TEL_PLANNED_ORDER_TYPE }}
           TEL_ORDER_GRID_STATE: ${{ inputs.order_grid_state || secrets.TEL_ORDER_GRID_STATE }}
           TEL_LAST_GRID_LEVEL_PRICE: ${{ inputs.last_grid_level_price || secrets.TEL_LAST_GRID_LEVEL_PRICE }}
+          TEL_ANTI_FOMO_STARTED_AT: ${{ inputs.anti_fomo_started_at || secrets.TEL_ANTI_FOMO_STARTED_AT }}
+          TEL_ANTI_FOMO_REASON: ${{ secrets.TEL_ANTI_FOMO_REASON }}
+          TEL_TRANCHE_COUNT_IN_ZONE: ${{ inputs.tranche_count_in_zone || secrets.TEL_TRANCHE_COUNT_IN_ZONE }}
+          TEL_MAX_TRANCHES_PER_ZONE: ${{ inputs.max_tranches_per_zone || secrets.TEL_MAX_TRANCHES_PER_ZONE }}
+          TEL_LAST_TRANCHE_PRICE: ${{ inputs.last_tranche_price || secrets.TEL_LAST_TRANCHE_PRICE }}
+          TEL_PLANNED_ENTRY_PRICE: ${{ inputs.planned_entry_price || secrets.TEL_PLANNED_ENTRY_PRICE }}
         run: node dist/src/automation/runner.js
       - name: Append journal commit
         shell: bash
