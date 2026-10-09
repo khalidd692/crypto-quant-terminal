@@ -16,6 +16,9 @@ export interface EntryPipelineInput {
   readonly context: ContextSnapshot | null;
   readonly contextError?: string;
   readonly venueStatus: "OK" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
+  readonly marketSourceHash?: string;
+  readonly candlesSourceHash?: string;
+  readonly btcSourceHash?: string;
   readonly venueDetail: string;
   readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string } | null;
   readonly swingCapitalQuote: number;
@@ -43,13 +46,13 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const angles:EntryAngle[]=[];
   let macroStatus:AngleStatus="UNAVAILABLE";
   let sentimentStatus:AngleStatus="UNAVAILABLE";
-  angles.push(angle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null));
+  angles.push(angle("KuCoin + contrôle MEXC",input.venueStatus,input.venueDetail,"KuCoin Spot / MEXC",last?.availableTime??null,input.marketSourceHash??null));
   const candlesFresh=last!==undefined&&isFresh(last.availableTime,input.now,90*60_000)&&last.dataQuality==="complete";
-  angles.push(angle("Historique / fraîcheur",candlesFresh?"OK":last?"PÉRIMÉ":"UNAVAILABLE",candlesFresh?"Bougie horaire récente et complète":"Historique absent, incomplet ou périmé","KuCoin Spot klines",last?.availableTime??null));
-  angles.push(angle("P0 — qualité d'entrée",quality.decision==="ACCEPTABLE"?"OK":quality.decision==="EXTENDED"?"BLOC":"UNAVAILABLE",quality.reasons.join("; ")||quality.decision,"assessEntryQuality",last?.availableTime??null));
+  angles.push(angle("Historique / fraîcheur",candlesFresh?"OK":last?"PÉRIMÉ":"UNAVAILABLE",candlesFresh?"Bougie horaire récente et complète":"Historique absent, incomplet ou périmé","KuCoin Spot klines",last?.availableTime??null,input.candlesSourceHash??null));
+  angles.push(angle("P0 — qualité d'entrée",quality.decision==="ACCEPTABLE"?"OK":quality.decision==="EXTENDED"?"BLOC":"UNAVAILABLE",quality.reasons.join("; ")||quality.decision,"assessEntryQuality",last?.availableTime??null,input.candlesSourceHash??null));
   const btc=assessBtcFilter({btc24hChangePct:input.btc24hChangePct,supportBroken:input.btcSupportBroken});
   const btcStatus=input.btc24hChangePct===null||input.btcSupportBroken===null?"UNAVAILABLE":btc.passed?"OK":"BLOC";
-  angles.push(angle("Filtre BTC",btcStatus,btc.reason,"Alternative.me BTC 24h + support local",input.context?.asOf??null,input.context?.snapshotHash??null));
+  angles.push(angle("Filtre BTC",btcStatus,btc.reason,"Binance BTC 1h klines",input.context?.asOf??null,input.btcSourceHash??null));
   const context=input.context;
   if(!context){
     angles.push(angle("Macro + calendrier","UNAVAILABLE",input.contextError??"Contexte absent","context providers"));
