@@ -50,7 +50,7 @@ function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGrid
   plannedEntryPrice:Number.isFinite(plannedEntry)&&plannedEntry>0?plannedEntry:null
  };
 }
-interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; }
+interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; mexcLiquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; }
 function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
 function estimateBuyImpactBps(asks:unknown,notional:number,bestAsk:number):number{
  if(!Array.isArray(asks)||notional<=0||bestAsk<=0)return 1_000_000;
@@ -67,11 +67,12 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
   "https://api.mexc.com/api/v3/ticker/24hr?symbol="+encodeURIComponent(asset.controlSymbol),
   "https://api.kucoin.com/api/v1/market/candles?symbol="+encodeURIComponent(asset.primarySymbol)+"&type=1hour&startAt="+start+"&endAt="+end,
   "https://api.kucoin.com/api/v1/market/orderbook/level2_20?symbol="+encodeURIComponent(asset.primarySymbol),
-  "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end
+  "https://api.kucoin.com/api/v1/market/candles?symbol=BTC-USDT&type=1hour&startAt="+(end-40*3600)+"&endAt="+end,
+  "https://api.mexc.com/api/v3/depth?symbol="+encodeURIComponent(asset.controlSymbol)+"&limit=20"
  ];
  const settled=await Promise.allSettled(urls.map(json));
  const value=(i:number):any=>{const item=settled[i];return item?.status==="fulfilled"?item.value:null;};
- const [k,mPrice,m24,kline,book,btc]=[0,1,2,3,4,5].map(value);
+ const [k,mPrice,m24,kline,book,btc,mBook]=[0,1,2,3,4,5,6].map(value);
  const failed=settled.map((item,i)=>item.status==="rejected"?`${i}:${String(item.reason).slice(0,100)}`:null).filter((x):x is string=>x!==null);
  const kd=k?.data?.list?.[0];if(!kd||!mPrice||!m24||!kline)throw new Error("Required KuCoin/MEXC market data unavailable: "+failed.join(" | "));
  const kuLast=num(kd.lastPrice),kuBid=num(kd.bestBidPrice),kuAsk=num(kd.bestAskPrice);
@@ -92,13 +93,20 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
  const stop=asset.invalidationPrice,estimatedNotional=kuLast>stop?maxRiskQuote/(kuLast-stop)*kuLast: swingCapital;
  const estimatedSlippageBps=estimateBuyImpactBps(asks,estimatedNotional,kuAsk);
  const liquidity=Number.isFinite(spreadBps)&&Number.isFinite(depthQuote)&&depthQuote>0?{spreadBps,depthQuote,estimatedSlippageBps,observedAt:now,sourceHash:sha(book)}:null;
+ const mexcBids=mBook?.bids??mBook?.data?.bids,mexcAsks=mBook?.asks??mBook?.data?.asks;
+ const mexcBestBid=Array.isArray(mexcBids?.[0])?Number(mexcBids[0][0]):NaN;
+ const mexcBestAsk=Array.isArray(mexcAsks?.[0])?Number(mexcAsks[0][0]):NaN;
+ const mexcDepth=Math.min(bookSideDepth(mexcBids),bookSideDepth(mexcAsks));
+ const mexcSpreadBps=mexcBestBid>0&&mexcBestAsk>=mexcBestBid?((mexcBestAsk-mexcBestBid)/((mexcBestAsk+mexcBestBid)/2))*10_000:Infinity;
+ const mexcSlippageBps=estimateBuyImpactBps(mexcAsks,estimatedNotional,mexcBestAsk);
+ const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepth)&&mexcDepth>0?{spreadBps:mexcSpreadBps,depthQuote:mexcDepth,estimatedSlippageBps:mexcSlippageBps,observedAt:now,sourceHash:sha(mBook)}:null;
  const btcRows=(Array.isArray(btc?.data)?btc.data:[]).filter((row:any)=>Array.isArray(row)&&row.length>=6).sort((a:any,b:any)=>Number(a[0])-Number(b[0]));
  let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null,btcUnavailableReason:string|null=null;
  if(btc===null){btcUnavailableReason=failed.find(x=>x.startsWith("5:"))??"BTC_HTTP_UNAVAILABLE";}
  else if(!Array.isArray(btc?.data)){btcUnavailableReason=`BTC_RESPONSE_SCHEMA_INVALID: code=${String(btc?.code??"missing")} message=${String(btc?.msg??btc?.message??"missing").slice(0,100)}`;}
  else if(btcRows.length<25){btcUnavailableReason=`BTC_CANDLES_INSUFFICIENT: ${btcRows.length}/25 rows`;}
  else {const old=Number(btcRows[btcRows.length-25]?.[2]),latest=Number(btcRows.at(-1)?.[2]),latestAt=Number(btcRows.at(-1)?.[0])*1000;const priorLows=btcRows.slice(-25,-1).map((x:any)=>Number(x[4])).filter(Number.isFinite);if(!Number.isFinite(old)||!Number.isFinite(latest)||old<=0||latest<=0){btcUnavailableReason="BTC_CLOSE_INVALID";}else if(!Number.isFinite(latestAt)||Date.parse(now)-latestAt>90*60_000||latestAt>Date.parse(now)+5*60_000){btcUnavailableReason="BTC_LAST_CANDLE_STALE_OR_FUTURE";}else if(priorLows.length!==24||priorLows.some((x:number)=>x<=0)){btcUnavailableReason=`BTC_SUPPORT_SERIES_INVALID: ${priorLows.length}/24 lows`;}else{btc24hChangePct=latest/old-1;btcSupportBroken=latest<Math.min(...priorLows);}}
- return{primary,control,candles,btc24hChangePct,btcSupportBroken,btcUnavailableReason,liquidity,venueStatus,venueDetail,marketSourceHash:sha({k,mPrice,m24}),candlesSourceHash:sha(kline),btcSourceHash:btc===null?null:sha(btc)};
+ return{primary,control,candles,btc24hChangePct,btcSupportBroken,btcUnavailableReason,liquidity,mexcLiquidity,venueStatus,venueDetail,marketSourceHash:sha({k,mPrice,m24}),candlesSourceHash:sha(kline),btcSourceHash:btc===null?null:sha(btc)};
 }
 function appendDueFollowUps(path:string,records:ReturnType<typeof readProspectiveJournal>,now:string,prices:Readonly<Record<string,number>>):void{for(const origin of records.filter(r=>r.mode==="TEST_SANS_ARGENT"&&r.referenceRecordHash===undefined&&r.priceQuote!==undefined)){for(const horizon of [1,3,7] as const){if(Date.parse(now)<Date.parse(origin.recordedAt)+horizon*86400000)continue;if(records.some(r=>r.referenceRecordHash===origin.recordHash&&r.horizonDays===horizon))continue;const price=prices[origin.assetId];if(price===undefined||!Number.isFinite(price)||price<=0)continue;appendFollowUp(path,origin,horizon,price,now);}}}
 async function main():Promise<void>{
@@ -120,7 +128,7 @@ async function main():Promise<void>{
    const contextProvenance=contextSnapshot?.provenance??[];
    const contextUnavailable=contextProvenance.filter(p=>p.status==="UNAVAILABLE");
    const contextError=contextSnapshot?undefined:contextResult.status==="rejected"?String(contextResult.reason).slice(0,200):"Context providers unavailable";
-   const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,...(market.btcUnavailableReason?{btcUnavailableReason:market.btcUnavailableReason}:{}),context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0),livePriceQuote:market.primary.lastPrice,...orderPlan});
+   const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,...(market.btcUnavailableReason?{btcUnavailableReason:market.btcUnavailableReason}:{}),context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0),livePriceQuote:market.primary.lastPrice,...orderPlan});
    decision=output.decision;angleDiagnostics=[...output.angles];vetoReasons=output.angles.filter(a=>a.status!=="OK").map(a=>`${a.angle}: ${a.status} — ${a.detail}`);reasons=[output.reason,...output.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | mode=${a.mode} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),...contextUnavailable.map(p=>`PROVENANCE_UNAVAILABLE[${p.field}]=${p.reason??"unavailable"}`)];
    html=output.html;
    snapshotHash=sha({pipelineHash:output.snapshotHash,market:{candles:qualityBars,primary:market.primary,control:market.control,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,btcUnavailableReason:market.btcUnavailableReason,liquidity:market.liquidity,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,btcSourceHash:market.btcSourceHash},contextHash:contextSnapshot?.snapshotHash??null,angles:output.angles});
