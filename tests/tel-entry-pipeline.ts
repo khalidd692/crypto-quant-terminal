@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createContextSnapshot } from "../src/context/snapshot.js";
 import type { ContextSnapshot, ContextProvenance } from "../src/context/types.js";
 import type { MarketDataPoint } from "../src/domain/types.js";
@@ -45,4 +46,9 @@ const healthy=runTelEntryPipeline(input());
 assert.ok(healthy.html.includes("Puis-je acheter maintenant ?"));
 assert.ok(healthy.html.includes("EN TEST — SANS ARGENT"));
 assert.ok(["ATTENDRE","ENTRER","NE_PAS_ENTRER"].includes(healthy.decision));
+const runnerSource=readFileSync("src/automation/runner.ts","utf8");
+const pipelineSource=readFileSync("src/surveillance/tel-entry-pipeline.ts","utf8");
+assert.match(runnerSource,/runTelEntryPipeline\(/,"runner must call the integrated pipeline");
+assert.match(pipelineSource,/assessEntryQuality\(/,"pipeline must call P0 assessEntryQuality");
+assert.match(pipelineSource,/renderTelTestScreen\(/,"pipeline must call renderTelTestScreen");
 console.log("TEL entry pipeline integration: PASS (missing, stale, stretched, BTC drop, macro event, no-force-enter, rendered screen)");
