@@ -1,7 +1,7 @@
 import{test,expect}from"@playwright/test";
 const pages=["decision","position","context","journal","market","experiments","lab","nlp","diagnostics","datasets","verdicts","surveillance","governance"];
 test.describe.configure({mode:"serial"});
-for(const page of pages){test(`render ${page}`,async({page:browserPage})=>{await browserPage.goto(`http://127.0.0.1:4173/#${page}`,{waitUntil:"networkidle"});await expect(browserPage.locator("#app")).not.toBeEmpty();await expect(browserPage.locator("#app .badge")).toHaveCount(1);await expect(browserPage.locator("#app")).not.toContainText(/undefined|NaN/i);await expect(browserPage.locator("#freshness")).toContainText("Données générées à");await browserPage.screenshot({path:`artifacts/khalyon-${page}.png`,fullPage:true});});}
+for(const page of pages){test(`render ${page}`,async({page:browserPage})=>{await browserPage.goto(`http://127.0.0.1:4173/#${page}`,{waitUntil:"networkidle"});await expect(browserPage.locator("#app")).not.toBeEmpty();await expect(browserPage.locator("#app .badge")).toHaveCount(1);await expect(browserPage.locator("#app")).not.toContainText(/\bundefined\b|\bNaN\b/i);await expect(browserPage.locator("#freshness")).toContainText("Données générées à");await browserPage.screenshot({path:`artifacts/khalyon-${page}.png`,fullPage:true});});}
 
 test("stale generated data is explicitly marked",async({page})=>{await page.route("**/data/runtime.json",async route=>{const response=await route.fetch();const data=await response.json();data.generatedAt=new Date(Date.now()-60*60*1000).toISOString();await route.fulfill({response,body:JSON.stringify(data)});});await page.goto("http://127.0.0.1:4173/#decision",{waitUntil:"networkidle"});await expect(page.locator("#freshness")).toContainText("PÉRIMÉ");});
 
