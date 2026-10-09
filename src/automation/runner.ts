@@ -8,6 +8,7 @@ import { fetchContextSnapshot } from "../context/providers/index.js";
 import { runTelEntryPipeline } from "../surveillance/tel-entry-pipeline.js";
 import { P0_ENTRY_POLICY } from "../surveillance/tel-swing.js";
 import { renderPrivateTelPositionReport } from "../surveillance/tel-position-private.js";
+import { calculateAnchoredVwap } from "../surveillance/anchored-vwap.js";
 import type { MarketDataPoint } from "../domain/types.js";
 
 const JOURNAL=process.env.PROSPECTIVE_JOURNAL??"research/prospective/journal.jsonl";
@@ -99,7 +100,7 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
  const mexcDepth=Math.min(bookSideDepth(mexcBids),bookSideDepth(mexcAsks));
  const mexcSpreadBps=mexcBestBid>0&&mexcBestAsk>=mexcBestBid?((mexcBestAsk-mexcBestBid)/((mexcBestAsk+mexcBestBid)/2))*10_000:Infinity;
  const mexcSlippageBps=estimateBuyImpactBps(mexcAsks,estimatedNotional,mexcBestAsk);
- const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepth)&&mexcDepth>0?{spreadBps:mexcSpreadBps,depthQuote:mexcDepth,estimatedSlippageBps:mexcSlippageBps,observedAt:now,sourceHash:sha(mBook)}:null;
+ const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepth)&&mexcDepth>0&&Number.isFinite(mexcSlippageBps)&&mexcSlippageBps>=0?{spreadBps:mexcSpreadBps,depthQuote:mexcDepth,estimatedSlippageBps:mexcSlippageBps,observedAt:now,sourceHash:sha(mBook)}:null;
  const btcRows=(Array.isArray(btc?.data)?btc.data:[]).filter((row:any)=>Array.isArray(row)&&row.length>=6).sort((a:any,b:any)=>Number(a[0])-Number(b[0]));
  let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null,btcUnavailableReason:string|null=null;
  if(btc===null){btcUnavailableReason=failed.find(x=>x.startsWith("5:"))??"BTC_HTTP_UNAVAILABLE";}
@@ -125,10 +126,11 @@ async function main():Promise<void>{
    const qualityBars=market.candles;
    const price24hAgo=qualityBars.length>=25?qualityBars[qualityBars.length-25]?.close??null:null;
    const price7dAgo=qualityBars.length>=169?qualityBars[qualityBars.length-169]?.close??null:null;
+   const anchoredVwap=calculateAnchoredVwap(qualityBars,process.env.TEL_ANCHORED_VWAP_START_AT?.trim()||null,now);
    const contextProvenance=contextSnapshot?.provenance??[];
    const contextUnavailable=contextProvenance.filter(p=>p.status==="UNAVAILABLE");
    const contextError=contextSnapshot?undefined:contextResult.status==="rejected"?String(contextResult.reason).slice(0,200):"Context providers unavailable";
-   const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,...(market.btcUnavailableReason?{btcUnavailableReason:market.btcUnavailableReason}:{}),context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0),livePriceQuote:market.primary.lastPrice,...orderPlan});
+   const output=runTelEntryPipeline({now,dataMode:"RÉEL",candles:qualityBars,price24hAgo,price7dAgo,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,...(market.btcUnavailableReason?{btcUnavailableReason:market.btcUnavailableReason}:{}),context:contextSnapshot,...(contextError?{contextError}:{}),venueStatus:market.venueStatus,venueDetail:market.venueDetail,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,...(market.btcSourceHash?{btcSourceHash:market.btcSourceHash}:{}),telLiquidity:market.liquidity,mexcLiquidity:market.mexcLiquidity,anchoredVwap,swingCapitalQuote:num(process.env.SWING_CAPITAL_QUOTE??1000),stopPrice:null,openSwingPositions:num(process.env.OPEN_SWING_POSITIONS??0),monthlyLossQuote:num(process.env.MONTHLY_LOSS_QUOTE??0),livePriceQuote:market.primary.lastPrice,...orderPlan});
    decision=output.decision;angleDiagnostics=[...output.angles];vetoReasons=output.angles.filter(a=>a.status!=="OK").map(a=>`${a.angle}: ${a.status} — ${a.detail}`);reasons=[output.reason,...output.angles.map(a=>`ANGLE[${a.angle}]=${a.status} | mode=${a.mode} | ${a.detail} | source=${a.source} | at=${a.observedAt??"UNAVAILABLE"} | hash=${a.sourceHash??"UNAVAILABLE"}`),...contextUnavailable.map(p=>`PROVENANCE_UNAVAILABLE[${p.field}]=${p.reason??"unavailable"}`)];
    html=output.html;
    snapshotHash=sha({pipelineHash:output.snapshotHash,market:{candles:qualityBars,primary:market.primary,control:market.control,btc24hChangePct:market.btc24hChangePct,btcSupportBroken:market.btcSupportBroken,btcUnavailableReason:market.btcUnavailableReason,liquidity:market.liquidity,marketSourceHash:market.marketSourceHash,candlesSourceHash:market.candlesSourceHash,btcSourceHash:market.btcSourceHash},contextHash:contextSnapshot?.snapshotHash??null,angles:output.angles});
