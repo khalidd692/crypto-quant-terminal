@@ -90,22 +90,23 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     angles.push(angle("Liquidité réelle TEL",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité réelle TEL", "UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
-  const requiredAngles=angles.filter(a=>a.angle!=="P0 — qualité d'entrée");
-  const failing=requiredAngles.find(a=>a.status!=="OK")??angles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
+  const finalAngles=angles.map(a=>({...a,mode:a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL"}));
+  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
+  const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
   let decision:SwingDecision="ATTENDRE",reason="Tous les contrôles obligatoires sont satisfaits; décision descriptive uniquement.";
   if(input.venueStatus!=="OK"||!candlesFresh||!context||!liquidity||failing){decision="ATTENDRE";reason=failing?failing.angle+": "+failing.detail:input.venueStatus!=="OK"?"Données de marché indisponibles, périmées ou incohérentes":!candlesFresh?"Historique de bougies indisponible/périmé":!context?"Contexte obligatoire indisponible":"Liquidité réelle TEL indisponible";}
   else if(quality.decision==="UNAVAILABLE"){decision="ATTENDRE";reason=quality.reasons[0]??"Qualité d'entrée indisponible";}
   else if(!btc.passed){decision="ATTENDRE";reason=btc.reason;}
   else if(quality.decision==="EXTENDED"){decision="ATTENDRE";reason=quality.reasons[0]??"Prix étiré";}
   else if(!risk.allowed){decision="NE_PAS_ENTRER";reason=risk.reason??"Dimensionnement SWING interdit";}
-  else if(angles.some(a=>a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
+  else if(finalAngles.some(a=>a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
   // Every mandatory angle is a veto. No angle can promote a blocked or unavailable result to ENTRER.
-  const finalDecision:SwingDecision=decision==="ENTRER"&&angles.every(a=>a.status==="OK")&&risk.allowed?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
+  const finalDecision:SwingDecision=decision==="ENTRER"&&finalAngles.every(a=>a.status==="OK")&&risk.allowed?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
   const finalReason=finalDecision==="ENTRER"?reason:reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
-  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles});
-  return{decision:finalDecision,reason:finalReason,quality,risk,angles,html,snapshotHash:hashOf(context),priceQuote:price};
+  const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
+  return{decision:finalDecision,reason:finalReason,quality,risk,angles:finalAngles,html,snapshotHash:hashOf(context),priceQuote:price};
 }
 import { renderTelTestScreen } from "./tel-test-mode.js";
 const screenRenderer={renderTelTestScreen};
