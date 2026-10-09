@@ -101,8 +101,8 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   else if(!risk.allowed){decision="NE_PAS_ENTRER";reason=risk.reason??"Dimensionnement SWING interdit";}
   else if(finalAngles.some(a=>a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
   // Every mandatory angle is a veto. No angle can promote a blocked or unavailable result to ENTRER.
-  const finalDecision:SwingDecision=decision==="ENTRER"&&finalAngles.every(a=>a.status==="OK")&&risk.allowed?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
-  const finalReason=finalDecision==="ENTRER"?reason:reason;
+  const finalDecision:SwingDecision=finalAngles.every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
+  const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
   const html=renderTelTestScreen({decision:finalDecision,quality:qualityForScreen,btcStatus:btcStatus==="OK"?"OK":btcStatus==="UNAVAILABLE"?"UNAVAILABLE":"BLOCKED",macroStatus:macroStatus==="OK"?"OK":"UNAVAILABLE",sentimentStatus:sentimentStatus==="OK"?"OK":"UNAVAILABLE",risk,riskMaxPct:P0_ENTRY_POLICY.maxRiskPerTradePct,reason:finalReason,angles:finalAngles});
