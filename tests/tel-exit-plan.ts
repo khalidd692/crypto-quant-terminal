@@ -34,7 +34,7 @@ const trail = evaluateTelExitActions(plan, {
   remainingQuantity: 30, target1Reached: true, target2Reached: true,
   timeReductionApplied: false, bestPriceSinceTarget2: 1.2, currentTrailingStop: 1.05
 }, 1.18, "2026-10-10T00:00:00.000Z", 0.05);
-assert.ok(trail.some(a => a.type === "UPDATE_TRAILING_STOP" && a.stopPrice === 1.1));
+assert.ok(trail.some(a => a.type === "UPDATE_TRAILING_STOP" && Math.abs(a.stopPrice - 1.1) < 1e-12));
 assert.throws(() => validateFavorableStopUpdate(1.05, 1.04), /only move in the favorable direction/);
 assert.doesNotThrow(() => validateFavorableStopUpdate(1.05, 1.06));
 assert.throws(() => createTelExitPlan(1, 1, 10, "2026-10-09T00:00:00.000Z"), /above zero/);
