@@ -71,6 +71,13 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run build
+      - name: Snapshot journal baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tel-journal-merge
+          : > /tmp/tel-journal-merge/before.jsonl
+          if test -f research/prospective/journal.jsonl; then cp research/prospective/journal.jsonl /tmp/tel-journal-merge/before.jsonl; fi
       - name: Run prospective surveillance
         env:
           PROSPECTIVE_JOURNAL: research/prospective/journal.jsonl
@@ -87,16 +94,39 @@ jobs:
           TEL_LAST_TRANCHE_PRICE: ${{ inputs.last_tranche_price || secrets.TEL_LAST_TRANCHE_PRICE }}
           TEL_PLANNED_ENTRY_PRICE: ${{ inputs.planned_entry_price || secrets.TEL_PLANNED_ENTRY_PRICE }}
         run: node dist/src/automation/runner.js
-      - name: Append journal commit
+      - name: Reconcile and append journal safely
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p /tmp/tel-journal-merge research/prospective
+          if test -f research/prospective/journal.jsonl; then
+            cp research/prospective/journal.jsonl /tmp/tel-journal-merge/after.jsonl
+          else
+            : > /tmp/tel-journal-merge/after.jsonl
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add research/prospective/journal.jsonl
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "automation: append prospective surveillance journal"
-          git push origin HEAD:main
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p research/prospective
+            if ! test -f research/prospective/journal.jsonl; then : > research/prospective/journal.jsonl; fi
+            node scripts/reconcile-prospective-journal.mjs /tmp/tel-journal-merge/before.jsonl /tmp/tel-journal-merge/after.jsonl research/prospective/journal.jsonl
+            git add research/prospective/journal.jsonl
+            if git diff --cached --quiet; then
+              echo "No new journal records to append."
+              exit 0
+            fi
+            git commit -m "automation: append prospective surveillance journal"
+            if git push origin HEAD:main; then
+              echo "Journal append and hash-chain verification succeeded."
+              exit 0
+            fi
+            echo "Concurrent main update detected; retrying against latest main (attempt $attempt/4)."
+          done
+          echo "Unable to append journal safely after 4 attempts." >&2
+          exit 1
       - name: Weekly angle availability and veto summary
         if: success()
         env:
