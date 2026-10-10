@@ -60,7 +60,7 @@
       "id": "fred-macro-series",
       "provider": "Federal Reserve Bank of St. Louis FRED",
       "purpose": ["macro context: DFF, DGS10, DTWEXBGS, CPIAUCSL, and declared extended series"],
-      "endpointPatterns": ["https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDAMGBD228NLBM", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL"],
+      "endpointPatterns": ["https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL"],
       "limitations": "Use observation dates as event times and fetch times as availability times; macro source age limit is seven days"
     },
     {
@@ -107,7 +107,7 @@
       "provider": "MEXC",
       "market": "Perpetual derivatives",
       "symbol": "TEL_USDT",
-      "endpointsUnderManualDiagnostic": ["https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT", "https://contract.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT"],
+      "endpointsUnderManualDiagnostic": ["https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT", "https://contract.mexc.com/api/v1/contract/detail?symbol=TEL_USDT"],
       "status": "UNAVAILABLE",
       "reason": "Smoke test has not yet confirmed root cause; diagnostic may reveal transport timeout, schema/envelope mismatch, symbol mismatch, or stale/invalid fields",
       "policy": "Do not use, substitute, estimate, or impute open interest; keep terminal status UNAVAILABLE until manual diagnostic evidence and independent review"
