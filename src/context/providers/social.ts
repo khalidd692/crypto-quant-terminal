@@ -4,7 +4,13 @@ import type { ContextProvenance, SocialSentimentContext } from "../types.js";
 
 const REDDIT = "https://www.reddit.com/r/Telcoin/search.json?q=TEL&restrict_sr=1&sort=new&limit=100";
 const X_SEARCH = "https://api.x.com/2/tweets/search/recent?query=(TEL%20OR%20Telcoin)%20-is:retweet&max_results=100&tweet.fields=author_id,created_at,text";
-const BLUESKY_SEARCH = "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=TEL%20OR%20Telcoin&sort=latest&limit=100";
+const BLUESKY_SEARCHES = [
+  "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=telcoin&sort=latest&limit=100",
+  "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts?q=telcoin&sort=latest&limit=100"
+] as const;
+const BLUESKY_HEADERS = {
+  "user-agent": "crypto-quant-terminal/1.0 (read-only research; https://github.com/khalidd692/crypto-quant-terminal)"
+} as const;
 const POS = ["bull", "bullish", "breakout", "moon", "buy", "partnership", "adoption", "launch", "growth", "bank", "regulated", "positive"];
 const NEG = ["bear", "bearish", "dump", "sell", "scam", "lawsuit", "hack", "risk", "negative", "unlock"];
 
@@ -88,20 +94,28 @@ export async function fetchSocialSentiment(at: string): Promise<{ value: SocialS
   }
 
   // Public Bluesky search is an unauthenticated fallback when Reddit/X cannot
-  // provide usable posts. It never overrides a usable primary social source.
+  // provide usable posts. Try the documented cached host first, then its API
+  // host; never override a usable primary social source or count empty results.
   if (selectedItems === null) {
-    try {
-      const raw = await fetchJson(BLUESKY_SEARCH) as any;
-      if (!Array.isArray(raw?.posts)) throw new Error("Bluesky response schema unavailable");
-      const posts = raw.posts.map((post: any) => ({
-        text: post?.record?.text,
-        author_id: post?.author?.did ?? post?.author?.handle
-      })).filter((post: any) => typeof post.text === "string" && post.text.trim().length > 0);
-      if (posts.length === 0) throw new Error("Bluesky returned no usable TEL posts");
-      selectedItems = posts;
-      provenanceItems.push(provenance("social.bluesky", BLUESKY_SEARCH, at, raw));
-    } catch (error) {
-      provenanceItems.push(unavailableProvenance("social.bluesky", BLUESKY_SEARCH, at, String(error)));
+    let failure = "No Bluesky endpoint returned usable posts";
+    for (const url of BLUESKY_SEARCHES) {
+      try {
+        const raw = await fetchJson(url, BLUESKY_HEADERS) as any;
+        if (!Array.isArray(raw?.posts)) throw new Error("Bluesky response schema unavailable");
+        const posts = raw.posts.map((post: any) => ({
+          text: post?.record?.text,
+          author_id: post?.author?.did ?? post?.author?.handle
+        })).filter((post: any) => typeof post.text === "string" && post.text.trim().length > 0);
+        if (posts.length === 0) throw new Error("Bluesky returned no usable TEL posts");
+        selectedItems = posts;
+        provenanceItems.push(provenance("social.bluesky", url, at, raw));
+        break;
+      } catch (error) {
+        failure = url + ": " + String(error);
+      }
+    }
+    if (selectedItems === null) {
+      provenanceItems.push(unavailableProvenance("social.bluesky", BLUESKY_SEARCHES.join(" ; "), at, failure));
     }
   }
 
