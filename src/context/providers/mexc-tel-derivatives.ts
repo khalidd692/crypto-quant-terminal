@@ -103,7 +103,13 @@ export function normalizeMexcTelDerivatives(input: {
   if (!contractData) {
     const contractEnvelope = record(input.contract);
     const contractCode = contractEnvelope?.code;
-    const contractNotListed = contractEnvelope?.success === false && Number(contractCode) === 1001;
+    const contractDataRaw = contractEnvelope?.data;
+    const contractListConfirmsAbsence = contractEnvelope?.success === true
+      && Number(contractCode) === 0
+      && Array.isArray(contractDataRaw)
+      && !contractDataRaw.some((item) => record(item)?.symbol === "TEL_USDT");
+    const contractNotListed = (contractEnvelope?.success === false && Number(contractCode) === 1001)
+      || contractListConfirmsAbsence;
     fundingReason = contractNotListed
       ? "MEXC_TEL_PERP_NOT_LISTED"
       : input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
