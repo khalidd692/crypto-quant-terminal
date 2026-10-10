@@ -156,10 +156,14 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const trancheMax=input.maxTranchesPerZone??3;
   const lastTranche=input.lastTranchePrice??null;
   const plannedEntry=input.plannedEntryPrice??livePrice;
-  let antiFomoStatus:AngleStatus=fomoStatus;
-  let antiFomoDetail=fomoDetail;
+  // The market-only FOMO gate is independent of the optional manual order
+  // plan. Missing order-plan fields are diagnostics, not automatic vetoes;
+  // measured extensions and an active reflection cooldown still block ENTRER.
+  let antiFomoStatus:AngleStatus=quality.decision==="UNAVAILABLE"?"UNAVAILABLE":fomoTrigger?"BLOC":"OK";
+  let antiFomoDetail=quality.decision==="UNAVAILABLE"?"Métriques marché insuffisantes pour évaluer l’extension FOMO":fomoTrigger?"FOMO ? ordres limités uniquement":"Aucune extension FOMO mesurée dans les métriques de marché.";
   const antiFomoReasons:string[]=[];
   if(fomoTrigger||startedAt!==null) {
+    antiFomoStatus="BLOC";
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
     if(anchoredVwapExtension) antiFomoReasons.push("Prix > 2 ATR au-dessus du VWAP ancré depuis le dernier creux confirmé");
     if(elapsedHours===null||elapsedHours<cooldownHours) {
@@ -185,12 +189,13 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
   }
   if(antiFomoReasons.length) antiFomoDetail=[...new Set(antiFomoReasons)].join(" — ");
-  angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Saisie manuelle hors dépôt",input.now,null));
+  angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Métriques P0 du marché",last?.availableTime??input.now,input.candlesSourceHash??null));
+  angles.push(angle("Plan d’ordre manuel",fomoStatus,fomoDetail,"Saisie manuelle hors dépôt",input.now,null));
   const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
   // Provenance globale is a diagnostic aggregate. Mandatory angles below
   // enforce their own fresh data requirements; optional/secondary sources
   // must not independently veto the decision.
-  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée"&&a.angle!=="Provenance globale");
+  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée"&&a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
   let decision:SwingDecision="ATTENDRE",reason="Tous les contrôles obligatoires sont satisfaits; décision descriptive uniquement.";
   if(input.venueStatus!=="OK"||!candlesFresh||!context||!liquidity||!input.mexcLiquidity||input.volumeCoherenceRatio==null||failing){decision="ATTENDRE";reason=failing?failing.angle+": "+failing.detail:input.venueStatus!=="OK"?"Données de marché indisponibles, périmées ou incohérentes":!candlesFresh?"Historique de bougies indisponible/périmé":!context?"Contexte obligatoire indisponible":!liquidity||!input.mexcLiquidity?"Liquidité KuCoin/MEXC indisponible":"Cohérence de volumes indisponible";}
@@ -198,9 +203,9 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   else if(!btc.passed){decision="ATTENDRE";reason=btc.reason;}
   else if(quality.decision==="EXTENDED"){decision="ATTENDRE";reason=quality.reasons[0]??"Prix étiré";}
   else if(!risk.allowed){decision="NE_PAS_ENTRER";reason=risk.reason??"Dimensionnement SWING interdit";}
-  else if(finalAngles.some(a=>a.angle!=="Provenance globale"&&a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
+  else if(finalAngles.some(a=>a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel"&&a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
   // Every mandatory angle is a veto. No angle can promote a blocked or unavailable result to ENTRER.
-  const finalDecision:SwingDecision=finalAngles.filter(a=>a.angle!=="Provenance globale").every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
+  const finalDecision:SwingDecision=finalAngles.filter(a=>a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel").every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
