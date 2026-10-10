@@ -5,7 +5,7 @@ import type { ContextProvenance, LiquidityContext } from "../types.js";
 const S="https://stablecoins.llama.fi/stablecoincharts/all";
 const B="https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT";
 const KUCOIN_STATS="https://api.kucoin.com/api/v1/market/stats?symbol=BTC-USDT";
-const KUCOIN_LEVEL1="https://api.kucoin.com/api/v3/market/orderbook/level1?symbol=BTC-USDT";
+const KUCOIN_LEVEL1="https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT";
 const COINGECKO_CATEGORIES="https://api.coingecko.com/api/v3/coins/categories";
 
 export function calculateSpreadBps(bid:number|null,ask:number|null):number|null{
