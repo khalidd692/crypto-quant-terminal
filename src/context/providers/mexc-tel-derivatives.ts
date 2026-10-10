@@ -77,7 +77,17 @@ export function normalizeMexcTelDerivatives(input: {
 
   let fundingRate: number | null = null;
   let fundingReason: string | null = null;
-  if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
+  // Funding is not treated as live for a perpetual unless the contract-detail
+  // endpoint independently confirms that TEL_USDT exists. This prevents a
+  // contradictory funding endpoint response from making an unlisted contract look live.
+  const contractEnvelope = record(input.contract);
+  const contractCode = contractEnvelope?.code;
+  const contractNotListed = contractEnvelope?.success === false && Number(contractCode) === 1001;
+  if (!contractData) {
+    fundingReason = contractNotListed
+      ? "MEXC_TEL_PERP_NOT_LISTED"
+      : input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+  } else if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
   else {
     const rate = finite(fundingData.fundingRate);
     if (rate === null) fundingReason = "MEXC_TEL_FUNDING_RATE_INVALID";
