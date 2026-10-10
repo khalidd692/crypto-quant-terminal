@@ -58,17 +58,17 @@ jobs:
           node khalyon/build.mjs
       - name: Write public build manifest
         env:
-          SOURCE_COMMIT: ${{ github.sha }}
           SOURCE_REF: ${{ github.ref }}
           RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from "node:fs";
+          import { execFileSync } from "node:child_process";
           const snapshot = JSON.parse(readFileSync("khalyon/data/phase3-diagnostic-snapshot.json", "utf8"));
           const manifest = {
             schemaVersion: 1,
-            sourceCommit: process.env.SOURCE_COMMIT,
+            sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
             sourceRef: process.env.SOURCE_REF,
             workflowRunId: process.env.RUN_ID,
             workflowRunAttempt: Number(process.env.RUN_ATTEMPT),
