@@ -67,15 +67,20 @@ assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
 assert.notEqual(missingMexcBook.decision,"ENTRER");
 assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
-const missingMexcOi=runTelEntryPipeline(input({context:context(undefined,true)}));
-const healthyWithoutSecondaryVeto=runTelEntryPipeline(input());
-assert.equal(missingMexcOi.decision,healthyWithoutSecondaryVeto.decision,
+const manualPlan={plannedOrderType:"LIMIT" as const,orderGridActive:false,lastGridLevelPrice:.99,livePriceQuote:1};
+const healthyWithManualPlan=runTelEntryPipeline(input(manualPlan));
+assert.equal(healthyWithManualPlan.decision,"ENTRER",
+  "fixture with all mandatory gates valid should not be blocked by non-mandatory plan diagnostics");
+const missingMexcOi=runTelEntryPipeline(input({...manualPlan,context:context(undefined,true)}));
+assert.equal(missingMexcOi.decision,healthyWithManualPlan.decision,
   "secondary MEXC open interest availability must not independently change the decision");
 assert.ok(missingMexcOi.angles.some(a=>a.angle==="Provenance globale"&&a.status==="UNAVAILABLE"&&a.detail.includes("market.telOpenInterestQuote")),
   "missing secondary fields remain visible in the provenance diagnostic");
-const mixedSocial=runTelEntryPipeline(input({context:context(undefined,false,true)}));
+const mixedSocial=runTelEntryPipeline(input({...manualPlan,context:context(undefined,false,true)}));
 assert.ok(mixedSocial.angles.some(a=>a.angle==="Sentiment"&&a.status==="OK"),
   "one valid fresh social source must remain usable when another platform is unavailable");
+assert.equal(mixedSocial.decision,"ENTRER",
+  "a fresh usable social source should satisfy sentiment despite another platform being unavailable");
 const divergentVolume=runTelEntryPipeline(input({volumeCoherenceRatio:6}));
 assert.notEqual(divergentVolume.decision,"ENTRER");
 assert.ok(divergentVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="INCOHÉRENT"));
