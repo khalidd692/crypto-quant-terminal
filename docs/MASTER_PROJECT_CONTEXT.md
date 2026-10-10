@@ -5,7 +5,7 @@
 **Repository:** `khalidd692/crypto-quant-terminal`  
 **Default branch reported by GitHub:** `main`  
 **Project type:** read-only quantitative decision-support terminal; not a live-trading bot.  
-**Last handoff update:** 2026-10-09.
+**Last handoff update:** 2026-10-10.
 
 ---
 
@@ -276,3 +276,34 @@ Do not run research, edit protected artifacts, create a new strategy, or merge a
 ---
 
 **Provenance note:** This file combines the current README and project documents with previously communicated project decisions and incident references. Some historical references are summaries pending independent verification. The repository artifacts, exact commit history, PR records and CI outputs remain the authority for claims about implementation state.
+
+
+## 2026-10-10 verified continuation — live context reliability
+
+This section records the verified repository changes made after the 2026-10-09 handoff. It supplements the invariants above; it does not supersede ADRs or research artifacts.
+
+### Merged fixes
+
+- PR #139 — MEXC Futures URLs use the documented `https://contract.mexc.com` host. Funding data is returned; TEL ticker/open-interest data still requires independent confirmation.
+- PR #140 — numeric normalization preserves `null`, missing and blank values instead of coercing them to zero; blank and `.` FRED observations are ignored.
+- PR #141 — provider-group timeout increased from 22s to 30s, with per-request timeouts/retries still bounded; extended FRED series with no valid numeric observations are unavailable.
+- PR #142 — removed `GOLDPMGBD228NLBM`, an IBA gold series deleted from FRED. Do not reintroduce it or fabricate a replacement.
+- PR #143 — MEXC normalization now reports bounded diagnostics for missing data/schema/symbol responses while retaining null/fail-closed values.
+- PR #144 — if Reddit is unavailable, a configured `X_BEARER_TOKEN` is still tried; when neither source is usable, social context remains `UNAVAILABLE`.
+
+The CI and KHALYON UI CI workflows passed for these PR heads. The read-only live smoke at **2026-10-10 19:47:49 UTC** recorded **`ATTENDRE`**. It no longer showed the prior 22-second provider-group timeout failures or the retired FRED gold-series 404.
+
+### Verified live blockers — do not bypass
+
+- `market.telOpenInterestQuote`: `MEXC_TEL_TICKER_DATA_MISSING`; no open-interest estimate may be substituted.
+- `social.reddit`: HTTP 403.
+- `social.x`: `X_BEARER_TOKEN not configured`. No token was added or requested in this work.
+- `fundamentalsTel.unlockCalendar`: no independently verifiable public TEL unlock schedule confirmed.
+- MEXC spot liquidity gate: `spread_too_wide`.
+- Anti-FOMO evaluation: manual order/grid/level/current-price inputs were incomplete, so the check remained unavailable rather than claiming it passed.
+
+The most recent generated context snapshot was persisted on `main` at 2026-10-10 19:48:47 UTC. This proves snapshot generation/persistence, not by itself that the public GitHub Pages deployment completed; verify the deployment before claiming the live site is updated.
+
+### Safety status
+
+No research run or new backtest study was launched. No strategy thresholds or entry rules were changed. The frozen dataset, untouched holdout, ADR-0002 and Phase 3 verdict **`PAS D'EDGE`** remain unchanged. Continue to fail closed: unavailable, stale or incoherent decision inputs must not authorize `ENTRER`.
