@@ -1,8 +1,12 @@
 name: Deploy KHALYON
 on:
-  # Scheduled deployment is the single automatic publication trigger.
-  # Keeping it independent from surveillance workflow_run events avoids duplicate
-  # deploys and prevents data-journal commits racing the build.
+  # Publish promptly after application/workflow changes reach main.
+  # Ignore runtime-only churn; the scheduled run still refreshes live context.
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "research/prospective/journal.jsonl"
+      - "khalyon/data/context-snapshot.json"
   schedule:
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
@@ -78,7 +82,7 @@ jobs:
             historicalVerdict: snapshot.historicalVerdict
           };
           if (!/^[0-9a-f]{40}$/.test(manifest.sourceCommit ?? "")) throw new Error("Invalid KHALYON build source SHA");
-          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\n");
+          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\\n");
           console.log("KHALYON public build manifest: " + manifest.sourceCommit);
           NODE
           node tests/khalyon-ui-integrity.mjs
