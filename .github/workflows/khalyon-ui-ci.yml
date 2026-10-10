@@ -50,6 +50,25 @@ jobs:
           KHALYON_NLP_REPORT: main-data/reports/latest_nlp_signals.md
         run: |
           node khalyon/build.mjs
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const snapshot = JSON.parse(readFileSync("khalyon/data/phase3-diagnostic-snapshot.json", "utf8"));
+          const manifest = {
+            schemaVersion: 1,
+            sourceCommit: process.env.GITHUB_SHA,
+            sourceRef: process.env.GITHUB_REF,
+            workflowRunId: process.env.GITHUB_RUN_ID,
+            workflowRunAttempt: Number(process.env.GITHUB_RUN_ATTEMPT),
+            workflowRunUrl: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            builtAt: new Date().toISOString(),
+            datasetVersion: snapshot.datasetVersion,
+            holdoutConsumed: snapshot.holdoutConsumed,
+            adr: snapshot.adr,
+            historicalVerdict: snapshot.historicalVerdict
+          };
+          if (!/^[0-9a-f]{40}$/.test(manifest.sourceCommit ?? "")) throw new Error("Invalid KHALYON build source SHA");
+          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\n");
+          NODE
           node tests/khalyon-ui-integrity.mjs
       - name: Install Playwright
         run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps

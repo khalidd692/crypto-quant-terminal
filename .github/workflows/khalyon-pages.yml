@@ -56,6 +56,33 @@ jobs:
         run: |
           echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
+      - name: Write public build manifest
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+          SOURCE_REF: ${{ github.ref }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const snapshot = JSON.parse(readFileSync("khalyon/data/phase3-diagnostic-snapshot.json", "utf8"));
+          const manifest = {
+            schemaVersion: 1,
+            sourceCommit: process.env.SOURCE_COMMIT,
+            sourceRef: process.env.SOURCE_REF,
+            workflowRunId: process.env.RUN_ID,
+            workflowRunAttempt: Number(process.env.RUN_ATTEMPT),
+            workflowRunUrl: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.RUN_ID}`,
+            builtAt: new Date().toISOString(),
+            datasetVersion: snapshot.datasetVersion,
+            holdoutConsumed: snapshot.holdoutConsumed,
+            adr: snapshot.adr,
+            historicalVerdict: snapshot.historicalVerdict
+          };
+          if (!/^[0-9a-f]{40}$/.test(manifest.sourceCommit ?? "")) throw new Error("Invalid KHALYON build source SHA");
+          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\n");
+          console.log("KHALYON public build manifest: " + manifest.sourceCommit);
+          NODE
           node tests/khalyon-ui-integrity.mjs
       - name: Install Playwright
         run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps
