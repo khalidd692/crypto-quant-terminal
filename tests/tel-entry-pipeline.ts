@@ -12,10 +12,10 @@ function point(i:number,close=1,availableAt?:string):MarketDataPoint{
   return {instrumentId:"TEL-USDT",eventTime:new Date(t).toISOString() as MarketDataPoint["eventTime"],availableTime:(availableAt??new Date(t+5_000).toISOString()) as MarketDataPoint["availableTime"],open:close,high:close+.005,low:close-.005,close,volume:100,dataQuality:"complete",sourceId:"KUCOIN_SPOT"};
 }
 function prov(field:string):ContextProvenance{return{field,source:"fixture://provider",availableAt:now,sourceSnapshotHash:hash,status:"OK"};}
-function context(eventAt?:string):ContextSnapshot{
- const provenance=[prov("macro.DFF"),prov("macro.DGS10"),prov("macro.DTWEXBGS"),prov("macro.CPIAUCSL"),prov("events.fomc"),prov("market.sentimentScore"),prov("social.reddit"),prov("fundamentalsTel.coingecko"),prov("fundamentalsTel.newsroom")];
+function context(eventAt?:string,mexcOiUnavailable=false):ContextSnapshot{
+ const provenance=[prov("macro.DFF"),prov("macro.DGS10"),prov("macro.DTWEXBGS"),prov("macro.CPIAUCSL"),prov("events.fomc"),prov("market.sentimentScore"),prov("social.reddit"),prov("fundamentalsTel.coingecko"),prov("fundamentalsTel.newsroom"),...(mexcOiUnavailable?[{...prov("market.telOpenInterestQuote"),status:"UNAVAILABLE" as const}]:[])];
  return createContextSnapshot({schemaVersion:"context-snapshot.v1",instrumentId:"TEL-USDT",asOf:now,
- market:{totalMarketCapQuote:1e12,btcDominancePct:55,btcReturnPct:0.01,realizedVolPct:2,breadthPct:50,sentimentScore:50},
+ market:{totalMarketCapQuote:1e12,btcDominancePct:55,btcReturnPct:0.01,realizedVolPct:2,breadthPct:50,sentimentScore:50,telOpenInterestQuote:mexcOiUnavailable?null:100},
  macro:{ratesBias:"NEUTRAL",inflationBias:"NEUTRAL",dollarBias:"NEUTRAL",policyRatePct:4,tenYearYieldPct:4,dollarIndex:100,cpiYoYPct:2.5,sourceAsOf:now},
  events:{events:eventAt?[{id:"fomc-near",timestamp:eventAt,category:"MACRO",label:"FOMC proche",importance:"HIGH"}]:[]},
  liquidity:{venue:"KUCOIN",symbol:"TEL-USDT",spreadBps:5,depthQuote:10000,volume24hQuote:100000,observedAt:now},
@@ -67,6 +67,9 @@ assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
 assert.notEqual(missingMexcBook.decision,"ENTRER");
 assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
+const missingMexcOi=runTelEntryPipeline(input({context:context(undefined,true)}));
+assert.notEqual(missingMexcOi.decision,"ENTRER","missing MEXC open interest must never promote a decision");
+assert.ok(missingMexcOi.angles.some(a=>a.angle==="Provenance globale"&&a.status==="UNAVAILABLE"&&a.detail.includes("market.telOpenInterestQuote")));
 const divergentVolume=runTelEntryPipeline(input({volumeCoherenceRatio:6}));
 assert.notEqual(divergentVolume.decision,"ENTRER");
 assert.ok(divergentVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="INCOHÉRENT"));
