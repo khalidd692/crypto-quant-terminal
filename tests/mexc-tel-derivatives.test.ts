@@ -140,4 +140,5 @@ const fundingDespiteInvalidContract = normalizeMexcTelDerivatives({
 assert.equal(fundingDespiteInvalidContract.fundingRate, null);
 assert.equal(fundingDespiteInvalidContract.openInterestQuote, null);
 assert.match(fundingDespiteInvalidContract.fundingReason ?? "", /NOT_LISTED/);
-\nconsole.log("MEXC TEL derivatives regression tests passed.");
+
+console.log("MEXC TEL derivatives regression tests passed.");
