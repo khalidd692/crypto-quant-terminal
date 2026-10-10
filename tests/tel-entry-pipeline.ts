@@ -90,6 +90,9 @@ assert.ok(missingVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC
 const unavailableAngle=runTelEntryPipeline(input({venueStatus:"UNAVAILABLE",venueDetail:"MEXC indisponible"}));
 assert.notEqual(unavailableAngle.decision,"ENTRER");
 const healthy=runTelEntryPipeline(input());
+assert.equal(healthy.decision,"ENTRER","a missing optional order plan must not veto when objective FOMO metrics and every mandatory gate pass");
+assert.ok(healthy.angles.some(a=>a.angle==="Plan d’ordre manuel"&&a.status==="UNAVAILABLE"));
+assert.ok(healthy.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="OK"));
 assert.ok(healthy.html.includes("Puis-je acheter maintenant ?"));
 assert.ok(healthy.html.includes("EN TEST — SANS ARGENT"));
 assert.ok(healthy.html.includes("Dérivés TEL MEXC — secondaire"));
