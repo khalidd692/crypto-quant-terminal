@@ -24,7 +24,7 @@ import { fetchTelDaily } from "./tel-price.js";
 import { fetchSocialSentiment } from "./social.js";
 import { correlationsForSeries } from "../correlations.js";
 
-const PROVIDER_TIMEOUT_MS = 22_000;
+const PROVIDER_TIMEOUT_MS = 30_000;
 const LABEL = "indice de température, bruité et manipulable, pas une prévision";
 const EXTENDED_SERIES: Readonly<Record<string, string>> = {
   DTWEXBGS: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
