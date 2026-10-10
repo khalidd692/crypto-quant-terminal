@@ -15,6 +15,7 @@ globalThis.fetch = async (input) => {
 try {
   const result = await fetchExtendedMacro("2026-10-10T20:00:00.000Z");
   assert.deepEqual(result.series.DTWEXBGS?.map(point => point.value), [101.2]);
+  assert.equal("GOLDPMGBD228NLBM" in result.series, false, "FRED removed the IBA gold series; do not request it again.");
   assert.equal(result.series.SP500?.length, 0, "blank observations must not become zero");
   assert.equal(result.provenance.find(item => item.field === "macroSeries.DTWEXBGS")?.status, "OK");
   assert.equal(result.provenance.find(item => item.field === "macroSeries.SP500")?.status, "UNAVAILABLE",
