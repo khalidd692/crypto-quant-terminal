@@ -108,12 +108,18 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const risk=price!==null&&effectiveStop!==null&&effectiveStop>0&&effectiveStop<price&&atrValue>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:effectiveStop,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
     const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
-    angles.push(angle("Liquidité KuCoin",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
+    const liquidityDetail=gate.reason===null
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+    angles.push(angle("Liquidité KuCoin",gate.passed?"OK":"BLOC",liquidityDetail,"KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité KuCoin","UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
   const mx=input.mexcLiquidity;
   if(mx&&price!==null&&risk.notionalQuote>0){
     const gate=assessLiquidity({spreadBps:mx.spreadBps,estimatedSlippageBps:mx.estimatedSlippageBps,depthQuote:mx.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
-    angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","MEXC Spot order book",mx.observedAt,mx.sourceHash));
+    const liquidityDetail=gate.reason===null
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+    angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",liquidityDetail,"MEXC Spot order book",mx.observedAt,mx.sourceHash));
   }else angles.push(angle("Liquidité MEXC","UNAVAILABLE","Carnet TEL MEXC ou dimensionnement indisponible","MEXC Spot order book",mx?.observedAt??null,mx?.sourceHash??null));
   const volumeRatio=input.volumeCoherenceRatio??null;
   angles.push(angle("Cohérence volumes KuCoin/MEXC",volumeRatio===null||!Number.isFinite(volumeRatio)?"UNAVAILABLE":volumeRatio>5?"INCOHÉRENT":"OK",volumeRatio===null||!Number.isFinite(volumeRatio)?"Volumes 24 h non comparables":`Ratio volume 24 h max/min = ${volumeRatio.toFixed(2)}×; seuil opérationnel daté : 5×`,"KuCoin + MEXC ticker 24 h",input.now,input.marketSourceHash??null));
