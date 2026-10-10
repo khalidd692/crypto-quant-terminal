@@ -82,7 +82,7 @@ jobs:
             historicalVerdict: snapshot.historicalVerdict
           };
           if (!/^[0-9a-f]{40}$/.test(manifest.sourceCommit ?? "")) throw new Error("Invalid KHALYON build source SHA");
-          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\\n");
+          writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\n");
           console.log("KHALYON public build manifest: " + manifest.sourceCommit);
           NODE
           node tests/khalyon-ui-integrity.mjs
