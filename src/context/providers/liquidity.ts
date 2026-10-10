@@ -8,6 +8,14 @@ const KUCOIN_STATS="https://api.kucoin.com/api/v1/market/stats?symbol=BTC-USDT";
 const KUCOIN_LEVEL1="https://api.kucoin.com/api/v3/market/orderbook/level1?symbol=BTC-USDT";
 const COINGECKO_CATEGORIES="https://api.coingecko.com/api/v3/coins/categories";
 
+export function calculateSpreadBps(bid:number|null,ask:number|null):number|null{
+ if(bid===null||ask===null||!Number.isFinite(bid)||!Number.isFinite(ask)||bid<=0||ask<=0||ask<bid)return null;
+ const mid=(bid+ask)/2;
+ if(!Number.isFinite(mid)||mid<=0)return null;
+ const spread=((ask-bid)/mid)*10000;
+ return Number.isFinite(spread)?spread:null;
+}
+
 export async function fetchLiquidityContext(at:string):Promise<{value:LiquidityContext;provenance:ContextProvenance[]}>{
  const [s,t,ks,kl,cg]=await Promise.allSettled([fetchJson(S),fetchJson(B),fetchJson(KUCOIN_STATS),fetchJson(KUCOIN_LEVEL1),fetchJson(COINGECKO_CATEGORIES)]);
  const sr=s.status==="fulfilled"?s.value as any:null;
@@ -21,17 +29,20 @@ export async function fetchLiquidityContext(at:string):Promise<{value:LiquidityC
  const stablecoinMarketCapQuote=stablecoinPrimary??stablecoinFallback;
  const binanceVolume=numberOrNull(tr?.quoteVolume),kucoinVolume=numberOrNull(kstats?.volValue);
  const volume24hQuote=binanceVolume??kucoinVolume;
- const bid=numberOrNull(tr?.bidPrice)??numberOrNull(kl1?.bestBid);
- const ask=numberOrNull(tr?.askPrice)??numberOrNull(kl1?.bestAsk);
- const last=numberOrNull(tr?.lastPrice)??numberOrNull(kl1?.price);
- const spreadBps=bid!==null&&ask!==null&&last!==null&&last>0?((ask-bid)/last)*10000:null;
+ const binanceBid=numberOrNull(tr?.bidPrice),binanceAsk=numberOrNull(tr?.askPrice);
+ const kucoinBid=numberOrNull(kl1?.bestBid),kucoinAsk=numberOrNull(kl1?.bestAsk);
+ const binanceBookValid=binanceBid!==null&&binanceAsk!==null&&binanceBid>0&&binanceAsk>=binanceBid;
+ const kucoinBookValid=kucoinBid!==null&&kucoinAsk!==null&&kucoinBid>0&&kucoinAsk>=kucoinBid;
+ // Keep each spread calculation within one venue; never combine one venue's bid with another's ask.
+ const spreadVenue=binanceBookValid?"BINANCE":kucoinBookValid?"KUCOIN":null;
+ const spreadBps=spreadVenue==="BINANCE"?calculateSpreadBps(binanceBid,binanceAsk):spreadVenue==="KUCOIN"?calculateSpreadBps(kucoinBid,kucoinAsk):null;
  const stableProv=stablecoinMarketCapQuote!==null?provenance("liquidity.stablecoinMarketCapQuote",stablecoinPrimary!==null?S:COINGECKO_CATEGORIES,at,stablecoinPrimary!==null?s.status==="fulfilled"?s.value:null:cg.status==="fulfilled"?cg.value:null):unavailableProvenance("liquidity.stablecoinMarketCapQuote",S+" + "+COINGECKO_CATEGORIES,at,"DefiLlama: "+(s.status==="rejected"?String(s.reason):"totalCirculatingUSD unavailable")+"; CoinGecko: "+(cg.status==="rejected"?String(cg.reason):"stablecoin category market_cap unavailable"));
  const volumeSource=binanceVolume!==null?B:KUCOIN_STATS;
  const volumeRaw=binanceVolume!==null?t.status==="fulfilled"?t.value:null:ks.status==="fulfilled"?ks.value:null;
  const volumeProv=volume24hQuote!==null?provenance("liquidity.volume24hQuote",volumeSource,at,volumeRaw):unavailableProvenance("liquidity.volume24hQuote",B+" + "+KUCOIN_STATS,at,"Binance: "+(t.status==="rejected"?String(t.reason):"quoteVolume unavailable")+"; KuCoin: "+(ks.status==="rejected"?String(ks.reason):"volValue unavailable"));
- const spreadSource=numberOrNull(tr?.bidPrice)!==null&&numberOrNull(tr?.askPrice)!==null?B:KUCOIN_LEVEL1;
- const spreadRaw=spreadSource===B?t.status==="fulfilled"?t.value:null:kl.status==="fulfilled"?kl.value:null;
- const spreadProv=spreadBps!==null?provenance("liquidity.spreadBps",spreadSource,at,spreadRaw):unavailableProvenance("liquidity.spreadBps",B+" + "+KUCOIN_LEVEL1,at,"Bid/ask/last unavailable from Binance and KuCoin");
+ const spreadSource=spreadVenue==="BINANCE"?B:KUCOIN_LEVEL1;
+ const spreadRaw=spreadVenue==="BINANCE"?t.status==="fulfilled"?t.value:null:spreadVenue==="KUCOIN"?kl.status==="fulfilled"?kl.value:null:null;
+ const spreadProv=spreadBps!==null?provenance("liquidity.spreadBps",spreadSource,at,spreadRaw):unavailableProvenance("liquidity.spreadBps",B+" + "+KUCOIN_LEVEL1,at,"Valid same-venue bid/ask unavailable from Binance and KuCoin");
  const venue=binanceVolume!==null||numberOrNull(tr?.bidPrice)!==null?"BINANCE":"KUCOIN";
  return {value:{venue,symbol:venue==="KUCOIN"?"BTC-USDT":"BTCUSDT",spreadBps,depthQuote:null,volume24hQuote,stablecoinMarketCapQuote,stablecoinSourceAsOf:stablecoinMarketCapQuote===null?null:at,observedAt:at},provenance:[stableProv,volumeProv,spreadProv]};
 }
