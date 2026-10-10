@@ -24,6 +24,27 @@ function responseData(value: unknown): UnknownRecord | null {
   return item?.symbol === "TEL_USDT" ? item : null;
 }
 
+function activeTelContract(value: UnknownRecord | null): boolean {
+  const contractSize = finite(value?.contractSize);
+  // Fail closed: only an explicitly active contract from the full detail list
+  // can authorize the separate funding endpoint.
+  return value !== null
+    && value.symbol === "TEL_USDT"
+    && value.state === 0
+    && value.quoteCoin === "USDT"
+    && value.settleCoin === "USDT"
+    && contractSize !== null
+    && contractSize > 0;
+}
+
+function contractEligibilityReason(value: UnknownRecord | null): string {
+  if (!value || value.symbol !== "TEL_USDT") return "MEXC_TEL_PERP_NOT_LISTED";
+  if (value.state !== 0) return "MEXC_TEL_PERP_NOT_ACTIVE (state=" + String(value.state ?? "missing") + ")";
+  if (value.quoteCoin !== "USDT" || value.settleCoin !== "USDT") return "MEXC_TEL_PERP_NOT_USDT_SETTLED";
+  if (finite(value.contractSize) === null || finite(value.contractSize)! <= 0) return "MEXC_TEL_CONTRACT_SIZE_INVALID";
+  return "MEXC_TEL_PERP_NOT_CONFIRMED";
+}
+
 function responseFailure(value: unknown, prefix: string): string {
   const envelope = record(value);
   if (!envelope) return prefix + "_INVALID_ENVELOPE";
@@ -77,7 +98,27 @@ export function normalizeMexcTelDerivatives(input: {
 
   let fundingRate: number | null = null;
   let fundingReason: string | null = null;
-  if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
+  // Funding is not treated as live unless the official contract-detail list
+  // independently confirms a TEL_USDT USDT-settled contract.
+  if (!contractData) {
+    const contractEnvelope = record(input.contract);
+    const contractCode = contractEnvelope?.code;
+    const contractDataRaw = contractEnvelope?.data;
+    const contractListConfirmsAbsence = contractEnvelope?.success === true
+      && Number(contractCode) === 0
+      && Array.isArray(contractDataRaw)
+      && !contractDataRaw.some((item) => record(item)?.symbol === "TEL_USDT");
+    const contractApiSaysMissing = contractEnvelope?.success === false && Number(contractCode) === 1001;
+    if (contractApiSaysMissing) {
+      fundingReason = "MEXC_TEL_PERP_NOT_LISTED: detail API code=1001 Contract not exists";
+    } else if (contractListConfirmsAbsence) {
+      fundingReason = "MEXC_TEL_PERP_NOT_LISTED: TEL_USDT absent from full detail list";
+    } else {
+      fundingReason = input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+    }
+  } else if (!activeTelContract(contractData)) {
+    fundingReason = contractEligibilityReason(contractData);
+  } else if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
   else {
     const rate = finite(fundingData.fundingRate);
     if (rate === null) fundingReason = "MEXC_TEL_FUNDING_RATE_INVALID";
@@ -90,6 +131,7 @@ export function normalizeMexcTelDerivatives(input: {
   if (!tickerData) openInterestReason = input.tickerError ?? responseFailure(input.ticker, "MEXC_TEL_TICKER");
   else if (!freshTimestamp(tickerData.timestamp, input.now, maxAgeMs)) openInterestReason = "MEXC_TEL_TICKER_STALE_OR_FUTURE";
   else if (!contractData) openInterestReason = input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+  else if (!activeTelContract(contractData)) openInterestReason = contractEligibilityReason(contractData);
   else {
     const holdVol = finite(tickerData.holdVol);
     const fairPrice = finite(tickerData.fairPrice);

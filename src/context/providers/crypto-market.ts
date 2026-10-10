@@ -11,13 +11,27 @@ const KUCOIN_FUNDING = "https://api-futures.kucoin.com/api/v1/funding-rate/XBTUS
 const KUCOIN_CONTRACT = "https://api-futures.kucoin.com/api/v1/contracts/XBTUSDTM";
 const MEXC_FUNDING = "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT";
 const MEXC_TICKER = "https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT";
-const MEXC_DETAIL = "https://contract.mexc.com/api/v1/contract/detail?symbol=TEL_USDT";
+// Official docs define /contract/detail without symbol as the complete contract list.
+// Keep the full list so a missing symbol is distinguishable from a contradictory single-symbol lookup.
+const MEXC_DETAIL = "https://contract.mexc.com/api/v1/contract/detail";
+const MEXC_DETAIL_CACHE_MS = 5_000;
+let mexcDetailCache: { expiresAt: number; promise: ReturnType<typeof fetchJson> } | null = null;
+
+function fetchMexcContractList(): ReturnType<typeof fetchJson> {
+  const now = Date.now();
+  if (mexcDetailCache && now < mexcDetailCache.expiresAt) return mexcDetailCache.promise;
+  // Cache successes and failures for the documented 1-request-per-5-second limit.
+  // A rejected promise is still surfaced by Promise.allSettled as UNAVAILABLE.
+  const promise = fetchJson(MEXC_DETAIL);
+  mexcDetailCache = { expiresAt: now + MEXC_DETAIL_CACHE_MS, promise };
+  return promise;
+}
 
 export async function fetchCryptoMarketContext(at: string): Promise<{ value: CryptoMarketContext; provenance: readonly ContextProvenance[] }> {
   const p: ContextProvenance[] = [];
   const [a,b,f,o,kf,kc,mf,mt,md] = await Promise.allSettled([
     fetchJson(G),fetchJson(B),fetchJson(F),fetchJson(O),fetchJson(KUCOIN_FUNDING),fetchJson(KUCOIN_CONTRACT),
-    fetchJson(MEXC_FUNDING),fetchJson(MEXC_TICKER),fetchJson(MEXC_DETAIL),
+    fetchJson(MEXC_FUNDING),fetchJson(MEXC_TICKER),fetchMexcContractList(),
   ]);
   const gd=a.status==="fulfilled"?object(a.value,G).data as any:null;
   const bd=b.status==="fulfilled"?object(b.value,B).data as any:null;

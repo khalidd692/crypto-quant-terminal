@@ -7,7 +7,7 @@ const normalized = normalizeMexcTelDerivatives({
   now,
   funding: { success: true, code: 0, data: { symbol: "TEL_USDT", fundingRate: 0.0002, timestamp: fresh } },
   ticker: { success: true, code: 0, data: { symbol: "TEL_USDT", holdVol: 125, fairPrice: 0.002, timestamp: fresh } },
-  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", contractSize: 1000 }] },
+  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", state: 0, quoteCoin: "USDT", settleCoin: "USDT", contractSize: 1000 }] },
 });
 assert.equal(normalized.fundingRate, 0.0002);
 assert.equal(normalized.openInterestQuote, 250);
@@ -18,7 +18,7 @@ const stale = normalizeMexcTelDerivatives({
   now,
   funding: { success: true, code: 0, data: { symbol: "TEL_USDT", fundingRate: 0.0002, timestamp: fresh - 16 * 60_000 } },
   ticker: { success: true, code: 0, data: { symbol: "TEL_USDT", holdVol: 125, fairPrice: 0.002, timestamp: fresh - 16 * 60_000 } },
-  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", contractSize: 1000 }] },
+  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", state: 0, quoteCoin: "USDT", settleCoin: "USDT", contractSize: 1000 }] },
 });
 assert.equal(stale.fundingRate, null);
 assert.equal(stale.openInterestQuote, null);
@@ -29,7 +29,7 @@ const wrongSymbol = normalizeMexcTelDerivatives({
   now,
   funding: { success: true, code: 0, data: { symbol: "BTC_USDT", fundingRate: 0, timestamp: fresh } },
   ticker: { success: true, code: 0, data: { symbol: "BTC_USDT", holdVol: 125, fairPrice: 0.002, timestamp: fresh } },
-  contract: { success: true, code: 0, data: [{ symbol: "BTC_USDT", contractSize: 1 }] },
+  contract: { success: true, code: 0, data: [{ symbol: "BTC_USDT", quoteCoin: "USDT", settleCoin: "USDT", contractSize: 1 }] },
 });
 assert.equal(wrongSymbol.fundingRate, null);
 assert.equal(wrongSymbol.openInterestQuote, null);
