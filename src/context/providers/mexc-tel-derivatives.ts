@@ -43,7 +43,10 @@ function responseFailure(value: unknown, prefix: string): string {
 }
 
 function finite(value: unknown): number | null {
-  const n = typeof value === "number" ? value : Number(value);
+  // Match numberOrNull semantics: missing/null/blank values are not numeric zero.
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) return null;
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
 
