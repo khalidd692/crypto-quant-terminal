@@ -6,7 +6,6 @@ const SERIES: Readonly<Record<string, string>> = {
   DTWEXBGS: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
   SP500: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500",
   DGS10: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-  GOLDPMGBD228NLBM: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDPMGBD228NLBM",
   M2SL: "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL"
 };
 
