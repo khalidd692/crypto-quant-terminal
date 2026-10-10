@@ -6,7 +6,7 @@ const timestamp = Date.parse(now);
 const envelope = (data: Record<string, unknown>) => ({ success: true, code: 0, data });
 const funding = envelope({ symbol: "TEL_USDT", fundingRate: 0, timestamp });
 const validTicker = { symbol: "TEL_USDT", timestamp, holdVol: "10", fairPrice: "0.02" };
-const validContract = { symbol: "TEL_USDT", contractSize: "1" };
+const validContract = { symbol: "TEL_USDT", state: 0, quoteCoin: "USDT", contractSize: "1" };
 
 const valid = normalizeMexcTelDerivatives({
   funding,
@@ -81,5 +81,39 @@ const emptyTicker = normalizeMexcTelDerivatives({
 });
 assert.equal(emptyTicker.openInterestQuote, null, "success envelope without data must remain unavailable");
 assert.equal(emptyTicker.openInterestReason, "MEXC_TEL_TICKER_DATA_MISSING");
+
+
+for (const state of [3, 4]) {
+  const inactive = normalizeMexcTelDerivatives({
+    funding: envelope({ symbol: "TEL_USDT", fundingRate: 0.000133, timestamp }),
+    ticker: envelope(validTicker),
+    contract: envelope({ ...validContract, state }),
+    now
+  });
+  assert.equal(inactive.fundingRate, null, `contract state ${state} must not expose live funding`);
+  assert.equal(inactive.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+  assert.equal(inactive.openInterestQuote, null, `contract state ${state} must not expose live open interest`);
+  assert.equal(inactive.openInterestReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+}
+
+const wrongQuoteCoin = normalizeMexcTelDerivatives({
+  funding,
+  ticker: envelope(validTicker),
+  contract: envelope({ ...validContract, quoteCoin: "BTC" }),
+  now
+});
+assert.equal(wrongQuoteCoin.fundingRate, null, "a non-USDT-quoted contract must not be treated as TEL_USDT");
+assert.equal(wrongQuoteCoin.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+assert.equal(wrongQuoteCoin.openInterestQuote, null);
+assert.equal(wrongQuoteCoin.openInterestReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+
+const missingContractState = normalizeMexcTelDerivatives({
+  funding,
+  ticker: envelope(validTicker),
+  contract: envelope({ symbol: "TEL_USDT", quoteCoin: "USDT", contractSize: "1" }),
+  now
+});
+assert.equal(missingContractState.fundingRate, null, "missing contract state must fail closed");
+assert.equal(missingContractState.openInterestQuote, null, "missing contract state must fail closed for open interest");
 
 console.log("MEXC TEL derivatives null/blank numeric tests passed.");
