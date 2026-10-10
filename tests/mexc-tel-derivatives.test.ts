@@ -3,7 +3,7 @@ import { normalizeMexcTelDerivatives } from "../src/context/providers/mexc-tel-d
 
 const now = "2026-10-10T20:30:00.000Z";
 const timestamp = Date.parse(now);
-const envelope = (data: Record<string, unknown>) => ({ success: true, code: 0, data });
+const envelope = (data: unknown) => ({ success: true, code: 0, data });
 const funding = envelope({ symbol: "TEL_USDT", fundingRate: 0, timestamp });
 const validTicker = { symbol: "TEL_USDT", timestamp, holdVol: "10", fairPrice: "0.02" };
 const validContract = { symbol: "TEL_USDT", quoteCoin: "USDT", settleCoin: "USDT", contractSize: "1" };
