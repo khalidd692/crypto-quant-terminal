@@ -23,6 +23,22 @@ try {
   assert.ok((result.value.toneScore ?? 0) > 0);
   assert.equal(result.provenance.find(item => item.field === "social.reddit")?.status, "UNAVAILABLE");
   assert.equal(result.provenance.find(item => item.field === "social.x")?.status, "OK");
+
+  // When Reddit is blocked and no X credential exists, neither source may be
+  // represented as valid and the provider must return an explicit unavailable value.
+  delete process.env.X_BEARER_TOKEN;
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("reddit.com")) return new Response("forbidden", { status: 403 });
+    if (url.includes("api.x.com")) throw new Error("X must not be requested without X_BEARER_TOKEN");
+    throw new Error("Unexpected URL: " + url);
+  };
+  const noCredentials = await fetchSocialSentiment("2026-10-10T20:01:00.000Z");
+  assert.equal(noCredentials.value.mentions, null);
+  assert.equal(noCredentials.value.toneScore, null);
+  assert.equal(noCredentials.value.temperature, "UNAVAILABLE");
+  assert.equal(noCredentials.provenance.find(item => item.field === "social.reddit")?.status, "UNAVAILABLE");
+  assert.equal(noCredentials.provenance.find(item => item.field === "social.x")?.status, "UNAVAILABLE");
 } finally {
   globalThis.fetch = originalFetch;
   if (originalToken === undefined) delete process.env.X_BEARER_TOKEN;
