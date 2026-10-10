@@ -1,7 +1,7 @@
 {
   "schemaVersion": "context-snapshot.v1",
   "instrumentId": "TEL-USDT",
-  "asOf": "2026-10-09T21:44:03.049Z",
+  "asOf": "2026-10-10T01:12:51.842Z",
   "market": {
     "totalMarketCapQuote": 2562406652192,
     "btcDominancePct": 0.647042038767221,
@@ -10,7 +10,7 @@
     "breadthPct": null,
     "fundingRatePct": 0.00006937,
     "openInterestQuote": 92352.574,
-    "sentimentScore": 59,
+    "sentimentScore": 64,
     "telFundingRate": 0.000133,
     "telOpenInterestQuote": null
   },
@@ -18,11 +18,11 @@
     "ratesBias": "NEUTRAL",
     "inflationBias": "INFLATIONARY",
     "dollarBias": "WEAKENING",
-    "policyRatePct": 0,
-    "tenYearYieldPct": 0,
+    "policyRatePct": 3.88,
+    "tenYearYieldPct": 5.22,
     "dollarIndex": 121.3848,
     "cpiYoYPct": 3.353016322755642,
-    "sourceAsOf": "2026-10-09T21:44:03.049Z"
+    "sourceAsOf": "2026-10-10T01:12:51.842Z"
   },
   "events": {
     "events": [
@@ -44,13 +44,13 @@
   },
   "liquidity": {
     "venue": "BINANCE",
-    "symbol": "BTCUSDT",
+    "symbol": "BTC-USDT",
     "spreadBps": 0.0012114731852299158,
     "depthQuote": null,
     "volume24hQuote": 969873479.1703213,
     "stablecoinMarketCapQuote": 291996915359.5304,
     "stablecoinSourceAsOf": "2026-10-09T21:44:03.049Z",
-    "observedAt": "2026-10-09T21:44:03.049Z"
+    "observedAt": "2026-10-10T01:12:51.842Z"
   },
   "fundamentals": {
     "protocolActivity": "UNKNOWN",
@@ -155083,10 +155083,10 @@
   "correlations": {
     "DTWEXBGS": [
       {
-        "coefficient": 0.0986591260065276,
+        "coefficient": null,
         "interval": [
-          -0.271257836480705,
-          0.44318173287638746
+          null,
+          null
         ],
         "signInversion": false,
         "rupture": false,
@@ -155118,13 +155118,13 @@
     ],
     "SP500": [
       {
-        "coefficient": 0.09189800516919494,
+        "coefficient": null,
         "interval": [
-          -0.2775671007387932,
-          0.43768222362791503
+          null,
+          null
         ],
-        "signInversion": true,
-        "rupture": true,
+        "signInversion": false,
+        "rupture": false,
         "windowDays": 30,
         "label": "corrélation descriptive, pas causale, instable"
       },
@@ -155153,12 +155153,12 @@
     ],
     "DGS10": [
       {
-        "coefficient": 0.197690620584159,
+        "coefficient": null,
         "interval": [
-          -0.1750523971868331,
-          0.5208680682061788
+          null,
+          null
         ],
-        "signInversion": true,
+        "signInversion": false,
         "rupture": false,
         "windowDays": 30,
         "label": "corrélation descriptive, pas causale, instable"
@@ -155319,213 +155319,380 @@
     "label": "indice de température, bruité et manipulable, pas une prévision",
     "sourceAsOf": null
   },
-  "runId": "khalyon:2026-10-09T21:44:03.049Z",
+  "runId": "khalyon:2026-10-10T01:12:51.842Z",
   "provenance": [
     {
       "field": "market.totalMarketCapQuote",
-      "source": "https://api.alternative.me/v2/global/?convert=USD",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:10bd59cb22e9b5d6e3d1da0439c1fab1c63b95f57b21f0d304b2378565c5bb5d",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.btcDominancePct",
-      "source": "https://api.alternative.me/v2/global/?convert=USD",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:10bd59cb22e9b5d6e3d1da0439c1fab1c63b95f57b21f0d304b2378565c5bb5d",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.btcReturnPct",
-      "source": "https://api.alternative.me/v2/ticker/bitcoin/?convert=USD",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:84b842472684d4ff8e085040653c1eb9712789d05ae00d1a4d0c366787da1d96",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.fundingRatePct",
-      "source": "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:67ce7a0640a20eeef5b5cbd940417c589ee2c7349430c0d7a361573577d52bbf",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.openInterestQuote",
-      "source": "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:1c4591e601753d47810c5ddeb97abece5c405517a5c21140c96796e145d249b1",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.telFundingRate",
-      "source": "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:f86975b8fd5cdab6af402d5a0b41d35847d0a8c7ab8141a30ee9d36e6f5f0eb2",
-      "status": "OK"
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
+      "status": "UNAVAILABLE",
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.telOpenInterestQuote",
-      "source": "https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT + https://contract.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:fbb9931f3212dfc3d8793a3e1a2738221bde6907cef3c078544d32d6bfa24065",
+      "source": "crypto-market provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:a4f49bf55f3cdc93bb08028caa6a6d2b488ec4c3e0be88086d2434da1faa37e1",
       "status": "UNAVAILABLE",
-      "reason": "MEXC_TEL_TICKER_SCHEMA_OR_SYMBOL_INVALID"
+      "reason": "Error: crypto-market_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "liquidity.stablecoinMarketCapQuote",
-      "source": "https://api.coingecko.com/api/v3/coins/categories",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:b2b10372972b938d0070cf9953ed53b70e1645e929cc75601345c7f3991342dc",
-      "status": "OK"
+      "source": "liquidity provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:4c3965acd6c7a9b36cd5aa0dacc2bb82e3f75f8258032d4ecd24c7461e34b6d6",
+      "status": "UNAVAILABLE",
+      "reason": "Error: liquidity_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "liquidity.volume24hQuote",
-      "source": "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:61a093fe325379b21072cff45d66a8a3234b2fb567e63fad7f62d1fb7452417c",
-      "status": "OK"
+      "source": "liquidity provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:4c3965acd6c7a9b36cd5aa0dacc2bb82e3f75f8258032d4ecd24c7461e34b6d6",
+      "status": "UNAVAILABLE",
+      "reason": "Error: liquidity_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "liquidity.spreadBps",
-      "source": "https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:61a093fe325379b21072cff45d66a8a3234b2fb567e63fad7f62d1fb7452417c",
-      "status": "OK"
+      "source": "liquidity provider group",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:4c3965acd6c7a9b36cd5aa0dacc2bb82e3f75f8258032d4ecd24c7461e34b6d6",
+      "status": "UNAVAILABLE",
+      "reason": "Error: liquidity_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "market.sentimentScore",
       "source": "https://api.alternative.me/fng/?limit=1",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:562250f01372c77c1a26d36ff72222a48585bd19846d87315ede6bcc46e344e8",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:83e5ef4394332e762ab19e3825dc37e5855c22292b332ba269fc880350039865",
       "status": "OK"
     },
     {
       "field": "macro.DFF",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:c0ac139150f674149c2dc9964f683eb3bedf2077eff936815bf4dade09fbb79b",
-      "status": "UNAVAILABLE",
-      "reason": "TimeoutError: The operation was aborted due to timeout"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:04dc03b05aaba83a5602acf39dd2eb594d1b5b0de6642c4bff7a47e228521f48",
+      "status": "OK"
     },
     {
       "field": "macro.DGS10",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:c0ac139150f674149c2dc9964f683eb3bedf2077eff936815bf4dade09fbb79b",
-      "status": "UNAVAILABLE",
-      "reason": "TimeoutError: The operation was aborted due to timeout"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:f33f07241b20fc51786cd498d00e8f4ee38e2de47dda5610a95d5c1a1a3247ed",
+      "status": "OK"
     },
     {
       "field": "macro.DTWEXBGS",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
-      "availableAt": "2026-10-09T21:44:03.049Z",
+      "availableAt": "2026-10-10T01:12:51.842Z",
       "sourceSnapshotHash": "sha256:27a8b9cc66501bd494695875fc2badc669bad2397e8bce88b4f50df58b237431",
       "status": "OK"
     },
     {
       "field": "macro.CPIAUCSL",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL",
-      "availableAt": "2026-10-09T21:44:03.049Z",
+      "availableAt": "2026-10-10T01:12:51.842Z",
       "sourceSnapshotHash": "sha256:5877c1dbb8e414914932895f5d959a65cfc011549e8661205d2cf1f40d127b0e",
       "status": "OK"
     },
     {
       "field": "events.fomc",
-      "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:cb2d550be229c62c287a3ed34767f08f09aa91871a8b3472a5b55cc241b1a709",
-      "status": "OK"
+      "source": "Federal Reserve calendar",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:3cd8ae85372c45a3c3a8d0da63b9105eedffd971f9e4061273947a51e475363f",
+      "status": "UNAVAILABLE",
+      "reason": "Error: events_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "macroSeries.DTWEXBGS",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DTWEXBGS",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:27a8b9cc66501bd494695875fc2badc669bad2397e8bce88b4f50df58b237431",
-      "status": "OK"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:ffdb6d3c0f18933edfe4da6e3907aa70507c5d57848ec28aaad632568385b271",
+      "status": "UNAVAILABLE",
+      "reason": "Error: extended-macro_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "macroSeries.SP500",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:0d00897ecacc0997e8fb54a92c71dcf440347d58f577290a08c211938e2e8369",
-      "status": "OK"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:ffdb6d3c0f18933edfe4da6e3907aa70507c5d57848ec28aaad632568385b271",
+      "status": "UNAVAILABLE",
+      "reason": "Error: extended-macro_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "macroSeries.DGS10",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:f33f07241b20fc51786cd498d00e8f4ee38e2de47dda5610a95d5c1a1a3247ed",
-      "status": "OK"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:ffdb6d3c0f18933edfe4da6e3907aa70507c5d57848ec28aaad632568385b271",
+      "status": "UNAVAILABLE",
+      "reason": "Error: extended-macro_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "macroSeries.GOLDAMGBD228NLBM",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=GOLDAMGBD228NLBM",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:f81acf259ff5bc0d78120ba410c807eacc477376b54c3ddfac1cd6fc5637d90f",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:ffdb6d3c0f18933edfe4da6e3907aa70507c5d57848ec28aaad632568385b271",
       "status": "UNAVAILABLE",
-      "reason": "Error: HTTP 404"
+      "reason": "Error: extended-macro_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "macroSeries.M2SL",
       "source": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M2SL",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:ec799aa848a7548bef159e304b9c42d90872e2201ef628b9c671b61a2ff3fdfb",
-      "status": "OK"
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:ffdb6d3c0f18933edfe4da6e3907aa70507c5d57848ec28aaad632568385b271",
+      "status": "UNAVAILABLE",
+      "reason": "Error: extended-macro_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "fundamentalsTel.coingecko",
-      "source": "https://api.coingecko.com/api/v3/coins/telcoin?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:bda896ce7d7851c5cb461763625f9f20c17d3eb8c155e744b4d590fdefa2e64c",
-      "status": "OK"
+      "source": "CoinGecko TEL fundamentals",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:74dcf5e016d6f16e5b9d6efb47602bcadfa60800a560585330f3b6d458bd22fd",
+      "status": "UNAVAILABLE",
+      "reason": "Error: TEL-fundamentals_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "fundamentalsTel.newsroom",
-      "source": "https://www.telco.in/en/newsroom",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:62117844022a48cb627a1277e52a1ca16834239fae92656a144e9b31900e1b2b",
-      "status": "OK"
-    },
-    {
-      "field": "fundamentalsTel.unlockCalendar",
-      "source": "https://www.telco.in/en/newsroom",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:353647af2653c3b62777ba5bc39d5d22bb61c97adb16f82fc1bf5d013ef28f70",
+      "source": "Telcoin newsroom",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:74dcf5e016d6f16e5b9d6efb47602bcadfa60800a560585330f3b6d458bd22fd",
       "status": "UNAVAILABLE",
-      "reason": "No independently verifiable public TEL vesting/unlock schedule was confirmed; keep UNAVAILABLE"
+      "reason": "Error: TEL-fundamentals_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "telDaily.close",
-      "source": "https://api.kucoin.com/api/v1/market/candles?type=1day&symbol=TEL-USDT",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:9e59da7ec54af311bf8819d76e7d55c7d8332cea1f6d3be040f02ab6f00af0ce",
-      "status": "OK"
+      "source": "KuCoin TEL daily candles",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:f38f9c0fe157098077c0d43624cf58df3472465ab359dcdc43a33aac3623e701",
+      "status": "UNAVAILABLE",
+      "reason": "Error: TEL-daily-price_TIMEOUT_AFTER_22000MS"
     },
     {
       "field": "social.reddit",
-      "source": "https://www.reddit.com/r/Telcoin/search.json?q=TEL&restrict_sr=1&sort=new&limit=100",
-      "availableAt": "2026-10-09T21:44:03.049Z",
-      "sourceSnapshotHash": "sha256:179a0c900a7ea21a3b81c068754cef551d5bc43ac981f65f9d56fe36649ae1dc",
+      "source": "Reddit r/Telcoin",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:912e94d5e98be3a76b52f2d5e43a4f5305e2635f0c437217ac11e59c8f84ea64",
       "status": "UNAVAILABLE",
-      "reason": "Error: HTTP 403"
+      "reason": "Error: social-sentiment_TIMEOUT_AFTER_22000MS"
     },
     {
-      "field": "context.macro.ratesBias",
+      "field": "social.x",
+      "source": "X recent search",
+      "availableAt": "2026-10-10T01:12:51.842Z",
+      "sourceSnapshotHash": "sha256:912e94d5e98be3a76b52f2d5e43a4f5305e2635f0c437217ac11e59c8f84ea64",
+      "status": "UNAVAILABLE",
+      "reason": "Error: social-sentiment_TIMEOUT_AFTER_22000MS"
+    },
+    {
+      "field": "context.market.totalMarketCapQuote",
       "source": "last-valid-snapshot",
-      "availableAt": "2026-10-09T21:24:44.341Z",
-      "sourceSnapshotHash": "sha256:410bfb4f7ed22033983b6695abc36d24c6de0ca46ee8abb10f3c7db7426a8bba",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
       "status": "UNAVAILABLE",
       "reason": "STALE: live field unavailable; retained last hash-verified value"
     },
     {
-      "field": "context.macroRegime.regime",
+      "field": "context.market.btcDominancePct",
       "source": "last-valid-snapshot",
-      "availableAt": "2026-10-09T21:24:44.341Z",
-      "sourceSnapshotHash": "sha256:410bfb4f7ed22033983b6695abc36d24c6de0ca46ee8abb10f3c7db7426a8bba",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.market.btcReturnPct",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.market.fundingRatePct",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.market.openInterestQuote",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.market.telFundingRate",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.events.events",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.liquidity.venue",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.liquidity.spreadBps",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.liquidity.volume24hQuote",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.liquidity.stablecoinMarketCapQuote",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.liquidity.stablecoinSourceAsOf",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.macroSeries.DTWEXBGS",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.macroSeries.SP500",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.macroSeries.DGS10",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.macroSeries.M2SL",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.macroSeries.TELUSDT",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.fundamentalsTel.totalSupply",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.fundamentalsTel.newsCount",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.fundamentalsTel.latestNews",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
+      "status": "UNAVAILABLE",
+      "reason": "STALE: live field unavailable; retained last hash-verified value"
+    },
+    {
+      "field": "context.fundamentalsTel.sourceAsOf",
+      "source": "last-valid-snapshot",
+      "availableAt": "2026-10-09T21:44:03.049Z",
+      "sourceSnapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb",
       "status": "UNAVAILABLE",
       "reason": "STALE: live field unavailable; retained last hash-verified value"
     }
   ],
-  "snapshotId": "run:khalyon:2026-10-09T21:44:03.049Z:TEL-USDT:2026-10-09T21:44:03.049Z",
-  "snapshotHash": "sha256:0aac4eb1a2f250462fdae19b0b1db2690a3742be4100e3ad6d84b84bd994aedb"
+  "snapshotId": "run:khalyon:2026-10-10T01:12:51.842Z:TEL-USDT:2026-10-10T01:12:51.842Z",
+  "snapshotHash": "sha256:a5b410d1dfbfae650a92f0abcc53af6a002df103db0ff7d82765aa5c7d7aeacb"
 }
