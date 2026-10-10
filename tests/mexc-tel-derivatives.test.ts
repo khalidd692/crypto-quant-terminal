@@ -6,7 +6,7 @@ const timestamp = Date.parse(now);
 const envelope = (data: unknown) => ({ success: true, code: 0, data });
 const funding = envelope({ symbol: "TEL_USDT", fundingRate: 0, timestamp });
 const validTicker = { symbol: "TEL_USDT", timestamp, holdVol: "10", fairPrice: "0.02" };
-const validContract = { symbol: "TEL_USDT", quoteCoin: "USDT", settleCoin: "USDT", contractSize: "1" };
+const validContract = { symbol: "TEL_USDT", state: 0, quoteCoin: "USDT", settleCoin: "USDT", contractSize: "1" };
 
 const valid = normalizeMexcTelDerivatives({
   funding,
@@ -64,7 +64,7 @@ assert.equal(missingFunding.fundingReason, "MEXC_TEL_FUNDING_RATE_INVALID");
 const contractNotListed = normalizeMexcTelDerivatives({
   funding: envelope({ symbol: "TEL_USDT", fundingRate: 0.000133, timestamp }),
   ticker: { success: true, code: 0 },
-  contract: { success: true, code: 0, data: [{ symbol: "BTC_USDT" }, { symbol: "ETH_USDT" }] },
+  contract: { success: false, code: 1001, message: "Contract not exists" },
   now
 });
 assert.equal(contractNotListed.fundingRate, null, "funding must not appear live when TEL is absent from official contract list");
@@ -109,4 +109,35 @@ const missingContractSize = normalizeMexcTelDerivatives({
 assert.equal(missingContractSize.fundingRate, null, "missing contract size must fail closed");
 assert.equal(missingContractSize.openInterestQuote, null, "missing contract size must fail closed for open interest");
 
-console.log("MEXC TEL derivatives null/blank numeric tests passed.");
+
+const inactiveState3 = normalizeMexcTelDerivatives({
+  funding, ticker: envelope(validTicker),
+  contract: envelope([{ ...validContract, state: 3 }]), now
+});
+assert.equal(inactiveState3.fundingRate, null, "state 3 must fail closed");
+assert.equal(inactiveState3.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+
+const inactiveState4 = normalizeMexcTelDerivatives({
+  funding, ticker: envelope(validTicker),
+  contract: envelope([{ ...validContract, state: 4 }]), now
+});
+assert.equal(inactiveState4.fundingRate, null, "state 4 must fail closed");
+assert.equal(inactiveState4.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+
+const wrongContractSymbol = normalizeMexcTelDerivatives({
+  funding, ticker: envelope(validTicker),
+  contract: envelope([{ ...validContract, symbol: "TEL_USDC" }]), now
+});
+assert.equal(wrongContractSymbol.fundingRate, null, "wrong contract symbol must fail closed");
+assert.match(wrongContractSymbol.fundingReason ?? "", /MEXC_TEL_PERP_NOT_LISTED/);
+
+const fundingDespiteInvalidContract = normalizeMexcTelDerivatives({
+  funding: envelope({ symbol: "TEL_USDT", fundingRate: 0.000133, timestamp, fairPrice: "0.02", idxPrice: "0.02" }),
+  ticker: { success: true, code: 0 },
+  contract: { success: false, code: 1001, message: "Contract not exists" },
+  now
+});
+assert.equal(fundingDespiteInvalidContract.fundingRate, null);
+assert.equal(fundingDespiteInvalidContract.openInterestQuote, null);
+assert.match(fundingDespiteInvalidContract.fundingReason ?? "", /NOT_LISTED/);
+\nconsole.log("MEXC TEL derivatives regression tests passed.");
