@@ -25,15 +25,23 @@ function responseData(value: unknown): UnknownRecord | null {
 }
 
 function activeTelContract(value: UnknownRecord | null): boolean {
+  // MEXC's documented public /contract/detail schema provides quoteCoin,
+  // settleCoin and contractSize, but does not document a contract state field.
+  // Confirm listing via the complete detail list and validate the documented
+  // USDT quote/settlement fields instead of requiring an undocumented field.
+  const contractSize = finite(value?.contractSize);
   return value !== null
     && value.symbol === "TEL_USDT"
-    && finite(value.state) === 0
-    && value.quoteCoin === "USDT";
+    && value.quoteCoin === "USDT"
+    && value.settleCoin === "USDT"
+    && contractSize !== null
+    && contractSize > 0;
 }
 
 function contractEligibilityReason(value: UnknownRecord | null): string {
   if (!value || value.symbol !== "TEL_USDT") return "MEXC_TEL_PERP_NOT_LISTED";
-  if (finite(value.state) !== 0 || value.quoteCoin !== "USDT") return "MEXC_TEL_PERP_NOT_ACTIVE";
+  if (value.quoteCoin !== "USDT" || value.settleCoin !== "USDT") return "MEXC_TEL_PERP_NOT_USDT_SETTLED";
+  if (finite(value.contractSize) === null || finite(value.contractSize)! <= 0) return "MEXC_TEL_CONTRACT_SIZE_INVALID";
   return "MEXC_TEL_PERP_NOT_CONFIRMED";
 }
 
@@ -90,13 +98,12 @@ export function normalizeMexcTelDerivatives(input: {
 
   let fundingRate: number | null = null;
   let fundingReason: string | null = null;
-  // Funding is not treated as live for a perpetual unless the contract-detail
-  // endpoint independently confirms that TEL_USDT exists. This prevents a
-  // contradictory funding endpoint response from making an unlisted contract look live.
-  const contractEnvelope = record(input.contract);
-  const contractCode = contractEnvelope?.code;
-  const contractNotListed = contractEnvelope?.success === false && Number(contractCode) === 1001;
+  // Funding is not treated as live unless the official contract-detail list
+  // independently confirms a TEL_USDT USDT-settled contract.
   if (!contractData) {
+    const contractEnvelope = record(input.contract);
+    const contractCode = contractEnvelope?.code;
+    const contractNotListed = contractEnvelope?.success === false && Number(contractCode) === 1001;
     fundingReason = contractNotListed
       ? "MEXC_TEL_PERP_NOT_LISTED"
       : input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
