@@ -3,11 +3,11 @@
 - **Document date:** 2026-10-09
 - **Candidate main SHA at configuration freeze:** `93d0abac2db3d8c5a4ea6421c55aac6c40301f09`
 - **Operational configuration/source freeze timestamp (UTC):** `2026-10-09T15:24:08.623Z`
-- **Acceptance timestamp:** `2026-10-09T15:24:08.623Z` — owner authorization to freeze the existing operational configuration and source allowlist only; this is not an approval of the still-proposed ADR-0003 or authorization to score outcomes.
+- **Study protocol acceptance timestamp:** NOT RECORDED — the timestamp above records only the operational configuration/source freeze; it is not approval of ADR-0003 or authorization to score outcomes.
 - **Frozen run configuration:** [`lab-config/tel-prospective-config.json`](../lab-config/tel-prospective-config.json)
 - **Frozen run configuration SHA-256:** `40ba6a7c659f53bb0e1ebd3440f5d32f657afc7231886562d8136ba37dce8640`
 - **Source/data manifest:** [`datasets/manifests/tel-prospective-sources.json`](../datasets/manifests/tel-prospective-sources.json)
-- **Source/data manifest SHA-256:** `ae9b70d7bd797b298d9cc7f21609164b775dc84f094dd1466f13bca528e34610`
+- **Source/data manifest SHA-256:** `79a2257dd32422fead91d17cc2b279617f6ae4d891417da7a524abc10cf233fe`
 - **Study protocol acceptance:** NOT RECORDED — `docs/adr/0003-tel-entry-quality-study-proposal.md` remains a proposal with outstanding approval/review requirements.
 - **Prospective outcome clock:** **NOT STARTED** — operational artifacts are frozen as a candidate; do not count outcomes until the protocol acceptance gate below is satisfied and the start timestamp is explicitly recorded.
 - **Existing journal entries:** excluded from the success/failure sample; they are operational telemetry collected before this protocol was accepted.
