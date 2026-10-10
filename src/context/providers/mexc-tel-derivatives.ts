@@ -39,7 +39,7 @@ function activeTelContract(value: UnknownRecord | null): boolean {
 
 function contractEligibilityReason(value: UnknownRecord | null): string {
   if (!value || value.symbol !== "TEL_USDT") return "MEXC_TEL_PERP_NOT_LISTED";
-  if (value.state !== 0) return "MEXC_TEL_PERP_NOT_ACTIVE";
+  if (value.state !== 0) return "MEXC_TEL_PERP_NOT_ACTIVE (state=" + String(value.state ?? "missing") + ")";
   if (value.quoteCoin !== "USDT" || value.settleCoin !== "USDT") return "MEXC_TEL_PERP_NOT_USDT_SETTLED";
   if (finite(value.contractSize) === null || finite(value.contractSize)! <= 0) return "MEXC_TEL_CONTRACT_SIZE_INVALID";
   return "MEXC_TEL_PERP_NOT_CONFIRMED";
@@ -108,11 +108,14 @@ export function normalizeMexcTelDerivatives(input: {
       && Number(contractCode) === 0
       && Array.isArray(contractDataRaw)
       && !contractDataRaw.some((item) => record(item)?.symbol === "TEL_USDT");
-    const contractNotListed = (contractEnvelope?.success === false && Number(contractCode) === 1001)
-      || contractListConfirmsAbsence;
-    fundingReason = contractNotListed
-      ? "MEXC_TEL_PERP_NOT_LISTED"
-      : input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+    const contractApiSaysMissing = contractEnvelope?.success === false && Number(contractCode) === 1001;
+    if (contractApiSaysMissing) {
+      fundingReason = "MEXC_TEL_PERP_NOT_LISTED: detail API code=1001 Contract not exists";
+    } else if (contractListConfirmsAbsence) {
+      fundingReason = "MEXC_TEL_PERP_NOT_LISTED: TEL_USDT absent from full detail list";
+    } else {
+      fundingReason = input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+    }
   } else if (!activeTelContract(contractData)) {
     fundingReason = contractEligibilityReason(contractData);
   } else if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
