@@ -115,14 +115,14 @@ const inactiveState3 = normalizeMexcTelDerivatives({
   contract: envelope([{ ...validContract, state: 3 }]), now
 });
 assert.equal(inactiveState3.fundingRate, null, "state 3 must fail closed");
-assert.equal(inactiveState3.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+assert.equal(inactiveState3.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE (state=3)");
 
 const inactiveState4 = normalizeMexcTelDerivatives({
   funding, ticker: envelope(validTicker),
   contract: envelope([{ ...validContract, state: 4 }]), now
 });
 assert.equal(inactiveState4.fundingRate, null, "state 4 must fail closed");
-assert.equal(inactiveState4.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE");
+assert.equal(inactiveState4.fundingReason, "MEXC_TEL_PERP_NOT_ACTIVE (state=4)");
 
 const wrongContractSymbol = normalizeMexcTelDerivatives({
   funding, ticker: envelope(validTicker),
