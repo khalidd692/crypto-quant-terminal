@@ -14,6 +14,23 @@ assert.equal(normalized.openInterestQuote, 250);
 assert.equal(normalized.fundingReason, null);
 assert.equal(normalized.openInterestReason, null);
 
+// MEXC's documented ticker endpoint may return the full contract list when no symbol is supplied.
+// Normalize only the exact TEL_USDT entry; never accept another contract as a fallback.
+const tickerList = normalizeMexcTelDerivatives({
+  now,
+  funding: { success: true, code: 0, data: { symbol: "TEL_USDT", fundingRate: 0.0002, timestamp: fresh } },
+  ticker: { success: true, code: 0, data: [
+    { symbol: "BTC_USDT", holdVol: 999999, fairPrice: 100000, timestamp: fresh },
+    { symbol: "TEL_USDT", holdVol: 125, fairPrice: 0.002, timestamp: fresh },
+  ] },
+  contract: { success: true, code: 0, data: [
+    { symbol: "BTC_USDT", contractSize: 1 },
+    { symbol: "TEL_USDT", contractSize: 1000 },
+  ] },
+});
+assert.equal(tickerList.openInterestQuote, 250);
+assert.equal(tickerList.openInterestReason, null);
+
 const stale = normalizeMexcTelDerivatives({
   now,
   funding: { success: true, code: 0, data: { symbol: "TEL_USDT", fundingRate: 0.0002, timestamp: fresh - 16 * 60_000 } },
