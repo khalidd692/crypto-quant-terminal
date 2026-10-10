@@ -325,3 +325,19 @@ This addendum supersedes the earlier status note above where it says PR #127 is 
 - Current verified main HEAD at the time of this addendum: `4157e3075ecbeffdafc6b506a8f1822c18edb5ea`. The latest verified live surveillance record remains `ATTENDRE`: MEXC spot spread too wide; MEXC TEL perpetual open interest unavailable; Reddit 403 and X token absent; TEL unlock calendar unverified; manual Anti-FOMO inputs incomplete.
 
 **Protected invariants remain unchanged:** Phase 3 verdict `PAS D'EDGE`; frozen dataset SHA-256 `6684d0e7bfb27080430164729e6aa8ac556ac09a728f373eeb32ef3b4781abce`; holdout untouched; ADR-0002 and historical results immutable; no new research/backtest or outcome scoring; read-only, no exchange orders. The prospective outcome clock remains NOT STARTED until explicit protocol acceptance and independent review.
+
+
+## Audit follow-up — 2026-10-10 (after Gemini/DeepSeek reviews)
+
+Verified main lineage at start of this follow-up: `997878627b6f90ee1e44b07c662e4cd9c26a31ec` (subsequent scheduled surveillance commits may advance main without changing application logic).
+
+- PR #149 merged: public Pages build manifest is generated at `khalyon/build-manifest.json`, containing the exact checked-out source SHA, workflow run URL/attempt, build time, dataset version, holdout state, ADR, and historical verdict. The UI integrity test checks the manifest against `git rev-parse HEAD`. PR #149 CI and KHALYON UI CI passed after correcting the manifest generation order.
+- PR #151 merged: `sourceCommit` is taken from the actual checkout, not assumed from the triggering event SHA. This is important because the Pages workflow can be triggered by `workflow_run` or `workflow_dispatch`, and it persists a context-snapshot commit after the build.
+- PR #150 merged: fixed MEXC numeric parsing. Missing, null, undefined, and blank values no longer coerce to numeric zero. Regression tests cover `holdVol`, `fairPrice`, `contractSize`, and `fundingRate`; an explicit valid numeric zero remains valid. PR #150 CI and KHALYON UI CI passed.
+- Source audit: `src/context/providers/social.ts` implements Reddit → X fallback when `X_BEARER_TOKEN` exists; without credentials, the provider returns explicit `UNAVAILABLE`. The regression test covers both branches.
+- Source audit: `src/automation/runner.ts` fetches public market/ticker/order-book data and records `ordersSent: false`; searches for common order-submission names/endpoints returned no matches. This is evidence from the audited code paths, not a formal proof over every possible dependency.
+- MEXC live status remains unresolved: the last verified live snapshot showed TEL ticker/open interest unavailable. The parser now fails closed on null/blank fields, but this does not establish that MEXC's live endpoint is currently returning valid data.
+- Public deployment limitation: the build now has a public manifest mechanism, but this audit interface could not independently retrieve the GitHub Pages manifest/DOM. Do not claim public CDN parity until `khalyon/build-manifest.json` is fetched from the live site and its `sourceCommit` is compared with the workflow/build evidence.
+- PR #127 remains closed and unmerged; its candidate protocol is not accepted. No study, backtest, entry study, threshold change, or order execution was authorized or performed.
+
+Invariants unchanged: frozen dataset SHA-256 `6684d0e7bfb27080430164729e6aa8ac556ac09a728f373eeb32ef3b4781abce`; holdout untouched; ADR-0002 immutable; historical verdict `PAS D'EDGE`; decision-only/read-only; missing, stale, or incoherent mandatory data must fail closed to `ATTENDRE`.
