@@ -198,9 +198,9 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   else if(!btc.passed){decision="ATTENDRE";reason=btc.reason;}
   else if(quality.decision==="EXTENDED"){decision="ATTENDRE";reason=quality.reasons[0]??"Prix étiré";}
   else if(!risk.allowed){decision="NE_PAS_ENTRER";reason=risk.reason??"Dimensionnement SWING interdit";}
-  else if(finalAngles.some(a=>a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
+  else if(finalAngles.some(a=>a.angle!=="Provenance globale"&&a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
   // Every mandatory angle is a veto. No angle can promote a blocked or unavailable result to ENTRER.
-  const finalDecision:SwingDecision=finalAngles.every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
+  const finalDecision:SwingDecision=finalAngles.filter(a=>a.angle!=="Provenance globale").every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;
