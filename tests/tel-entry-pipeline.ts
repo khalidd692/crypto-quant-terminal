@@ -67,6 +67,11 @@ assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
 assert.notEqual(missingMexcBook.decision,"ENTRER");
 assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
+const wideSpread=runTelEntryPipeline(input({telLiquidity:{spreadBps:24.5,depthQuote:10000,estimatedSlippageBps:12,observedAt:now,sourceHash:hash}}));
+const wideKucoinAngle=wideSpread.angles.find(a=>a.angle==="Liquidité KuCoin");
+assert.equal(wideKucoinAngle?.status,"BLOC");
+assert.ok(wideKucoinAngle?.detail.includes("spread=24.50 bps (max 20)"));
+assert.ok(wideKucoinAngle?.detail.includes("slippage=12.00 bps (max 50)"));
 const manualPlan={plannedOrderType:"LIMIT" as const,orderGridActive:false,lastGridLevelPrice:.99,livePriceQuote:1};
 const healthyWithManualPlan=runTelEntryPipeline(input(manualPlan));
 assert.equal(healthyWithManualPlan.decision,"ENTRER",
