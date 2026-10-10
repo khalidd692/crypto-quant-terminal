@@ -83,8 +83,13 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const eventOk=!!eventProv&&eventProv.status==="OK"&&isFresh(eventProv.availableAt,input.now,24*3600_000);
     macroStatus=!macroOk||!eventOk?"UNAVAILABLE":highEvent?"BLOC":"OK";
     angles.push(angle("Macro + calendrier",macroStatus,highEvent?("Événement majeur proche : "+highEvent.label):macroStatus==="OK"?"Macro renseignée, aucun événement HIGH dans les 48 h":"Macro ou calendrier indisponible/périmé","FRED + calendrier FOMC",context.asOf,context.snapshotHash));
-    const sentimentProv=context.provenance.filter(p=>p.field.startsWith("market.sentiment")||p.field.startsWith("social."));
-    const sentimentOk=context.market.sentimentScore!==null&&context.socialSentiment?.temperature!==undefined&&context.socialSentiment.temperature!=="UNAVAILABLE"&&sentimentProv.length>0&&sentimentProv.every(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
+    const marketSentimentProv=context.provenance.find(p=>p.field==="market.sentimentScore");
+    const socialProv=context.provenance.filter(p=>p.field.startsWith("social."));
+    // Alternative.me must be fresh and at least one real social feed must be
+    // fresh. A single blocked platform must not discard a healthy fallback.
+    const marketSentimentOk=!!marketSentimentProv&&marketSentimentProv.status==="OK"&&isFresh(marketSentimentProv.availableAt,input.now,24*3600_000);
+    const socialFeedOk=socialProv.some(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
+    const sentimentOk=context.market.sentimentScore!==null&&marketSentimentOk&&context.socialSentiment?.temperature!==undefined&&context.socialSentiment.temperature!=="UNAVAILABLE"&&socialFeedOk;
     const sentimentBlocked=context.socialSentiment?.temperature==="HOT"||((context.socialSentiment?.concentrationTop5Pct??0)>.8);
     sentimentStatus=!sentimentOk?"UNAVAILABLE":sentimentBlocked?"BLOC":"OK";
     angles.push(angle("Sentiment",sentimentStatus, sentimentBlocked?"Attention sociale chaude/concentrée":sentimentOk?"Sentiment renseigné":"Sentiment indisponible/périmé","Alternative.me + Reddit/X",context.asOf,context.snapshotHash));
@@ -182,7 +187,10 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   if(antiFomoReasons.length) antiFomoDetail=[...new Set(antiFomoReasons)].join(" — ");
   angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Saisie manuelle hors dépôt",input.now,null));
   const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
-  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
+  // Provenance globale is a diagnostic aggregate. Mandatory angles below
+  // enforce their own fresh data requirements; optional/secondary sources
+  // must not independently veto the decision.
+  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée"&&a.angle!=="Provenance globale");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
   let decision:SwingDecision="ATTENDRE",reason="Tous les contrôles obligatoires sont satisfaits; décision descriptive uniquement.";
   if(input.venueStatus!=="OK"||!candlesFresh||!context||!liquidity||!input.mexcLiquidity||input.volumeCoherenceRatio==null||failing){decision="ATTENDRE";reason=failing?failing.angle+": "+failing.detail:input.venueStatus!=="OK"?"Données de marché indisponibles, périmées ou incohérentes":!candlesFresh?"Historique de bougies indisponible/périmé":!context?"Contexte obligatoire indisponible":!liquidity||!input.mexcLiquidity?"Liquidité KuCoin/MEXC indisponible":"Cohérence de volumes indisponible";}
