@@ -61,4 +61,25 @@ const missingFunding = normalizeMexcTelDerivatives({
 assert.equal(missingFunding.fundingRate, null, "missing funding must not become a zero funding rate");
 assert.equal(missingFunding.fundingReason, "MEXC_TEL_FUNDING_RATE_INVALID");
 
+
+const contractNotListed = normalizeMexcTelDerivatives({
+  funding: envelope({ symbol: "TEL_USDT", fundingRate: 0.000133, timestamp }),
+  ticker: { success: true, code: 0 },
+  contract: { success: false, code: 1001, message: "Contract not exists" },
+  now
+});
+assert.equal(contractNotListed.fundingRate, null, "funding must not appear live when contract detail says TEL_USDT does not exist");
+assert.equal(contractNotListed.fundingReason, "MEXC_TEL_PERP_NOT_LISTED");
+assert.equal(contractNotListed.openInterestQuote, null, "empty ticker data must not become open interest");
+assert.equal(contractNotListed.openInterestReason, "MEXC_TEL_TICKER_DATA_MISSING");
+
+const emptyTicker = normalizeMexcTelDerivatives({
+  funding,
+  ticker: { success: true, code: 0 },
+  contract: envelope(validContract),
+  now
+});
+assert.equal(emptyTicker.openInterestQuote, null, "success envelope without data must remain unavailable");
+assert.equal(emptyTicker.openInterestReason, "MEXC_TEL_TICKER_DATA_MISSING");
+
 console.log("MEXC TEL derivatives null/blank numeric tests passed.");
