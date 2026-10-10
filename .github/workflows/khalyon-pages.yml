@@ -1,14 +1,13 @@
 name: Deploy KHALYON
 on:
-  # Offset from the surveillance schedule to avoid simultaneous duplicate deployments.
+  # Scheduled deployment is the single automatic publication trigger.
+  # Keeping it independent from surveillance workflow_run events avoids duplicate
+  # deploys and prevents data-journal commits racing the build.
   schedule:
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Prospective surveillance"]
-    types: [completed]
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 concurrency:
@@ -16,21 +15,20 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 15
     environment:
       name: khalyon-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout KHALYON
+      - name: Checkout KHALYON at event SHA
         uses: actions/checkout@v5
         with:
-          ref: main
-      - name: Checkout latest surveillance journal from main
+          ref: ${{ github.sha }}
+      - name: Checkout matching surveillance journal at same SHA
         uses: actions/checkout@v5
         with:
-          ref: main
+          ref: ${{ github.sha }}
           path: main-data
           sparse-checkout: |
             /research/prospective/journal.jsonl
@@ -90,24 +88,6 @@ jobs:
         run: python3 -m http.server 4173 --directory khalyon > /tmp/khalyon-http.log 2>&1 &
       - name: Playwright render and screenshots
         run: npx playwright test tests/khalyon-playwright.spec.mjs --workers=1
-      - name: Persist hash-verified context snapshot to main
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "::error::main advanced during this build; refuse to publish a runtime built from stale main."
-            exit 1
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add khalyon/data/context-snapshot.json
-          if git diff --cached --quiet; then
-            echo "Context snapshot unchanged; no commit required."
-          else
-            git commit -m "chore(context): persist verified KHALYON snapshot"
-            git push origin HEAD:main
-          fi
       - name: Upload Playwright screenshots
         uses: actions/upload-artifact@v4
         with:
