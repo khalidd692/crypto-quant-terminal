@@ -71,7 +71,7 @@ const wideSpread=runTelEntryPipeline(input({telLiquidity:{spreadBps:24.5,depthQu
 const wideKucoinAngle=wideSpread.angles.find(a=>a.angle==="Liquidité KuCoin");
 assert.equal(wideKucoinAngle?.status,"BLOC");
 assert.ok(wideKucoinAngle?.detail.includes("spread=24.50 bps (max 20)"));
-assert.ok(wideKucoinAngle?.detail.includes("slippage=12.00 bps (max 50)"));
+assert.ok(wideKucoinAngle?.detail.includes("slippage=12.00 bps (max 50;"));
 const sizeAwareBook=runTelEntryPipeline(input({telLiquidity:{
   ...input().telLiquidity!,
   estimatedSlippageBps:1_000_000,
