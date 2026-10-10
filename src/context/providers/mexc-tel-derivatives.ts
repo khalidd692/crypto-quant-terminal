@@ -24,6 +24,19 @@ function responseData(value: unknown): UnknownRecord | null {
   return item?.symbol === "TEL_USDT" ? item : null;
 }
 
+function activeTelContract(value: UnknownRecord | null): boolean {
+  return value !== null
+    && value.symbol === "TEL_USDT"
+    && finite(value.state) === 0
+    && value.quoteCoin === "USDT";
+}
+
+function contractEligibilityReason(value: UnknownRecord | null): string {
+  if (!value || value.symbol !== "TEL_USDT") return "MEXC_TEL_PERP_NOT_LISTED";
+  if (finite(value.state) !== 0 || value.quoteCoin !== "USDT") return "MEXC_TEL_PERP_NOT_ACTIVE";
+  return "MEXC_TEL_PERP_NOT_CONFIRMED";
+}
+
 function responseFailure(value: unknown, prefix: string): string {
   const envelope = record(value);
   if (!envelope) return prefix + "_INVALID_ENVELOPE";
@@ -87,6 +100,8 @@ export function normalizeMexcTelDerivatives(input: {
     fundingReason = contractNotListed
       ? "MEXC_TEL_PERP_NOT_LISTED"
       : input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+  } else if (!activeTelContract(contractData)) {
+    fundingReason = contractEligibilityReason(contractData);
   } else if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
   else {
     const rate = finite(fundingData.fundingRate);
@@ -100,6 +115,7 @@ export function normalizeMexcTelDerivatives(input: {
   if (!tickerData) openInterestReason = input.tickerError ?? responseFailure(input.ticker, "MEXC_TEL_TICKER");
   else if (!freshTimestamp(tickerData.timestamp, input.now, maxAgeMs)) openInterestReason = "MEXC_TEL_TICKER_STALE_OR_FUTURE";
   else if (!contractData) openInterestReason = input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
+  else if (!activeTelContract(contractData)) openInterestReason = contractEligibilityReason(contractData);
   else {
     const holdVol = finite(tickerData.holdVol);
     const fairPrice = finite(tickerData.fairPrice);
