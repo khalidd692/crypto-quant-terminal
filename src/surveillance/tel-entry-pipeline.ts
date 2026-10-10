@@ -6,6 +6,7 @@ import { latestSwingLowAnchoredVwap } from "../features/monitor-indicators.js";
 
 export type AngleStatus = "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
 export interface EntryAngle { readonly angle: string; readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ"; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
+type OrderBookLevel = readonly [string|number,string|number];
 export interface EntryPipelineInput {
   readonly now: string;
   readonly dataMode?: "RÉEL" | "SIMULÉ";
@@ -24,8 +25,8 @@ export interface EntryPipelineInput {
   readonly candlesSourceHash?: string;
   readonly btcSourceHash?: string;
   readonly venueDetail: string;
-  readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string } | null;
-  readonly mexcLiquidity?: { readonly spreadBps:number; readonly depthQuote:number; readonly estimatedSlippageBps:number; readonly observedAt:string; readonly sourceHash:string } | null;
+  readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string; readonly asks?:readonly OrderBookLevel[]; readonly bestAsk?:number } | null;
+  readonly mexcLiquidity?: { readonly spreadBps:number; readonly depthQuote:number; readonly estimatedSlippageBps:number; readonly observedAt:string; readonly sourceHash:string; readonly asks?:readonly OrderBookLevel[]; readonly bestAsk?:number } | null;
   readonly volumeCoherenceRatio?: number | null;
   readonly swingCapitalQuote: number;
   readonly stopPrice: number | null;
@@ -56,6 +57,19 @@ const disabledRisk: SpotRiskResult = { allowed:false,riskBudgetQuote:0,riskPerUn
 function angle(angle:string,status:AngleStatus,detail:string,source:string,observedAt:string|null=null,sourceHash:string|null=null):EntryAngle{return{angle,mode:status==="UNAVAILABLE"?"UNAVAILABLE":"RÉEL",status,detail,source,observedAt,sourceHash};}
 function isFresh(when:string|null|undefined,now:string,maxAgeMs=120_000):boolean{if(!when)return false;const t=Date.parse(when),n=Date.parse(now);return Number.isFinite(t)&&Number.isFinite(n)&&t<=n+5_000&&n-t<=maxAgeMs;}
 function hashOf(context:ContextSnapshot|null):string{return context?.snapshotHash??"sha256:unavailable";}
+function impactAtNotional(asks:readonly OrderBookLevel[]|undefined,notional:number,bestAsk:number|undefined):number|null{
+  if(!asks||asks.length===0||bestAsk===undefined||!Number.isFinite(bestAsk)||bestAsk<=0||!Number.isFinite(notional)||notional<=0)return null;
+  let remaining=notional,base=0,quote=0;
+  for(const row of asks){
+    const price=Number(row[0]),quantity=Number(row[1]);
+    if(!Number.isFinite(price)||!Number.isFinite(quantity)||price<=0||quantity<=0)continue;
+    const available=price*quantity,take=Math.min(remaining,available);
+    base+=take/price;quote+=take;remaining-=take;
+    if(remaining<=Math.max(1e-8,notional*1e-6))break;
+  }
+  if(remaining>Math.max(1e-8,notional*1e-6)||base<=0)return 1_000_000;
+  return Math.max(0,(quote/base/bestAsk-1)*10_000);
+}
 export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutput {
   const nowMs=Date.parse(input.now), last=input.candles.at(-1), price=last?.close??null;
   const quality=assessEntryQuality({points:input.candles,...(input.price24hAgo===null?{}:{price24hAgo:input.price24hAgo}),...(input.price7dAgo===null?{}:{price7dAgo:input.price7dAgo}),...(input.relativeVolume==null?{}:{relativeVolume:input.relativeVolume}),now:input.now});
@@ -107,18 +121,20 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const effectiveStop=price!==null&&input.stopPrice===null&&atrValue>0?price-atrValue*P0_ENTRY_POLICY.atrStopMultiple-Number.EPSILON*Math.max(1,price)*8:input.stopPrice;
   const risk=price!==null&&effectiveStop!==null&&effectiveStop>0&&effectiveStop<price&&atrValue>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:effectiveStop,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
-    const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
+    const estimatedSlippageBps=impactAtNotional(liquidity.asks,risk.notionalQuote,liquidity.bestAsk)??liquidity.estimatedSlippageBps;
+    const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     const liquidityDetail=gate.reason===null
-      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
-      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (impact recalculé au notional SWING; seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50; recalculé au notional SWING); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
     angles.push(angle("Liquidité KuCoin",gate.passed?"OK":"BLOC",liquidityDetail,"KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité KuCoin","UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
   const mx=input.mexcLiquidity;
   if(mx&&price!==null&&risk.notionalQuote>0){
-    const gate=assessLiquidity({spreadBps:mx.spreadBps,estimatedSlippageBps:mx.estimatedSlippageBps,depthQuote:mx.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
+    const estimatedSlippageBps=impactAtNotional(mx.asks,risk.notionalQuote,mx.bestAsk)??mx.estimatedSlippageBps;
+    const gate=assessLiquidity({spreadBps:mx.spreadBps,estimatedSlippageBps,depthQuote:mx.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
     const liquidityDetail=gate.reason===null
-      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
-      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (impact recalculé au notional SWING; seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50; recalculé au notional SWING); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
     angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",liquidityDetail,"MEXC Spot order book",mx.observedAt,mx.sourceHash));
   }else angles.push(angle("Liquidité MEXC","UNAVAILABLE","Carnet TEL MEXC ou dimensionnement indisponible","MEXC Spot order book",mx?.observedAt??null,mx?.sourceHash??null));
   const volumeRatio=input.volumeCoherenceRatio??null;
