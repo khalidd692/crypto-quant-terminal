@@ -9,4 +9,5 @@ assert.equal(calculateSpreadBps(null, 101), null);
 assert.equal(calculateSpreadBps(0, 101), null);
 assert.equal(calculateSpreadBps(101, 100), null);
 assert.equal(calculateSpreadBps(Number.NaN, 101), null);
-\nconsole.log("context providers: PASS");
+
+console.log("context providers: PASS");
