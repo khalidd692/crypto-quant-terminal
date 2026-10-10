@@ -304,6 +304,11 @@ The CI and KHALYON UI CI workflows passed for these PR heads. The read-only live
 
 The most recent generated context snapshot was persisted on `main` at 2026-10-10 19:48:47 UTC. This proves snapshot generation/persistence, not by itself that the public GitHub Pages deployment completed; verify the deployment before claiming the live site is updated.
 
+
+### Open candidate PR to reconcile — #127 (not accepted study protocol)
+
+As verified on 2026-10-10, PR #127 (`docs/freeze-tel-prospective-protocol`) remains **open and unmerged** and GitHub reported it as not mergeable. It is a frozen candidate configuration/source manifest, not approval to score outcomes or start the prospective clock. Its source manifest still references the retired FRED series `GOLDAMGBD228NLBM` and MEXC `/contract/detail/country?symbol=TEL_USDT`, which do not match the currently verified provider configuration. Do not merge it blindly. Before considering it, reconcile the manifest against current code, update only with evidence, and preserve the explicit owner/independent-review gate for any proposed ADR-0003. No prospective outcomes may be scored and no new study may start from this PR alone.
+
 ### Safety status
 
 No research run or new backtest study was launched. No strategy thresholds or entry rules were changed. The frozen dataset, untouched holdout, ADR-0002 and Phase 3 verdict **`PAS D'EDGE`** remain unchanged. Continue to fail closed: unavailable, stale or incoherent decision inputs must not authorize `ENTRER`.
