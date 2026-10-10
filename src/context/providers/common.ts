@@ -1,5 +1,5 @@
 import{createHash}from"node:crypto";import type{ContextProvenance}from"../types.js";
-export function numberOrNull(v:unknown):number|null{const n=Number(v);return Number.isFinite(n)?n:null;}
+export function numberOrNull(v:unknown):number|null{if(v===null||v===undefined||(typeof v==="string"&&v.trim()===""))return null;if(typeof v!=="number"&&typeof v!=="string")return null;const n=Number(v);return Number.isFinite(n)?n:null;}
 export function rawHash(v:unknown):`sha256:${string}`{return `sha256:${createHash("sha256").update(JSON.stringify(v)).digest("hex")}`;}
 export function provenance(field:string,source:string,at:string,raw:unknown,status:"OK"|"UNAVAILABLE"="OK",reason?:string):ContextProvenance{const p={field,source,availableAt:at,sourceSnapshotHash:rawHash(raw),status};return reason===undefined?p:{...p,reason};}
 export function unavailableProvenance(field:string,source:string,at:string,reason:string):ContextProvenance{return provenance(field,source,at,{unavailable:true,reason},"UNAVAILABLE",reason);}
