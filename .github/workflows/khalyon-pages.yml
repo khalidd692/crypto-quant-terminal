@@ -56,7 +56,6 @@ jobs:
         run: |
           echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
-          node tests/khalyon-ui-integrity.mjs
       - name: Write public build manifest
         env:
           SOURCE_COMMIT: ${{ github.sha }}
@@ -84,6 +83,7 @@ jobs:
           writeFileSync("khalyon/build-manifest.json", JSON.stringify(manifest, null, 2) + "\n");
           console.log("KHALYON public build manifest: " + manifest.sourceCommit);
           NODE
+          node tests/khalyon-ui-integrity.mjs
       - name: Install Playwright
         run: npm install --no-save --package-lock=false @playwright/test@1.64.0 && npx playwright install chromium --with-deps
       - name: Serve KHALYON
