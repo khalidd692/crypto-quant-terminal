@@ -38,7 +38,7 @@ function build(items: readonly any[], at: string): SocialSentimentContext {
   };
 }
 
-function unavailable(at: string): SocialSentimentContext {
+function unavailable(): SocialSentimentContext {
   return {
     mentions: null, mentionChangePct: null, toneScore: null, concentrationTop5Pct: null,
     attentionSpike: null, temperature: "UNAVAILABLE",
@@ -48,15 +48,14 @@ function unavailable(at: string): SocialSentimentContext {
 
 export async function fetchSocialSentiment(at: string): Promise<{ value: SocialSentimentContext; provenance: ContextProvenance[] }> {
   const provenanceItems: ContextProvenance[] = [];
-  const items: any[] = [];
-  let sourceAvailable = false;
+  let selectedItems: any[] | null = null;
 
   try {
     const raw = await fetchJson(REDDIT) as any;
     if (!Array.isArray(raw?.data?.children)) throw new Error("Reddit response schema unavailable");
-    items.push(...raw.data.children);
+    selectedItems = raw.data.children;
     provenanceItems.push(provenance("social.reddit", REDDIT, at, raw));
-    sourceAvailable = true;
+
   } catch (error) {
     provenanceItems.push(unavailableProvenance("social.reddit", REDDIT, at, String(error)));
   }
@@ -71,9 +70,9 @@ export async function fetchSocialSentiment(at: string): Promise<{ value: SocialS
       if (!response.ok) throw new Error("X HTTP " + response.status);
       const raw = await response.json() as any;
       if (!Array.isArray(raw?.data)) throw new Error("X response schema unavailable");
-      items.push(...raw.data);
+      if (selectedItems === null) selectedItems = raw.data;
       provenanceItems.push(provenance("social.x", X_SEARCH, at, raw));
-      sourceAvailable = true;
+
     } catch (error) {
       provenanceItems.push(unavailableProvenance("social.x", X_SEARCH, at, String(error)));
     }
@@ -82,7 +81,7 @@ export async function fetchSocialSentiment(at: string): Promise<{ value: SocialS
   }
 
   return {
-    value: sourceAvailable ? build(items, at) : unavailable(at),
+    value: selectedItems !== null ? build(selectedItems, at) : unavailable(),
     provenance: provenanceItems
   };
 }
