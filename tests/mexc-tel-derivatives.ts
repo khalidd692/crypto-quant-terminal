@@ -18,7 +18,7 @@ const stale = normalizeMexcTelDerivatives({
   now,
   funding: { success: true, code: 0, data: { symbol: "TEL_USDT", fundingRate: 0.0002, timestamp: fresh - 16 * 60_000 } },
   ticker: { success: true, code: 0, data: { symbol: "TEL_USDT", holdVol: 125, fairPrice: 0.002, timestamp: fresh - 16 * 60_000 } },
-  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", contractSize: 1000 }] },
+  contract: { success: true, code: 0, data: [{ symbol: "TEL_USDT", state: 0, quoteCoin: "USDT", contractSize: 1000 }] },
 });
 assert.equal(stale.fundingRate, null);
 assert.equal(stale.openInterestQuote, null);
