@@ -82,6 +82,16 @@ const sizeAwareKucoin= sizeAwareBook.angles.find(a=>a.angle==="Liquidité KuCoin
 assert.equal(sizeAwareKucoin?.status,"OK","raw asks must recompute impact at the pipeline risk-sized notional");
 assert.ok(sizeAwareKucoin?.detail.includes("slippage estimé 0.00 bps"));
 assert.ok(!sizeAwareKucoin?.detail.includes("1,000,000"));
+const sizeAwareMexcBook=runTelEntryPipeline(input({mexcLiquidity:{
+  ...input().mexcLiquidity!,
+  estimatedSlippageBps:1_000_000,
+  asks:[["1",10000]] as const,
+  bestAsk:1
+}}));
+const sizeAwareMexc=sizeAwareMexcBook.angles.find(a=>a.angle==="Liquidité MEXC");
+assert.equal(sizeAwareMexc?.status,"OK","MEXC impact must use the same risk-sized notional");
+assert.ok(sizeAwareMexc?.detail.includes("slippage estimé 0.00 bps"));
+assert.ok(!sizeAwareMexc?.detail.includes("1,000,000"));
 const manualPlan={plannedOrderType:"LIMIT" as const,orderGridActive:false,lastGridLevelPrice:.99,livePriceQuote:1};
 const healthyWithManualPlan=runTelEntryPipeline(input(manualPlan));
 assert.equal(healthyWithManualPlan.decision,"ENTRER",
