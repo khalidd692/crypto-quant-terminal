@@ -72,6 +72,16 @@ const wideKucoinAngle=wideSpread.angles.find(a=>a.angle==="Liquidité KuCoin");
 assert.equal(wideKucoinAngle?.status,"BLOC");
 assert.ok(wideKucoinAngle?.detail.includes("spread=24.50 bps (max 20)"));
 assert.ok(wideKucoinAngle?.detail.includes("slippage=12.00 bps (max 50)"));
+const sizeAwareBook=runTelEntryPipeline(input({telLiquidity:{
+  ...input().telLiquidity!,
+  estimatedSlippageBps:1_000_000,
+  asks:[["1",10000]] as const,
+  bestAsk:1
+}}));
+const sizeAwareKucoin= sizeAwareBook.angles.find(a=>a.angle==="Liquidité KuCoin");
+assert.equal(sizeAwareKucoin?.status,"OK","raw asks must recompute impact at the pipeline risk-sized notional");
+assert.ok(sizeAwareKucoin?.detail.includes("slippage estimé 0.00 bps"));
+assert.ok(!sizeAwareKucoin?.detail.includes("1,000,000"));
 const manualPlan={plannedOrderType:"LIMIT" as const,orderGridActive:false,lastGridLevelPrice:.99,livePriceQuote:1};
 const healthyWithManualPlan=runTelEntryPipeline(input(manualPlan));
 assert.equal(healthyWithManualPlan.decision,"ENTRER",
