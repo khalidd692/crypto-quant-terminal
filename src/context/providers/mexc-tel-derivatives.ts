@@ -24,6 +24,24 @@ function responseData(value: unknown): UnknownRecord | null {
   return item?.symbol === "TEL_USDT" ? item : null;
 }
 
+function responseFailure(value: unknown, prefix: string): string {
+  const envelope = record(value);
+  if (!envelope) return prefix + "_INVALID_ENVELOPE";
+  if (envelope.success !== true || Number(envelope.code) !== 0) {
+    return prefix + "_API_ERROR (code=" + String(envelope.code) + ")";
+  }
+  const data = envelope.data;
+  if (Array.isArray(data)) {
+    const symbols = data.map(record).map(item => item?.symbol).filter((symbol): symbol is string => typeof symbol === "string");
+    if (!symbols.includes("TEL_USDT")) return prefix + "_SYMBOL_ABSENT (symbols=" + (symbols.slice(0, 5).join(",") || "none") + ")";
+    return prefix + "_INVALID_DATA";
+  }
+  const item = record(data);
+  if (!item) return prefix + "_DATA_MISSING";
+  if (item.symbol !== "TEL_USDT") return prefix + "_SYMBOL_MISMATCH (received=" + String(item.symbol ?? "missing") + ")";
+  return prefix + "_INVALID_DATA";
+}
+
 function finite(value: unknown): number | null {
   const n = typeof value === "number" ? value : Number(value);
   return Number.isFinite(n) ? n : null;
@@ -56,7 +74,7 @@ export function normalizeMexcTelDerivatives(input: {
 
   let fundingRate: number | null = null;
   let fundingReason: string | null = null;
-  if (!fundingData) fundingReason = input.fundingError ?? "MEXC_TEL_FUNDING_SCHEMA_OR_SYMBOL_INVALID";
+  if (!fundingData) fundingReason = input.fundingError ?? responseFailure(input.funding, "MEXC_TEL_FUNDING");
   else {
     const rate = finite(fundingData.fundingRate);
     if (rate === null) fundingReason = "MEXC_TEL_FUNDING_RATE_INVALID";
@@ -66,9 +84,9 @@ export function normalizeMexcTelDerivatives(input: {
 
   let openInterestQuote: number | null = null;
   let openInterestReason: string | null = null;
-  if (!tickerData) openInterestReason = input.tickerError ?? "MEXC_TEL_TICKER_SCHEMA_OR_SYMBOL_INVALID";
+  if (!tickerData) openInterestReason = input.tickerError ?? responseFailure(input.ticker, "MEXC_TEL_TICKER");
   else if (!freshTimestamp(tickerData.timestamp, input.now, maxAgeMs)) openInterestReason = "MEXC_TEL_TICKER_STALE_OR_FUTURE";
-  else if (!contractData) openInterestReason = input.contractError ?? "MEXC_TEL_CONTRACT_DETAIL_SCHEMA_OR_SYMBOL_INVALID";
+  else if (!contractData) openInterestReason = input.contractError ?? responseFailure(input.contract, "MEXC_TEL_CONTRACT_DETAIL");
   else {
     const holdVol = finite(tickerData.holdVol);
     const fairPrice = finite(tickerData.fairPrice);
