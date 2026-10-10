@@ -9,9 +9,9 @@ const F = "https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT";
 const O = "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT";
 const KUCOIN_FUNDING = "https://api-futures.kucoin.com/api/v1/funding-rate/XBTUSDTM/current";
 const KUCOIN_CONTRACT = "https://api-futures.kucoin.com/api/v1/contracts/XBTUSDTM";
-const MEXC_FUNDING = "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT";
-const MEXC_TICKER = "https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT";
-const MEXC_DETAIL = "https://contract.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT";
+const MEXC_FUNDING = "https://api.mexc.com/api/v1/contract/funding_rate/TEL_USDT";
+const MEXC_TICKER = "https://api.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT";
+const MEXC_DETAIL = "https://api.mexc.com/api/v1/contract/detail/country?symbol=TEL_USDT";
 
 export async function fetchCryptoMarketContext(at: string): Promise<{ value: CryptoMarketContext; provenance: readonly ContextProvenance[] }> {
   const p: ContextProvenance[] = [];
