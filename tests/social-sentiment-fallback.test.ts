@@ -31,6 +31,9 @@ try {
     const url = String(input);
     if (url.includes("reddit.com")) return new Response("forbidden", { status: 403 });
     if (url.includes("api.x.com")) throw new Error("X must not be requested without X_BEARER_TOKEN");
+    if (url.includes("public.api.bsky.app")) {
+      return new Response(JSON.stringify({ posts: [] }), { status: 200, headers: { "content-type": "application/json" } });
+    }
     throw new Error("Unexpected URL: " + url);
   };
   const noCredentials = await fetchSocialSentiment("2026-10-10T20:01:00.000Z");
@@ -39,6 +42,30 @@ try {
   assert.equal(noCredentials.value.temperature, "UNAVAILABLE");
   assert.equal(noCredentials.provenance.find(item => item.field === "social.reddit")?.status, "UNAVAILABLE");
   assert.equal(noCredentials.provenance.find(item => item.field === "social.x")?.status, "UNAVAILABLE");
+  assert.equal(noCredentials.provenance.find(item => item.field === "social.bluesky")?.status, "UNAVAILABLE",
+    "empty Bluesky results must remain unavailable rather than being treated as neutral sentiment");
+
+  // Bluesky public search can provide a real fallback without an X API token.
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("reddit.com")) return new Response("forbidden", { status: 403 });
+    if (url.includes("api.x.com")) throw new Error("X must not be requested without X_BEARER_TOKEN");
+    if (url.includes("public.api.bsky.app")) {
+      return new Response(JSON.stringify({
+        posts: [
+          { record: { text: "Telcoin partnership adoption" }, author: { did: "did:plc:a" } },
+          { record: { text: "TEL bullish growth" }, author: { did: "did:plc:b" } }
+        ]
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    throw new Error("Unexpected URL: " + url);
+  };
+  const blueskyFallback = await fetchSocialSentiment("2026-10-10T20:02:00.000Z");
+  assert.equal(blueskyFallback.value.mentions, 2);
+  assert.notEqual(blueskyFallback.value.temperature, "UNAVAILABLE");
+  assert.equal(blueskyFallback.provenance.find(item => item.field === "social.reddit")?.status, "UNAVAILABLE");
+  assert.equal(blueskyFallback.provenance.find(item => item.field === "social.x")?.status, "UNAVAILABLE");
+  assert.equal(blueskyFallback.provenance.find(item => item.field === "social.bluesky")?.status, "OK");
 } finally {
   globalThis.fetch = originalFetch;
   if (originalToken === undefined) delete process.env.X_BEARER_TOKEN;
