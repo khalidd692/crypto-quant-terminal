@@ -104,3 +104,48 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify public build manifest matches deployed commit
+        env:
+          PUBLIC_MANIFEST_URL: ${{ steps.deployment.outputs.page_url }}build-manifest.json
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -u
+          for attempt in $(seq 1 12); do
+            url="${PUBLIC_MANIFEST_URL}?verify=${EXPECTED_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${attempt}"
+            if curl --fail --silent --show-error --location --max-time 10 "$url" -o /tmp/khalyon-public-manifest.json; then
+              if node --input-type=module - "$EXPECTED_SHA" "$EXPECTED_RUN_ID" /tmp/khalyon-public-manifest.json <<'NODE'
+          import { readFileSync } from "node:fs";
+          const [expectedSha, expectedRunId, path] = process.argv.slice(2);
+          let manifest;
+          try { manifest = JSON.parse(readFileSync(path, "utf8")); }
+          catch { console.error("Public build manifest is not valid JSON"); process.exit(1); }
+          const builtAt = Date.parse(manifest.builtAt ?? "");
+          const valid = manifest.sourceCommit === expectedSha
+            && manifest.workflowRunId === expectedRunId
+            && Number.isFinite(builtAt)
+            && /^[0-9a-f]{40}$/.test(manifest.sourceCommit ?? "");
+          if (!valid) {
+            console.error(JSON.stringify({
+              expectedSha, actualSha: manifest.sourceCommit ?? null,
+              expectedRunId, actualRunId: manifest.workflowRunId ?? null,
+              builtAt: manifest.builtAt ?? null
+            }));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({
+            status: "PUBLIC_MANIFEST_VERIFIED",
+            sourceCommit: manifest.sourceCommit,
+            builtAt: manifest.builtAt,
+            workflowRunId: manifest.workflowRunId
+          }));
+          NODE
+              then
+                exit 0
+              fi
+            fi
+            echo "Public manifest not yet matching deployment (attempt $attempt/12); retrying in 5 seconds."
+            sleep 5
+          done
+          echo "ERROR: public build manifest never matched GITHUB_SHA and workflow run id."
+          exit 1
