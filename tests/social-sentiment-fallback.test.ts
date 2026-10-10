@@ -31,7 +31,7 @@ try {
     const url = String(input);
     if (url.includes("reddit.com")) return new Response("forbidden", { status: 403 });
     if (url.includes("api.x.com")) throw new Error("X must not be requested without X_BEARER_TOKEN");
-    if (url.includes("public.api.bsky.app")) {
+    if (url.includes("bsky.app")) {
       return new Response(JSON.stringify({ posts: [] }), { status: 200, headers: { "content-type": "application/json" } });
     }
     throw new Error("Unexpected URL: " + url);
