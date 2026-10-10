@@ -4,6 +4,11 @@ name: CI
 on:
   push:
     branches: ["main", "feature/**"]
+    # Automated runtime data is validated by its producer and must not trigger
+    # the full research CI suite on every surveillance cycle.
+    paths-ignore:
+      - "research/prospective/journal.jsonl"
+      - "khalyon/data/context-snapshot.json"
   pull_request:
 
 jobs:
