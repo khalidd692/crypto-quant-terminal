@@ -163,7 +163,6 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   let antiFomoDetail=quality.decision==="UNAVAILABLE"?"Métriques marché insuffisantes pour évaluer l’extension FOMO":fomoTrigger?"FOMO ? ordres limités uniquement":"Aucune extension FOMO mesurée dans les métriques de marché.";
   const antiFomoReasons:string[]=[];
   if(fomoTrigger||startedAt!==null) {
-    antiFomoStatus="BLOC";
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
     if(anchoredVwapExtension) antiFomoReasons.push("Prix > 2 ATR au-dessus du VWAP ancré depuis le dernier creux confirmé");
     if(elapsedHours===null||elapsedHours<cooldownHours) {
@@ -174,6 +173,10 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
       antiFomoStatus="BLOC";
       antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
     } else {
+      // The cooldown and written reflection are satisfied. A measured FOMO
+      // trigger is a display/journal warning after the configured wait, not an
+      // indefinite block; an actual MARKET order above the grid still blocks.
+      antiFomoStatus=elapsedHours!==null&&elapsedHours>=cooldownHours?"OK":antiFomoStatus;
       antiFomoReasons.push("Motif écrit fourni (contenu privé masqué; non journalisé)");
     }
   }
