@@ -11,7 +11,9 @@ const KUCOIN_FUNDING = "https://api-futures.kucoin.com/api/v1/funding-rate/XBTUS
 const KUCOIN_CONTRACT = "https://api-futures.kucoin.com/api/v1/contracts/XBTUSDTM";
 const MEXC_FUNDING = "https://contract.mexc.com/api/v1/contract/funding_rate/TEL_USDT";
 const MEXC_TICKER = "https://contract.mexc.com/api/v1/contract/ticker?symbol=TEL_USDT";
-const MEXC_DETAIL = "https://contract.mexc.com/api/v1/contract/detail?symbol=TEL_USDT";
+// Official docs define /contract/detail without symbol as the complete contract list.
+// Keep the full list so a missing symbol is distinguishable from a contradictory single-symbol lookup.
+const MEXC_DETAIL = "https://contract.mexc.com/api/v1/contract/detail";
 
 export async function fetchCryptoMarketContext(at: string): Promise<{ value: CryptoMarketContext; provenance: readonly ContextProvenance[] }> {
   const p: ContextProvenance[] = [];
