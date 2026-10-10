@@ -6,6 +6,7 @@ import { latestSwingLowAnchoredVwap } from "../features/monitor-indicators.js";
 
 export type AngleStatus = "OK" | "BLOC" | "UNAVAILABLE" | "PÉRIMÉ" | "INCOHÉRENT";
 export interface EntryAngle { readonly angle: string; readonly mode: "RÉEL" | "UNAVAILABLE" | "SIMULÉ"; readonly status: AngleStatus; readonly detail: string; readonly source: string; readonly observedAt: string | null; readonly sourceHash: string | null; }
+type OrderBookLevel = readonly [string|number,string|number];
 export interface EntryPipelineInput {
   readonly now: string;
   readonly dataMode?: "RÉEL" | "SIMULÉ";
@@ -24,8 +25,8 @@ export interface EntryPipelineInput {
   readonly candlesSourceHash?: string;
   readonly btcSourceHash?: string;
   readonly venueDetail: string;
-  readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string } | null;
-  readonly mexcLiquidity?: { readonly spreadBps:number; readonly depthQuote:number; readonly estimatedSlippageBps:number; readonly observedAt:string; readonly sourceHash:string } | null;
+  readonly telLiquidity: { readonly spreadBps: number; readonly depthQuote: number; readonly estimatedSlippageBps: number; readonly observedAt: string; readonly sourceHash: string; readonly asks?:readonly OrderBookLevel[]; readonly bestAsk?:number } | null;
+  readonly mexcLiquidity?: { readonly spreadBps:number; readonly depthQuote:number; readonly estimatedSlippageBps:number; readonly observedAt:string; readonly sourceHash:string; readonly asks?:readonly OrderBookLevel[]; readonly bestAsk?:number } | null;
   readonly volumeCoherenceRatio?: number | null;
   readonly swingCapitalQuote: number;
   readonly stopPrice: number | null;
@@ -56,6 +57,19 @@ const disabledRisk: SpotRiskResult = { allowed:false,riskBudgetQuote:0,riskPerUn
 function angle(angle:string,status:AngleStatus,detail:string,source:string,observedAt:string|null=null,sourceHash:string|null=null):EntryAngle{return{angle,mode:status==="UNAVAILABLE"?"UNAVAILABLE":"RÉEL",status,detail,source,observedAt,sourceHash};}
 function isFresh(when:string|null|undefined,now:string,maxAgeMs=120_000):boolean{if(!when)return false;const t=Date.parse(when),n=Date.parse(now);return Number.isFinite(t)&&Number.isFinite(n)&&t<=n+5_000&&n-t<=maxAgeMs;}
 function hashOf(context:ContextSnapshot|null):string{return context?.snapshotHash??"sha256:unavailable";}
+function impactAtNotional(asks:readonly OrderBookLevel[]|undefined,notional:number,bestAsk:number|undefined):number|null{
+  if(!asks||asks.length===0||bestAsk===undefined||!Number.isFinite(bestAsk)||bestAsk<=0||!Number.isFinite(notional)||notional<=0)return null;
+  let remaining=notional,base=0,quote=0;
+  for(const row of asks){
+    const price=Number(row[0]),quantity=Number(row[1]);
+    if(!Number.isFinite(price)||!Number.isFinite(quantity)||price<=0||quantity<=0)continue;
+    const available=price*quantity,take=Math.min(remaining,available);
+    base+=take/price;quote+=take;remaining-=take;
+    if(remaining<=Math.max(1e-8,notional*1e-6))break;
+  }
+  if(remaining>Math.max(1e-8,notional*1e-6)||base<=0)return 1_000_000;
+  return Math.max(0,(quote/base/bestAsk-1)*10_000);
+}
 export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutput {
   const nowMs=Date.parse(input.now), last=input.candles.at(-1), price=last?.close??null;
   const quality=assessEntryQuality({points:input.candles,...(input.price24hAgo===null?{}:{price24hAgo:input.price24hAgo}),...(input.price7dAgo===null?{}:{price7dAgo:input.price7dAgo}),...(input.relativeVolume==null?{}:{relativeVolume:input.relativeVolume}),now:input.now});
@@ -83,8 +97,13 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     const eventOk=!!eventProv&&eventProv.status==="OK"&&isFresh(eventProv.availableAt,input.now,24*3600_000);
     macroStatus=!macroOk||!eventOk?"UNAVAILABLE":highEvent?"BLOC":"OK";
     angles.push(angle("Macro + calendrier",macroStatus,highEvent?("Événement majeur proche : "+highEvent.label):macroStatus==="OK"?"Macro renseignée, aucun événement HIGH dans les 48 h":"Macro ou calendrier indisponible/périmé","FRED + calendrier FOMC",context.asOf,context.snapshotHash));
-    const sentimentProv=context.provenance.filter(p=>p.field.startsWith("market.sentiment")||p.field.startsWith("social."));
-    const sentimentOk=context.market.sentimentScore!==null&&context.socialSentiment?.temperature!==undefined&&context.socialSentiment.temperature!=="UNAVAILABLE"&&sentimentProv.length>0&&sentimentProv.every(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
+    const marketSentimentProv=context.provenance.find(p=>p.field==="market.sentimentScore");
+    const socialProv=context.provenance.filter(p=>p.field.startsWith("social."));
+    // Alternative.me must be fresh and at least one real social feed must be
+    // fresh. A single blocked platform must not discard a healthy fallback.
+    const marketSentimentOk=!!marketSentimentProv&&marketSentimentProv.status==="OK"&&isFresh(marketSentimentProv.availableAt,input.now,24*3600_000);
+    const socialFeedOk=socialProv.some(p=>p.status==="OK"&&isFresh(p.availableAt,input.now,24*3600_000));
+    const sentimentOk=context.market.sentimentScore!==null&&marketSentimentOk&&context.socialSentiment?.temperature!==undefined&&context.socialSentiment.temperature!=="UNAVAILABLE"&&socialFeedOk;
     const sentimentBlocked=context.socialSentiment?.temperature==="HOT"||((context.socialSentiment?.concentrationTop5Pct??0)>.8);
     sentimentStatus=!sentimentOk?"UNAVAILABLE":sentimentBlocked?"BLOC":"OK";
     angles.push(angle("Sentiment",sentimentStatus, sentimentBlocked?"Attention sociale chaude/concentrée":sentimentOk?"Sentiment renseigné":"Sentiment indisponible/périmé","Alternative.me + Reddit/X",context.asOf,context.snapshotHash));
@@ -102,13 +121,21 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const effectiveStop=price!==null&&input.stopPrice===null&&atrValue>0?price-atrValue*P0_ENTRY_POLICY.atrStopMultiple-Number.EPSILON*Math.max(1,price)*8:input.stopPrice;
   const risk=price!==null&&effectiveStop!==null&&effectiveStop>0&&effectiveStop<price&&atrValue>0?calculateSpotSwingRisk({swingCapitalQuote:input.swingCapitalQuote,entryPrice:price,stopPrice:effectiveStop,maxRiskPerTradePct:P0_ENTRY_POLICY.maxRiskPerTradePct,feePct:P0_ENTRY_POLICY.roundTripFeePct,slippagePct:P0_ENTRY_POLICY.slippagePct,openSwingPositions:input.openSwingPositions,maxPositions:P0_ENTRY_POLICY.maxPositions,monthlyLossQuote:input.monthlyLossQuote,maxMonthlyLossPct:P0_ENTRY_POLICY.maxMonthlyLossPct,atr:quality.metrics.atr??0,atrStopMultiple:P0_ENTRY_POLICY.atrStopMultiple}):disabledRisk;
   if(liquidity&&price!==null&&risk.notionalQuote>0){
-    const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps:liquidity.estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
-    angles.push(angle("Liquidité KuCoin",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
+    const estimatedSlippageBps=impactAtNotional(liquidity.asks,risk.notionalQuote,liquidity.bestAsk)??liquidity.estimatedSlippageBps;
+    const gate=assessLiquidity({spreadBps:liquidity.spreadBps,estimatedSlippageBps,depthQuote:liquidity.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
+    const liquidityDetail=gate.reason===null
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (impact recalculé au notional SWING; seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50; recalculé au notional SWING); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+    angles.push(angle("Liquidité KuCoin",gate.passed?"OK":"BLOC",liquidityDetail,"KuCoin Spot order book",liquidity.observedAt,liquidity.sourceHash));
   }else angles.push(angle("Liquidité KuCoin","UNAVAILABLE","Carnet TEL ou dimensionnement indisponible","KuCoin Spot order book",liquidity?.observedAt??null,liquidity?.sourceHash??null));
   const mx=input.mexcLiquidity;
   if(mx&&price!==null&&risk.notionalQuote>0){
-    const gate=assessLiquidity({spreadBps:mx.spreadBps,estimatedSlippageBps:mx.estimatedSlippageBps,depthQuote:mx.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
-    angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",gate.reason??"Spread, impact estimé et profondeur conformes","MEXC Spot order book",mx.observedAt,mx.sourceHash));
+    const estimatedSlippageBps=impactAtNotional(mx.asks,risk.notionalQuote,mx.bestAsk)??mx.estimatedSlippageBps;
+    const gate=assessLiquidity({spreadBps:mx.spreadBps,estimatedSlippageBps,depthQuote:mx.depthQuote,orderNotionalQuote:risk.notionalQuote,maxSpreadBps:20,maxSlippageBps:50,minDepthMultiple:3});
+    const liquidityDetail=gate.reason===null
+      ? `Spread ${gate.spreadBps.toFixed(2)} bps; slippage estimé ${gate.estimatedSlippageBps.toFixed(2)} bps; profondeur ${gate.depthQuote.toFixed(2)} USDT; notional estimé ${risk.notionalQuote.toFixed(2)} USDT (impact recalculé au notional SWING; seuils inchangés : spread 20 bps, slippage 50 bps, profondeur 3×)`
+      : `${gate.reason} | spread=${gate.spreadBps.toFixed(2)} bps (max 20); slippage=${gate.estimatedSlippageBps.toFixed(2)} bps (max 50; recalculé au notional SWING); profondeur=${gate.depthQuote.toFixed(2)} USDT; notional estimé=${risk.notionalQuote.toFixed(2)} USDT (profondeur min 3×)`;
+    angles.push(angle("Liquidité MEXC",gate.passed?"OK":"BLOC",liquidityDetail,"MEXC Spot order book",mx.observedAt,mx.sourceHash));
   }else angles.push(angle("Liquidité MEXC","UNAVAILABLE","Carnet TEL MEXC ou dimensionnement indisponible","MEXC Spot order book",mx?.observedAt??null,mx?.sourceHash??null));
   const volumeRatio=input.volumeCoherenceRatio??null;
   angles.push(angle("Cohérence volumes KuCoin/MEXC",volumeRatio===null||!Number.isFinite(volumeRatio)?"UNAVAILABLE":volumeRatio>5?"INCOHÉRENT":"OK",volumeRatio===null||!Number.isFinite(volumeRatio)?"Volumes 24 h non comparables":`Ratio volume 24 h max/min = ${volumeRatio.toFixed(2)}×; seuil opérationnel daté : 5×`,"KuCoin + MEXC ticker 24 h",input.now,input.marketSourceHash??null));
@@ -151,8 +178,11 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   const trancheMax=input.maxTranchesPerZone??3;
   const lastTranche=input.lastTranchePrice??null;
   const plannedEntry=input.plannedEntryPrice??livePrice;
-  let antiFomoStatus:AngleStatus=fomoStatus;
-  let antiFomoDetail=fomoDetail;
+  // The market-only FOMO gate is independent of the optional manual order
+  // plan. Missing order-plan fields are diagnostics, not automatic vetoes;
+  // measured extensions and an active reflection cooldown still block ENTRER.
+  let antiFomoStatus:AngleStatus=quality.decision==="UNAVAILABLE"?"UNAVAILABLE":fomoTrigger?"BLOC":"OK";
+  let antiFomoDetail=quality.decision==="UNAVAILABLE"?"Métriques marché insuffisantes pour évaluer l’extension FOMO":fomoTrigger?"FOMO ? ordres limités uniquement":"Aucune extension FOMO mesurée dans les métriques de marché.";
   const antiFomoReasons:string[]=[];
   if(fomoTrigger||startedAt!==null) {
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
@@ -165,6 +195,10 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
       antiFomoStatus="BLOC";
       antiFomoReasons.push("Motif écrit requis (12 caractères minimum)");
     } else {
+      // The cooldown and written reflection are satisfied. A measured FOMO
+      // trigger is a display/journal warning after the configured wait, not an
+      // indefinite block; an actual MARKET order above the grid still blocks.
+      antiFomoStatus=elapsedHours!==null&&elapsedHours>=cooldownHours?"OK":antiFomoStatus;
       antiFomoReasons.push("Motif écrit fourni (contenu privé masqué; non journalisé)");
     }
   }
@@ -180,9 +214,13 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
     antiFomoReasons.push("FOMO ? ordres limités uniquement");
   }
   if(antiFomoReasons.length) antiFomoDetail=[...new Set(antiFomoReasons)].join(" — ");
-  angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Saisie manuelle hors dépôt",input.now,null));
+  angles.push(angle("Garde-fou anti-FOMO",antiFomoStatus,antiFomoDetail,"Métriques P0 du marché",last?.availableTime??input.now,input.candlesSourceHash??null));
+  angles.push(angle("Plan d’ordre manuel",fomoStatus,fomoDetail,"Saisie manuelle hors dépôt",input.now,null));
   const finalAngles:EntryAngle[]=angles.map(a=>({...a,mode:(a.status==="UNAVAILABLE"?"UNAVAILABLE":input.dataMode??"RÉEL") as EntryAngle["mode"]}));
-  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée");
+  // Provenance globale is a diagnostic aggregate. Mandatory angles below
+  // enforce their own fresh data requirements; optional/secondary sources
+  // must not independently veto the decision.
+  const requiredAngles=finalAngles.filter(a=>a.angle!=="P0 — qualité d'entrée"&&a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel");
   const failing=requiredAngles.find(a=>a.status!=="OK")??finalAngles.find(a=>a.angle==="P0 — qualité d'entrée"&&a.status!=="OK");
   let decision:SwingDecision="ATTENDRE",reason="Tous les contrôles obligatoires sont satisfaits; décision descriptive uniquement.";
   if(input.venueStatus!=="OK"||!candlesFresh||!context||!liquidity||!input.mexcLiquidity||input.volumeCoherenceRatio==null||failing){decision="ATTENDRE";reason=failing?failing.angle+": "+failing.detail:input.venueStatus!=="OK"?"Données de marché indisponibles, périmées ou incohérentes":!candlesFresh?"Historique de bougies indisponible/périmé":!context?"Contexte obligatoire indisponible":!liquidity||!input.mexcLiquidity?"Liquidité KuCoin/MEXC indisponible":"Cohérence de volumes indisponible";}
@@ -190,9 +228,9 @@ export function runTelEntryPipeline(input:EntryPipelineInput):EntryPipelineOutpu
   else if(!btc.passed){decision="ATTENDRE";reason=btc.reason;}
   else if(quality.decision==="EXTENDED"){decision="ATTENDRE";reason=quality.reasons[0]??"Prix étiré";}
   else if(!risk.allowed){decision="NE_PAS_ENTRER";reason=risk.reason??"Dimensionnement SWING interdit";}
-  else if(finalAngles.some(a=>a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
+  else if(finalAngles.some(a=>a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel"&&a.status!=="OK")){decision="ATTENDRE";reason="Au moins un veto contexte/liquidité n'est pas levé";} else {decision="ENTRER";reason="Qualité P0, BTC, contexte, liquidité et risque SWING validés";}
   // Every mandatory angle is a veto. No angle can promote a blocked or unavailable result to ENTRER.
-  const finalDecision:SwingDecision=finalAngles.every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
+  const finalDecision:SwingDecision=finalAngles.filter(a=>a.angle!=="Provenance globale"&&a.angle!=="Plan d’ordre manuel").every(a=>a.status==="OK")&&risk.allowed&&decision==="ENTRER"?"ENTRER":decision==="ENTRER"?"ATTENDRE":decision;
   const finalReason=reason;
   const qualityForScreen:EntryQuality=quality;
   const { renderTelTestScreen }=screenRenderer;

@@ -12,8 +12,8 @@ function point(i:number,close=1,availableAt?:string):MarketDataPoint{
   return {instrumentId:"TEL-USDT",eventTime:new Date(t).toISOString() as MarketDataPoint["eventTime"],availableTime:(availableAt??new Date(t+5_000).toISOString()) as MarketDataPoint["availableTime"],open:close,high:close+.005,low:close-.005,close,volume:100,dataQuality:"complete",sourceId:"KUCOIN_SPOT"};
 }
 function prov(field:string):ContextProvenance{return{field,source:"fixture://provider",availableAt:now,sourceSnapshotHash:hash,status:"OK"};}
-function context(eventAt?:string,mexcOiUnavailable=false):ContextSnapshot{
- const provenance=[prov("macro.DFF"),prov("macro.DGS10"),prov("macro.DTWEXBGS"),prov("macro.CPIAUCSL"),prov("events.fomc"),prov("market.sentimentScore"),prov("social.reddit"),prov("fundamentalsTel.coingecko"),prov("fundamentalsTel.newsroom"),...(mexcOiUnavailable?[{...prov("market.telOpenInterestQuote"),status:"UNAVAILABLE" as const}]:[])];
+function context(eventAt?:string,mexcOiUnavailable=false,mixedSocialSources=false):ContextSnapshot{
+ const provenance=[prov("macro.DFF"),prov("macro.DGS10"),prov("macro.DTWEXBGS"),prov("macro.CPIAUCSL"),prov("events.fomc"),prov("market.sentimentScore"),...(mixedSocialSources?[{...prov("social.reddit"),status:"UNAVAILABLE" as const},prov("social.x")]:[prov("social.reddit")]),prov("fundamentalsTel.coingecko"),prov("fundamentalsTel.newsroom"),...(mexcOiUnavailable?[{...prov("market.telOpenInterestQuote"),status:"UNAVAILABLE" as const}]:[])];
  return createContextSnapshot({schemaVersion:"context-snapshot.v1",instrumentId:"TEL-USDT",asOf:now,
  market:{totalMarketCapQuote:1e12,btcDominancePct:55,btcReturnPct:0.01,realizedVolPct:2,breadthPct:50,sentimentScore:50,telOpenInterestQuote:mexcOiUnavailable?null:100},
  macro:{ratesBias:"NEUTRAL",inflationBias:"NEUTRAL",dollarBias:"NEUTRAL",policyRatePct:4,tenYearYieldPct:4,dollarIndex:100,cpiYoYPct:2.5,sourceAsOf:now},
@@ -67,9 +67,45 @@ assert.equal(macroNear.decision,"ATTENDRE");assert.ok(macroNear.angles.some(a=>a
 const missingMexcBook=runTelEntryPipeline(input({mexcLiquidity:null}));
 assert.notEqual(missingMexcBook.decision,"ENTRER");
 assert.ok(missingMexcBook.angles.some(a=>a.angle==="Liquidité MEXC"&&a.status==="UNAVAILABLE"));
-const missingMexcOi=runTelEntryPipeline(input({context:context(undefined,true)}));
-assert.notEqual(missingMexcOi.decision,"ENTRER","missing MEXC open interest must never promote a decision");
-assert.ok(missingMexcOi.angles.some(a=>a.angle==="Provenance globale"&&a.status==="UNAVAILABLE"&&a.detail.includes("market.telOpenInterestQuote")));
+const wideSpread=runTelEntryPipeline(input({telLiquidity:{spreadBps:24.5,depthQuote:10000,estimatedSlippageBps:12,observedAt:now,sourceHash:hash}}));
+const wideKucoinAngle=wideSpread.angles.find(a=>a.angle==="Liquidité KuCoin");
+assert.equal(wideKucoinAngle?.status,"BLOC");
+assert.ok(wideKucoinAngle?.detail.includes("spread=24.50 bps (max 20)"));
+assert.ok(wideKucoinAngle?.detail.includes("slippage=12.00 bps (max 50;"));
+const sizeAwareBook=runTelEntryPipeline(input({telLiquidity:{
+  ...input().telLiquidity!,
+  estimatedSlippageBps:1_000_000,
+  asks:[["1",10000]] as const,
+  bestAsk:1
+}}));
+const sizeAwareKucoin= sizeAwareBook.angles.find(a=>a.angle==="Liquidité KuCoin");
+assert.equal(sizeAwareKucoin?.status,"OK","raw asks must recompute impact at the pipeline risk-sized notional");
+assert.ok(sizeAwareKucoin?.detail.includes("slippage estimé 0.00 bps"));
+assert.ok(!sizeAwareKucoin?.detail.includes("1,000,000"));
+const sizeAwareMexcBook=runTelEntryPipeline(input({mexcLiquidity:{
+  ...input().mexcLiquidity!,
+  estimatedSlippageBps:1_000_000,
+  asks:[["1",10000]] as const,
+  bestAsk:1
+}}));
+const sizeAwareMexc=sizeAwareMexcBook.angles.find(a=>a.angle==="Liquidité MEXC");
+assert.equal(sizeAwareMexc?.status,"OK","MEXC impact must use the same risk-sized notional");
+assert.ok(sizeAwareMexc?.detail.includes("slippage estimé 0.00 bps"));
+assert.ok(!sizeAwareMexc?.detail.includes("1,000,000"));
+const manualPlan={plannedOrderType:"LIMIT" as const,orderGridActive:false,lastGridLevelPrice:.99,livePriceQuote:1};
+const healthyWithManualPlan=runTelEntryPipeline(input(manualPlan));
+assert.equal(healthyWithManualPlan.decision,"ENTRER",
+  "fixture with all mandatory gates valid should not be blocked by non-mandatory plan diagnostics");
+const missingMexcOi=runTelEntryPipeline(input({...manualPlan,context:context(undefined,true)}));
+assert.equal(missingMexcOi.decision,healthyWithManualPlan.decision,
+  "secondary MEXC open interest availability must not independently change the decision");
+assert.ok(missingMexcOi.angles.some(a=>a.angle==="Provenance globale"&&a.status==="UNAVAILABLE"&&a.detail.includes("market.telOpenInterestQuote")),
+  "missing secondary fields remain visible in the provenance diagnostic");
+const mixedSocial=runTelEntryPipeline(input({...manualPlan,context:context(undefined,false,true)}));
+assert.ok(mixedSocial.angles.some(a=>a.angle==="Sentiment"&&a.status==="OK"),
+  "one valid fresh social source must remain usable when another platform is unavailable");
+assert.equal(mixedSocial.decision,"ENTRER",
+  "a fresh usable social source should satisfy sentiment despite another platform being unavailable");
 const divergentVolume=runTelEntryPipeline(input({volumeCoherenceRatio:6}));
 assert.notEqual(divergentVolume.decision,"ENTRER");
 assert.ok(divergentVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC"&&a.status==="INCOHÉRENT"));
@@ -79,6 +115,9 @@ assert.ok(missingVolume.angles.some(a=>a.angle==="Cohérence volumes KuCoin/MEXC
 const unavailableAngle=runTelEntryPipeline(input({venueStatus:"UNAVAILABLE",venueDetail:"MEXC indisponible"}));
 assert.notEqual(unavailableAngle.decision,"ENTRER");
 const healthy=runTelEntryPipeline(input());
+assert.equal(healthy.decision,"ENTRER","a missing optional order plan must not veto when objective FOMO metrics and every mandatory gate pass");
+assert.ok(healthy.angles.some(a=>a.angle==="Plan d’ordre manuel"&&a.status==="UNAVAILABLE"));
+assert.ok(healthy.angles.some(a=>a.angle==="Garde-fou anti-FOMO"&&a.status==="OK"));
 assert.ok(healthy.html.includes("Puis-je acheter maintenant ?"));
 assert.ok(healthy.html.includes("EN TEST — SANS ARGENT"));
 assert.ok(healthy.html.includes("Dérivés TEL MEXC — secondaire"));
