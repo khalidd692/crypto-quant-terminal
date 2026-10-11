@@ -122,7 +122,8 @@ function unavailableSocial(now: string, reason: string) {
     value,
     provenance: [
       unavailable("social.reddit", "Reddit r/Telcoin", now, reason),
-      unavailable("social.x", "X recent search", now, reason)
+      unavailable("social.x", "X recent search", now, reason),
+      unavailable("social.bluesky", "Bluesky public search", now, reason)
     ]
   };
 }

@@ -103,7 +103,15 @@ function readManualOrderPlan():{plannedOrderType:"LIMIT"|"MARKET"|null;orderGrid
   plannedEntryPrice:Number.isFinite(plannedEntry)&&plannedEntry>0?plannedEntry:null
  };
 }
-interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; mexcLiquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string}|null; volumeCoherenceRatio:number|null; }
+type BookLevel = readonly [string|number,string|number];
+interface LiveInputs { primary:VenueSnapshot; control:VenueSnapshot; candles:MarketDataPoint[]; btc24hChangePct:number|null; btcSupportBroken:boolean|null; liquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string;asks:readonly BookLevel[];bestAsk:number}|null; venueStatus:"OK"|"UNAVAILABLE"|"PÉRIMÉ"|"INCOHÉRENT"; venueDetail:string; marketSourceHash:string; candlesSourceHash:string; btcSourceHash:string|null; btcUnavailableReason:string|null; mexcLiquidity:{spreadBps:number;depthQuote:number;estimatedSlippageBps:number;observedAt:string;sourceHash:string;asks:readonly BookLevel[];bestAsk:number}|null; volumeCoherenceRatio:number|null; }
+function normalizeBookLevels(levels:unknown,ascending:boolean):BookLevel[]{
+ if(!Array.isArray(levels))return[];
+ const valid=levels.filter((row:any)=>Array.isArray(row)&&row.length>=2)
+  .map((row:any)=>[row[0] as string|number,row[1] as string|number] as const)
+  .filter(([p,q])=>Number.isFinite(Number(p))&&Number.isFinite(Number(q))&&Number(p)>0&&Number(q)>0);
+ return valid.sort((a,b)=>(ascending?1:-1)*(Number(a[0])-Number(b[0])));
+}
 function bookSideDepth(levels:unknown):number{if(!Array.isArray(levels))return 0;return levels.reduce((sum,row)=>{if(!Array.isArray(row))return sum;const p=Number(row[0]),q=Number(row[1]);return Number.isFinite(p)&&Number.isFinite(q)&&p>0&&q>0?sum+p*q:sum;},0);}
 function estimateBuyImpactBps(asks:unknown,notional:number,bestAsk:number):number{
  if(!Array.isArray(asks)||notional<=0||bestAsk<=0)return 1_000_000;
@@ -139,19 +147,22 @@ async function collect(asset:SurveillanceAssetConfig,now:string):Promise<LiveInp
  const venueEval=evaluateTelSurveillance(primary,control,{maxAgeMs:asset.maxAgeMs,maxCrossVenueDeviationBps:asset.maxCrossVenueDeviationBps,entryZone:asset.entryZone,invalidationPrice:asset.invalidationPrice,target1:asset.target1,target2:asset.target2,maxLossQuote:asset.maxLossQuote,existingPosition:"NONE",exitTriggered:false},Date.parse(now));
  let venueStatus:LiveInputs["venueStatus"]=venueEval.degraded?"INCOHÉRENT":"OK",venueDetail=venueEval.reasons.join("; ");
  if(candleAge>90*60_000){venueStatus="PÉRIMÉ";venueDetail="Dernière bougie KuCoin trop ancienne";}
- const bids=book?.data?.bids??book?.bids,asks=book?.data?.asks??book?.asks;
+ const rawBids=book?.data?.bids??book?.bids,rawAsks=book?.data?.asks??book?.asks;
+ const bids=normalizeBookLevels(rawBids,false),asks=normalizeBookLevels(rawAsks,true);
  const bidDepth=bookSideDepth(bids),askDepth=bookSideDepth(asks),depthQuote=Math.min(bidDepth,askDepth);
  const spreadBps=kuLast>0?((kuAsk-kuBid)/kuLast)*10_000:Infinity;
  const swingCapital=num(process.env.SWING_CAPITAL_QUOTE??1000),maxRiskQuote=swingCapital*.005;
  const stop=asset.invalidationPrice,estimatedNotional=kuLast>stop?maxRiskQuote/(kuLast-stop)*kuLast: swingCapital;
- const estimatedSlippageBps=estimateBuyImpactBps(asks,estimatedNotional,kuAsk);
- const liquidity=Number.isFinite(spreadBps)&&Number.isFinite(depthQuote)&&depthQuote>0?{spreadBps,depthQuote,estimatedSlippageBps,observedAt:now,sourceHash:sha(book)}:null;
- const mbids=mBook?.bids,masks=mBook?.asks;
- const mBid=Array.isArray(mbids)&&mbids[0]?num(mbids[0][0]):NaN,mAsk=Array.isArray(masks)&&masks[0]?num(masks[0][0]):NaN;
+ const bestBookAsk=asks.length>0?num(asks[0]![0]):NaN;
+ const estimatedSlippageBps=estimateBuyImpactBps(asks,estimatedNotional,bestBookAsk);
+ const liquidity=Number.isFinite(spreadBps)&&Number.isFinite(depthQuote)&&depthQuote>0&&Number.isFinite(bestBookAsk)?{spreadBps,depthQuote,estimatedSlippageBps,asks,bestAsk:bestBookAsk,observedAt:now,sourceHash:sha(book)}:null;
+ const rawMBids=mBook?.bids,rawMasks=mBook?.asks;
+ const mbids=normalizeBookLevels(rawMBids,false),masks=normalizeBookLevels(rawMasks,true);
+ const mBid=mbids.length>0?num(mbids[0]![0]):NaN,mAsk=masks.length>0?num(masks[0]![0]):NaN;
  const mexcBidDepth=bookSideDepth(mbids),mexcAskDepth=bookSideDepth(masks),mexcDepthQuote=Math.min(mexcBidDepth,mexcAskDepth);
  const mexcSpreadBps=mBid>0&&mAsk>=mBid?((mAsk-mBid)/((mAsk+mBid)/2))*10_000:NaN;
  const mexcSlippageBps=estimateBuyImpactBps(masks,estimatedNotional,mAsk);
- const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepthQuote)&&mexcDepthQuote>0?{spreadBps:mexcSpreadBps,depthQuote:mexcDepthQuote,estimatedSlippageBps:mexcSlippageBps,observedAt:now,sourceHash:sha(mBook)}:null;
+ const mexcLiquidity=mBook&&Number.isFinite(mexcSpreadBps)&&Number.isFinite(mexcDepthQuote)&&mexcDepthQuote>0&&Number.isFinite(mAsk)?{spreadBps:mexcSpreadBps,depthQuote:mexcDepthQuote,estimatedSlippageBps:mexcSlippageBps,asks:masks,bestAsk:mAsk,observedAt:now,sourceHash:sha(mBook)}:null;
  const volumeCoherenceRatio=Number.isFinite(primary.volume24hQuote)&&primary.volume24hQuote>0&&Number.isFinite(control.volume24hQuote)&&control.volume24hQuote>0?Math.max(primary.volume24hQuote,control.volume24hQuote)/Math.min(primary.volume24hQuote,control.volume24hQuote):null;
  const btcRows=(Array.isArray(btc?.data)?btc.data:[]).filter((row:any)=>Array.isArray(row)&&row.length>=6).sort((a:any,b:any)=>Number(a[0])-Number(b[0]));
  let btc24hChangePct:number|null=null,btcSupportBroken:boolean|null=null,btcUnavailableReason:string|null=null;
