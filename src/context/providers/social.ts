@@ -29,10 +29,12 @@ function build(items: readonly any[], at: string): SocialSentimentContext {
 function unavailable(): SocialSentimentContext {
   return {mentions:null,mentionChangePct:null,toneScore:null,concentrationTop5Pct:null,attentionSpike:null,temperature:"UNAVAILABLE",label:"indice de température, bruité et manipulable, pas une prévision",sourceAsOf:null};
 }
-function safeCause(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  // Never echo credentials or authorization headers into provenance/log output.
-  return message.replace(/(Bearer\s+)\S+/gi,"$1[REDACTED]").replace(/(Basic\s+)\S+/gi,"$1[REDACTED]").slice(0,240);
+function safeCause(error: unknown, secrets: readonly (string | undefined)[] = []): string {
+  let message = error instanceof Error ? error.message : String(error);
+  // Redact authorization tokens and literal configured credentials before provenance/logging.
+  message = message.replace(/(Bearer\s+)\S+/gi,"$1[REDACTED]").replace(/(Basic\s+)\S+/gi,"$1[REDACTED]");
+  for (const secret of secrets) if (secret) message = message.split(secret).join("[REDACTED]");
+  return message.slice(0,240);
 }
 export async function fetchSocialSentiment(at: string): Promise<{value:SocialSentimentContext;provenance:ContextProvenance[]}> {
   const provenanceItems: ContextProvenance[] = [];
@@ -61,7 +63,7 @@ export async function fetchSocialSentiment(at: string): Promise<{value:SocialSen
       redditItems=raw.data.children;
       provenanceItems.push(provenance("social.reddit",REDDIT_SEARCH,at,raw));
     } catch(error) {
-      provenanceItems.push(unavailableProvenance("social.reddit",REDDIT_SEARCH,at,safeCause(error)));
+      provenanceItems.push(unavailableProvenance("social.reddit",REDDIT_SEARCH,at,safeCause(error,[clientId,clientSecret])));
     }
   }
   const xToken=process.env.X_BEARER_TOKEN;
@@ -73,7 +75,7 @@ export async function fetchSocialSentiment(at: string): Promise<{value:SocialSen
       if(!Array.isArray(raw?.data))throw new Error("X_RESPONSE_SCHEMA_UNAVAILABLE");
       provenanceItems.push(provenance("social.x",X_SEARCH,at,raw));
     } catch(error) {
-      provenanceItems.push(unavailableProvenance("social.x",X_SEARCH,at,safeCause(error)));
+      provenanceItems.push(unavailableProvenance("social.x",X_SEARCH,at,safeCause(error,[xToken])));
     }
   } else provenanceItems.push(unavailableProvenance("social.x",X_SEARCH,at,"X_BEARER_TOKEN not configured"));
   // Reddit is the required social input. X cannot silently replace a missing/blocked Reddit source.
