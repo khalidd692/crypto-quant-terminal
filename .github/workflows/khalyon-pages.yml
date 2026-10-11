@@ -11,6 +11,7 @@ on:
     - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -58,6 +59,11 @@ jobs:
         run: |
           echo "KHALYON HEAD: $GITHUB_SHA"
           node khalyon/build.mjs
+      - name: Measure scheduled cadence and freshness
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: node scripts/khalyon-schedule-audit.mjs
       - name: Write public build manifest
         env:
           SOURCE_REF: ${{ github.ref }}
@@ -97,6 +103,12 @@ jobs:
         with:
           name: khalyon-playwright-screenshots
           path: artifacts/khalyon-*.png
+      - name: Upload schedule audit evidence (7 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: khalyon-schedule-audit-${{ github.run_id }}
+          path: khalyon/data/schedule-audit.json
+          retention-days: 7
       - name: Upload KHALYON
         uses: actions/upload-pages-artifact@v4
         with:
