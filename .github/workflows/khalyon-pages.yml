@@ -149,3 +149,16 @@ jobs:
           done
           echo "ERROR: public build manifest never matched GITHUB_SHA and workflow run id."
           exit 1
+      - name: Verify public production page after deployment
+        if: success()
+        env:
+          KHALYON_PUBLIC_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: npx playwright test tests/khalyon-production.spec.mjs --workers=1
+      - name: Upload public production proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khalyon-production-proof-${{ github.run_id }}
+          path: artifacts/khalyon-production-public.png
+          retention-days: 7
