@@ -19,8 +19,8 @@ globalThis.fetch = async (input) => {
 };
 try {
   const result = await fetchSocialSentiment("2026-10-10T20:00:00.000Z");
-  assert.equal(result.value.mentions, 2, "X data must remain usable when Reddit is blocked");
-  assert.ok((result.value.toneScore ?? 0) > 0);
+  assert.equal(result.value.mentions, null, "X must not replace the required Reddit source when Reddit is blocked");
+  assert.equal(result.value.temperature, "UNAVAILABLE");
   assert.equal(result.provenance.find(item => item.field === "social.reddit")?.status, "UNAVAILABLE");
   assert.equal(result.provenance.find(item => item.field === "social.x")?.status, "OK");
 
