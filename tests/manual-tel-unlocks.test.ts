@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import {normalizeManualTelUnlocks,readManualTelUnlocksFile} from "../src/context/providers/manual-tel-unlocks.js";
+const now="2026-10-11T20:00:00.000Z";
+const valid={source_url:"https://example.org/source",retrieved_at:"2026-10-10T10:00:00.000Z",valid_until:"2026-10-20T00:00:00.000Z",events:[{date:"2026-11-01",amount:12,note:"owner-supplied fixture"}]};
+assert.equal(normalizeManualTelUnlocks(valid,now).status,"OK");
+assert.equal(normalizeManualTelUnlocks({...valid,valid_until:"2026-10-11T19:59:59.000Z"},now).reason,"MANUAL_TEL_UNLOCKS_EXPIRED");
+assert.equal(normalizeManualTelUnlocks({...valid,source_url:"http://example.org"},now).status,"UNAVAILABLE");
+assert.equal(normalizeManualTelUnlocks({...valid,events:[{date:"not-a-date"}]},now).status,"UNAVAILABLE");
+assert.equal(readManualTelUnlocksFile("/nonexistent/khalyon/tel-unlocks.json",now).reason,"MANUAL_TEL_UNLOCKS_FILE_ABSENT");
+console.log("Manual TEL unlock validation tests passed.");
