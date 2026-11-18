@@ -1,6 +1,6 @@
 # Latest NLP surveillance signals
 
-- **Date du scan (UTC)** : 2026-10-22T12:02:30.580222+00:00
+- **Date du scan (UTC)** : 2026-11-18T15:47:33.712975+00:00
 - **Statut de l’aspiration** : **FAIL-CLOSED**
 
 ## Résumé de l’ingestion
