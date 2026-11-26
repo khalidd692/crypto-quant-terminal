@@ -9,6 +9,8 @@ on:
       - "khalyon/data/context-snapshot.json"
   schedule:
     - cron: "7,22,37,52 * * * *"
+  repository_dispatch:
+    types: [khalyon_refresh]
   workflow_dispatch:
 permissions:
   actions: read
